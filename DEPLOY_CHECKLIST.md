@@ -29,8 +29,8 @@ Configurar las siguientes variables en el servicio web:
   python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
   ```
 - [ ] **DEBUG**: `False`
-- [ ] **ALLOWED_HOSTS**: Tu dominio de Render (ej: `motomoto-xxxx.onrender.com`)
-- [ ] **DATABASE_URL**: Copiar desde PostgreSQL → "Internal Database URL"
+- [ ] **ALLOWED_HOSTS**: (Opcional) Ya configurado automáticamente. Solo configura si necesitas restringir a un dominio específico
+- [ ] **DATABASE_URL**: Copiar desde PostgreSQL → "Internal Database URL" (o se configura automáticamente con render.yaml)
 - [ ] **PYTHON_VERSION**: `3.11.0` (opcional, ya está en build.sh)
 
 ## Post-Despliegue

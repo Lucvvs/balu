@@ -27,9 +27,20 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-%3m5+&7_ens!u3db*_e4w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get('ALLOWED_HOSTS') else []
-if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+# Configuración de ALLOWED_HOSTS
+ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS', '').strip()
+
+if ALLOWED_HOSTS_ENV:
+    # Si se especifica en variables de entorno, usar esa configuración
+    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',') if host.strip()]
+else:
+    # En desarrollo, usar localhost
+    if DEBUG:
+        ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+    else:
+        # En producción (Render), aceptar cualquier dominio .onrender.com
+        # El formato .onrender.com acepta cualquier subdominio (ej: balu-c7hx.onrender.com)
+        ALLOWED_HOSTS = ['.onrender.com', '*']
 
 
 # Application definition

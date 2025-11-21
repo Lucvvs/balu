@@ -12,18 +12,21 @@ services:
         generateValue: true
       - key: DEBUG
         value: "False"
-      - key: ALLOWED_HOSTS
-        value: "*"   # cambiar luego por el dominio real
+      # ALLOWED_HOSTS se configura automáticamente para aceptar .onrender.com
+      # Si necesitas un dominio específico, descomenta y configura:
+      # - key: ALLOWED_HOSTS
+      #   value: balu-c7hx.onrender.com
       - key: DATABASE_URL
         fromDatabase:
           name: motomoto-db
           property: connectionString
     healthCheckPath: /
-    plan: free
+    plan: free  # Cambia a 'starter' o 'standard' para producción
 
-databases:
-  - name: motomoto-db
-    type: postgresql
-    plan: free
+  # Base de datos PostgreSQL
+  - type: postgresql
+    name: motomoto-db
+    plan: free  # Cambia a 'starter' o 'standard' para producción
     databaseName: motomoto
     user: motomoto_user
+

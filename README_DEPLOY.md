@@ -106,8 +106,8 @@ En el panel de Render, ve a tu servicio web → "Environment" y configura:
 
 - **SECRET_KEY**: Clave secreta de Django (genera una nueva, nunca uses la del código)
 - **DEBUG**: `False` (en producción)
-- **ALLOWED_HOSTS**: Tu dominio de Render (ej: `motomoto-xxxx.onrender.com`)
-- **DATABASE_URL**: Se configura automáticamente si conectas la base de datos
+- **ALLOWED_HOSTS**: (Opcional) Ya configurado automáticamente para aceptar `.onrender.com`. Solo configura si necesitas restringir a un dominio específico
+- **DATABASE_URL**: Se configura automáticamente si conectas la base de datos usando `render.yaml`
 
 ### Generar SECRET_KEY:
 
