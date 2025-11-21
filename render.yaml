@@ -24,7 +24,7 @@ services:
     plan: free  # Cambia a 'starter' o 'standard' para producción
 
   # Base de datos PostgreSQL
-  - type: postgresql
+  - type: pg
     name: motomoto-db
     plan: free  # Cambia a 'starter' o 'standard' para producción
     databaseName: motomoto
