@@ -1,0 +1,72 @@
+{% load static %}
+<nav class="navbar navbar-expand-lg navbar-dark navbar-motomoto">
+    <div class="container">
+        <!-- Logo -->
+        <a class="navbar-brand" href="{% url 'shop:home' %}">
+            <i class="bi bi-bicycle"></i> MotoMoto
+        </a>
+        
+        <!-- Toggle button para mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <!-- Navbar items -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'shop:home' %}">
+                        Inicio
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'products_list' or request.resolver_match.url_name == 'product_detail' %}active{% endif %}" href="{% url 'shop:products_list' %}">
+                        Productos
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- Right side items -->
+            <ul class="navbar-nav ms-auto">
+                <!-- Carrito -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'shop:cart' %}">
+                        <i class="bi bi-cart3"></i>
+                        Carrito
+                        {% if cart_items_count > 0 %}
+                            <span class="cart-badge">{{ cart_items_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                
+                <!-- Auth buttons -->
+                {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i> {{ user.get_full_name|default:user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            {% if user.is_staff %}
+                                <li><a class="dropdown-item" href="{% url 'admin:index' %}">Admin</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{% url 'shop:logout' %}">Cerrar sesión</a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'shop:login' %}">
+                            Iniciar sesión
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-danger text-white ms-2 {% if request.resolver_match.url_name == 'register' %}active{% endif %}" href="{% url 'shop:register' %}">
+                            Registro
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+

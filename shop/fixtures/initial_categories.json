@@ -1,0 +1,36 @@
+[
+  {
+    "model": "shop.category",
+    "pk": 1,
+    "fields": {
+      "name": "Equipamiento",
+      "slug": "equipamiento",
+      "description": "Cascos, chaquetas, guantes y toda la protección necesaria para tu seguridad",
+      "is_active": true,
+      "highlight_on_home": true
+    }
+  },
+  {
+    "model": "shop.category",
+    "pk": 2,
+    "fields": {
+      "name": "Para la Moto",
+      "slug": "para-la-moto",
+      "description": "Accesorios y repuestos para tu motocicleta",
+      "is_active": true,
+      "highlight_on_home": true
+    }
+  },
+  {
+    "model": "shop.category",
+    "pk": 3,
+    "fields": {
+      "name": "Accesorios",
+      "slug": "accesorios",
+      "description": "Complementos y accesorios para motociclistas",
+      "is_active": true,
+      "highlight_on_home": true
+    }
+  }
+]
+

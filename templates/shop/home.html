@@ -1,0 +1,413 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load shop_filters %}
+
+{% block title %}MotoMoto - Inicio{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section"
+    style="background-image: url('{% static 'img/bienvenida.png' %}'); filter: brightness(0.8);">
+    <div class="container">
+        <h1>¿Qué productos MotoMoto buscas hoy?</h1>
+        <a href="{% url 'shop:products_list' %}" class="btn btn-hero">
+            <img src="{% static 'img/vercatalogo.png' %}" alt="Ver Catálogo" onerror="this.style.display='none'">
+        </a>
+    </div>
+</section>
+
+<!-- Category Banner -->
+<section class="category-banner">
+    <a href="{% url 'shop:products_list' %}" class="category-item"
+        style="background-image: url('{% static 'img/banner1.png' %}');">
+        <div class="overlay">
+            <span style="color: white; font-size: 2rem; font-weight: bold;">Equipamiento</span>
+        </div>
+    </a>
+    <a href="{% url 'shop:products_list' %}" class="category-item"
+        style="background-image: url('{% static 'img/banner2.png' %}');">
+        <div class="overlay">
+            <span style="color: white; font-size: 2rem; font-weight: bold;">Para la Moto</span>
+        </div>
+    </a>
+    <a href="{% url 'shop:products_list' %}" class="category-item"
+        style="background-image: url('{% static 'img/banner3.png' %}');">
+        <div class="overlay">
+            <span style="color: white; font-size: 2rem; font-weight: bold;">Accesorios</span>
+        </div>
+    </a>
+</section>
+
+<!-- Separator -->
+<div class="separator"></div>
+
+<!-- Security Banner -->
+<section class="security-banner">
+    <div class="container">
+        <h3 class="security-title">
+            <img src="{% static 'img/garant1.png' %}" alt="Garantía 1" class="security-title-image-left" onerror="this.style.display='none'">
+            Seguridad Garantizada al Mejor Precio
+            <img src="{% static 'img/garant2.png' %}" alt="Garantía 2" class="security-title-image-right" onerror="this.style.display='none'">
+        
+        </h3>
+        <div class="security-images-container">
+            <div class="security-image-item">
+                <img src="{% static 'img/seguridad1.png' %}" alt="Seguridad 1" class="security-image"
+                    onerror="this.style.display='none'">
+            </div>
+            <div class="security-image-item">
+                <img src="{% static 'img/seguridad2.png' %}" alt="Seguridad 2" class="security-image"
+                    onerror="this.style.display='none'">
+            </div>
+            <div class="security-image-item">
+                <img src="{% static 'img/seguridad3.png' %}" alt="Seguridad 3" class="security-image"
+                    onerror="this.style.display='none'">
+            </div>
+            <div class="security-image-item">
+                <img src="{% static 'img/seguridad4.png' %}" alt="Seguridad 4" class="security-image"
+                    onerror="this.style.display='none'">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Brands Banner -->
+<section class="brands-banner">
+    <div class="brands-scroll-wrapper">
+        <div class="brands-scroll">
+            <!-- Primera copia -->
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr1.png' %}" alt="Carr 1" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr2.png' %}" alt="Carr 2" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr3.png' %}" alt="Carr 3" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr4.png' %}" alt="Carr 4" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr5.png' %}" alt="Carr 5" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <!-- Segunda copia para loop infinito -->
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr1.png' %}" alt="Carr 1" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr2.png' %}" alt="Carr 2" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr3.png' %}" alt="Carr 3" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr4.png' %}" alt="Carr 4" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr5.png' %}" alt="Carr 5" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <!-- Tercera copia para transición perfecta sin saltos -->
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr1.png' %}" alt="Carr 1" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr2.png' %}" alt="Carr 2" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr3.png' %}" alt="Carr 3" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr4.png' %}" alt="Carr 4" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+            <div class="brand-logo-link">
+                <img src="{% static 'img/carr5.png' %}" alt="Carr 5" class="brand-logo" onerror="this.style.display='none'">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Offers Section -->
+<section class="offers-section">
+    <div class="container">
+        <h2 class="section-title">Ofertas</h2>
+        <div class="row">
+            {% for product in offers %}
+            <div class="col-md-4 mb-4">
+                <div class="product-card">
+                    {% if product.has_offer %}
+                    <span class="offer-badge">OFERTA</span>
+                    {% endif %}
+                    <a href="{% url 'shop:product_detail' slug=product.slug %}"
+                        style="display: block; position: relative;">
+                        {% with images=product.images.all %}
+                        {% if images|length > 0 %}
+                        {% with primary_image=images|first %}
+                        <img src="{{ primary_image.image.url }}" alt="{{ product.name }}" class="product-card-img"
+                            onerror="this.src='{% static 'img/placeholder.jpg' %}'">
+                        {% endwith %}
+                        {% else %}
+                        <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" class="product-card-img">
+                        {% endif %}
+                        {% endwith %}
+                    </a>
+                    <div class="product-card-body">
+                        <h5 class="product-card-title">{{ product.name }}</h5>
+                        <p class="product-card-description">{{ product.short_description }}</p>
+                        <div class="product-card-price">
+                            {% if product.has_offer %}
+                            <span class="price-original">{{ product.price|currency_clp }}</span>
+                            <span class="price-offer">{{ product.current_price|currency_clp }}</span>
+                            {% else %}
+                            <span class="price-normal">{{ product.current_price|currency_clp }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="product-card-actions">
+                            <a href="{% url 'shop:product_detail' slug=product.slug %}" class="btn btn-view-detail">
+                                Ver Detalle
+                            </a>
+                            <form method="post" action="{% url 'shop:add_to_cart' product_id=product.id %}"
+                                class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-add-cart" title="Agregar al carrito">
+                                    <i class="bi bi-cart-plus"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <p class="text-center text-muted">No hay ofertas disponibles en este momento.</p>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'shop:products_list' %}?offers=true" class="btn btn-offers-action">Ir a OFERTAS</a>
+            <a href="{% url 'shop:products_list' %}" class="btn btn-offers-action">Ir a PRODUCTOS</a>
+        </div>
+    </div>
+</section>
+
+<!-- Service Banner -->
+<section class="service-banner">
+    <div class="service-item">
+        <img src="{% static 'img/envios.png' %}" alt="Envíos" class="service-main-image"
+            onerror="this.style.display='none'">
+        <h5 class="service-title">Envíos a toda la RM</h5>
+        <p class="service-text">Por solo $4.000</p>
+        <small class="service-text">(Compras superiores a $50.000)</small>
+        <img src="{% static 'img/couriers.png' %}" alt="Couriers" class="service-small-image mt-2"
+            onerror="this.style.display='none'">
+        
+    </div>
+    <div class="service-item">
+        <img src="{% static 'img/retiros.png' %}" alt="Retiros" class="service-main-image"
+            onerror="this.style.display='none'">
+        <h5 class="service-title">Retiros en Bodega MotoMoto</h5>
+        <p class="service-text">Cercano a Metro Sótero del Río</p>
+        <img src="{% static 'img/gratismetro.png' %}" alt="Gratis Metro" class="service-small-image mt-1"
+            onerror="this.style.display='none'">
+        
+    </div>
+    <div class="service-item">
+        <img src="{% static 'img/metodospago.png' %}" alt="Métodos de Pago" class="service-main-image"
+            onerror="this.style.display='none'">
+        <h5 class="service-title">Métodos de Pago</h5>
+        <p class="service-text">Aceptamos Transferencia, Efectivo y Tarjetas</p>
+        <img src="{% static 'img/tarjetas.png' %}" alt="Tarjetas" class="service-small-image mt-2"
+            onerror="this.style.display='none'">
+    </div>
+</section>
+
+<!-- Separator -->
+<div class="separator"></div>
+
+<!-- Best Sellers Section -->
+<section class="best-sellers-section">
+    <div class="container">
+        <h2 class="section-title">Los Más Vendidos</h2>
+        {% for product in best_sellers %}
+        <div class="best-seller-item-wrapper">
+            <div class="best-seller-card">
+                <div class="best-seller-image-section">
+                    {% with images=product.images.all %}
+                    {% if images|length > 0 %}
+                    <div class="carousel-main-container" id="carousel-container-{{ product.id }}">
+                        {% if images|length > 1 %}
+                        <i class="bi bi-chevron-left carousel-arrow prev-arrow" data-product="{{ product.id }}"
+                            onclick="changeCarouselImage({{ product.id }}, -1)"></i>
+                        <a href="{% url 'shop:product_detail' slug=product.slug %}">
+                            {% with primary_img=product.get_primary_image %}
+                                {% if primary_img %}
+                                    <img src="{{ primary_img.image.url }}" alt="{{ product.name }}"
+                                        class="carousel-main main-image-{{ product.id }}" id="main-image-{{ product.id }}">
+                                {% endif %}
+                            {% endwith %}
+                        </a>
+                        <i class="bi bi-chevron-right carousel-arrow next-arrow" data-product="{{ product.id }}"
+                            onclick="changeCarouselImage({{ product.id }}, 1)"></i>
+                        {% else %}
+                        <a href="{% url 'shop:product_detail' slug=product.slug %}">
+                            {% with first_img=images|first %}
+                                <img src="{{ first_img.image.url }}" alt="{{ product.name }}"
+                                    class="carousel-main main-image-{{ product.id }}" id="main-image-{{ product.id }}">
+                            {% endwith %}
+                        </a>
+                        {% endif %}
+                    </div>
+
+                    {% if images|length > 1 %}
+                    <div class="carousel-thumbnails" id="thumbnails-{{ product.id }}">
+                        {% for image in images %}
+                        <img src="{{ image.image.url }}" alt="{{ product.name }}"
+                            class="carousel-thumb {% if forloop.first %}active{% endif %}"
+                            data-product="{{ product.id }}" data-index="{{ forloop.counter0 }}"
+                            onclick="setCarouselImage({{ product.id }}, {{ forloop.counter0 }}, '{{ image.image.url }}')">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="carousel-main-container">
+                        <a href="{% url 'shop:product_detail' slug=product.slug %}"
+                            style="display: block; width: 100%; height: 100%;">
+                            <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}"
+                                class="carousel-main main-image-{{ product.id }}" id="main-image-{{ product.id }}">
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="best-seller-info-section">
+                    <div class="best-seller-info">
+                        <h3>{{ product.name }}</h3>
+                        <p class="product-short-desc">{{ product.short_description }}</p>
+                        <div class="best-seller-price">
+                            {% if product.has_offer %}
+                            <span class="price-original">{{ product.price|currency_clp }}</span>
+                            <span class="price-offer">{{ product.current_price|currency_clp }}</span>
+                            {% else %}
+                            <span class="price-normal">{{ product.current_price|currency_clp }}</span>
+                            {% endif %}
+                        </div>
+                        <a href="{% url 'shop:product_detail' slug=product.slug %}"
+                            class="btn btn-danger btn-lg best-seller-btn">
+                            <i class="bi bi-cart-plus"></i> ¡Lo Quiero!
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <p class="text-center text-muted">No hay productos destacados en este momento.</p>
+        </div>
+        {% endfor %}
+        <div class="text-center mt-4">
+            <a href="{% url 'shop:products_list' %}" class="btn btn-danger btn-lg btn-ver-mas">Ver Más</a>
+        </div>
+    </div>
+</section>
+
+<!-- Como Comprar y Canales -->
+{% include 'partials/_como_comprar_y_canales.html' %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Store current indices for each product carousel
+    const carouselIndices = {};
+
+    // Initialize carousels for best sellers
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.product-carousel').forEach(carousel => {
+            const productId = carousel.querySelector('[data-product]')?.dataset.product;
+            if (!productId) return;
+
+            const thumbnails = carousel.querySelectorAll(`.carousel-thumb[data-product="${productId}"]`);
+            if (thumbnails.length <= 1) return;
+
+            // Initialize index
+            carouselIndices[productId] = 0;
+
+            // Auto-rotate images
+            const interval = 4000 + (parseInt(productId) * 300); // Different interval per product
+            let rotationInterval = setInterval(() => {
+                const nextIndex = (carouselIndices[productId] + 1) % thumbnails.length;
+                setCarouselImage(productId, nextIndex, thumbnails[nextIndex].src);
+            }, interval);
+
+            // Pause on hover
+            carousel.addEventListener('mouseenter', () => {
+                clearInterval(rotationInterval);
+            });
+
+            carousel.addEventListener('mouseleave', () => {
+                rotationInterval = setInterval(() => {
+                    const nextIndex = (carouselIndices[productId] + 1) % thumbnails.length;
+                    setCarouselImage(productId, nextIndex, thumbnails[nextIndex].src);
+                }, interval);
+            });
+
+            // Pause on user interaction
+            thumbnails.forEach(thumb => {
+                thumb.addEventListener('click', () => {
+                    clearInterval(rotationInterval);
+                    setTimeout(() => {
+                        rotationInterval = setInterval(() => {
+                            const nextIndex = (carouselIndices[productId] + 1) % thumbnails.length;
+                            setCarouselImage(productId, nextIndex, thumbnails[nextIndex].src);
+                        }, interval);
+                    }, 5000);
+                });
+            });
+        });
+    });
+
+    function setCarouselImage(productId, index, imageUrl) {
+        const mainImage = document.getElementById(`main-image-${productId}`);
+        const thumbnails = document.querySelectorAll(`.carousel-thumb[data-product="${productId}"]`);
+
+        if (!mainImage || !thumbnails.length) return;
+
+        // Update main image with fade effect
+        mainImage.style.opacity = '0';
+        setTimeout(() => {
+            mainImage.src = imageUrl;
+            mainImage.style.opacity = '1';
+        }, 150);
+
+        // Update active thumbnail
+        thumbnails.forEach((thumb, idx) => {
+            thumb.classList.toggle('active', idx === index);
+        });
+
+        // Update current index
+        carouselIndices[productId] = index;
+    }
+
+    function changeCarouselImage(productId, direction) {
+        const thumbnails = document.querySelectorAll(`.carousel-thumb[data-product="${productId}"]`);
+        if (!thumbnails.length) return;
+
+        const currentIndex = carouselIndices[productId] || 0;
+        let newIndex;
+
+        if (direction > 0) {
+            newIndex = (currentIndex + 1) % thumbnails.length;
+        } else {
+            newIndex = (currentIndex - 1 + thumbnails.length) % thumbnails.length;
+        }
+
+        setCarouselImage(productId, newIndex, thumbnails[newIndex].src);
+    }
+
+    // Add transition effect to main images
+    document.querySelectorAll('.carousel-main').forEach(img => {
+        img.style.transition = 'opacity 0.3s ease-in-out';
+    });
+</script>
+{% endblock %}

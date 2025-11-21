@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load shop_filters %}
+
+{% block title %}{{ product.name }} - MotoMoto{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Left Column: Product Images -->
+        <div class="col-md-6 mb-4">
+            <div class="product-image-gallery">
+                <!-- Main Image -->
+                <div class="main-image-container text-center mb-3">
+                    {% if images %}
+                        <img src="{{ primary_image.image.url|default:images.0.image.url }}" alt="{{ product.name }}" 
+                             class="img-fluid main-product-image" id="main-product-image" 
+                             style="max-height: 500px; object-fit: contain;">
+                    {% else %}
+                        <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" 
+                             class="img-fluid main-product-image" style="max-height: 500px; object-fit: contain;">
+                    {% endif %}
+                </div>
+                
+                <!-- Navigation Arrows -->
+                {% if images|length > 1 %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <button class="btn btn-outline-secondary" onclick="previousImage()">
+                            <i class="bi bi-chevron-left"></i> Anterior
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="nextImage()">
+                            Siguiente <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Thumbnails -->
+                    <div class="thumbnails-container d-flex gap-2 justify-content-center flex-wrap">
+                        {% for image in images %}
+                            <img src="{{ image.image.url }}" alt="{{ product.name }}" 
+                                 class="product-thumbnail {% if forloop.first %}active{% endif %}" 
+                                 onclick="changeMainImage('{{ image.image.url }}', this)"
+                                 style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; border: 2px solid transparent; border-radius: 4px;">
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Right Column: Product Details -->
+        <div class="col-md-6">
+            <h1 class="mb-3">{{ product.name }}</h1>
+            <p class="text-muted mb-2">{{ product.short_description }}</p>
+            <p class="mb-3">
+                <span class="badge bg-secondary">{{ product.category.name }}</span>
+                {% if product.brand %}
+                    <span class="badge bg-info">{{ product.brand.name }}</span>
+                {% endif %}
+            </p>
+            
+            <!-- Stock Info -->
+            {% if product.stock <= 2 and product.stock > 0 %}
+                <div class="stock-alert">
+                    <i class="bi bi-exclamation-triangle"></i> ¡Últimas unidades! Stock disponible: {{ product.stock }}
+                </div>
+            {% elif product.stock == 0 %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle"></i> Producto sin stock
+                </div>
+            {% else %}
+                <p class="text-success mb-3"><strong>Stock disponible: {{ product.stock }} unidades</strong></p>
+            {% endif %}
+            
+            <!-- Price -->
+            <div class="mb-4">
+                {% if product.has_offer %}
+                    <p class="mb-1">
+                        <span class="price-original fs-5">{{ product.price|currency_clp }}</span>
+                        <span class="badge bg-danger ms-2">OFERTA</span>
+                    </p>
+                    <p class="price-offer fs-2 mb-0">{{ product.current_price|currency_clp }}</p>
+                {% else %}
+                    <p class="price-normal fs-2 mb-0">{{ product.current_price|currency_clp }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Description -->
+            <div class="mb-4">
+                <h5>Descripción</h5>
+                <p>{{ product.description|linebreaks }}</p>
+            </div>
+            
+            <!-- Add to Cart Form -->
+            {% if product.stock > 0 %}
+                <form method="post" action="{% url 'shop:add_to_cart' product_id=product.id %}" class="mb-3">
+                    {% csrf_token %}
+                    <div class="row g-3 align-items-end">
+                        {% if product.has_sizes %}
+                            <div class="col-12">
+                                <label for="id_size" class="form-label">Talla:</label>
+                                {{ form.size }}
+                            </div>
+                        {% else %}
+                            {{ form.size }}
+                        {% endif %}
+                        <div class="col-auto">
+                            <label for="quantity" class="form-label">Cantidad:</label>
+                            <input type="number" name="quantity" id="quantity" 
+                                   class="form-control" value="1" min="1" max="{{ product.stock }}" required>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-cart-plus"></i> Agregar al Carrito
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            {% endif %}
+            
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'shop:products_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver al Catálogo
+                </a>
+                <a href="{% url 'shop:cart' %}" class="btn btn-warning">
+                    Finalizar Pedido
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Separator -->
+    <div class="separator my-5"></div>
+    
+    <!-- Related Products -->
+    {% if related_products %}
+        <div class="related-products-section">
+            <h3 class="mb-4">PRODUCTOS RELACIONADOS</h3>
+            <div class="row">
+                {% for related_product in related_products %}
+                    <div class="col-md-3 col-sm-6 mb-4">
+                        <div class="product-card">
+                            {% with primary_image=related_product.images.first %}
+                                {% if primary_image %}
+                                    <img src="{{ primary_image.image.url }}" alt="{{ related_product.name }}" 
+                                         class="product-card-img" style="cursor: pointer;"
+                                         onclick="window.location.href='{% url 'shop:product_detail' slug=related_product.slug %}'">
+                                {% else %}
+                                    <img src="{% static 'img/placeholder.jpg' %}" alt="{{ related_product.name }}" 
+                                         class="product-card-img" style="cursor: pointer;"
+                                         onclick="window.location.href='{% url 'shop:product_detail' slug=related_product.slug %}'">
+                                {% endif %}
+                            {% endwith %}
+                            <div class="product-card-body">
+                                <h6 class="product-card-title" style="cursor: pointer;"
+                                    onclick="window.location.href='{% url 'shop:product_detail' slug=related_product.slug %}'">
+                                    {{ related_product.name }}
+                                </h6>
+                                <p class="price-offer">{{ related_product.current_price|currency_clp }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Como Comprar y Canales -->
+{% include 'partials/_como_comprar_y_canales.html' %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentImageIndex = 0;
+    const images = [
+        {% for image in images %}
+            '{{ image.image.url }}',
+        {% endfor %}
+    ];
+    
+    function changeMainImage(imageUrl, thumbnail) {
+        document.getElementById('main-product-image').src = imageUrl;
+        
+        // Update active thumbnail
+        document.querySelectorAll('.product-thumbnail').forEach(thumb => {
+            thumb.classList.remove('active');
+            thumb.style.borderColor = 'transparent';
+        });
+        
+        if (thumbnail) {
+            thumbnail.classList.add('active');
+            thumbnail.style.borderColor = '#dc3545';
+        }
+        
+        // Update current index
+        currentImageIndex = images.indexOf(imageUrl);
+    }
+    
+    function nextImage() {
+        if (images.length > 0) {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            const thumbnail = document.querySelectorAll('.product-thumbnail')[currentImageIndex];
+            changeMainImage(images[currentImageIndex], thumbnail);
+        }
+    }
+    
+    function previousImage() {
+        if (images.length > 0) {
+            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+            const thumbnail = document.querySelectorAll('.product-thumbnail')[currentImageIndex];
+            changeMainImage(images[currentImageIndex], thumbnail);
+        }
+    }
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft') {
+            previousImage();
+        } else if (e.key === 'ArrowRight') {
+            nextImage();
+        }
+    });
+</script>
+{% endblock %}
+

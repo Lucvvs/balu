@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load shop_filters %}
+
+{% block title %}Carrito de Compras - MotoMoto{% endblock %}
+
+{% block content %}
+<div class="container mt-4 cart-page-container">
+    <h1 class="mb-4">
+        <i class="bi bi-cart3"></i> Carrito de Compras
+    </h1>
+    
+    {% if cart and cart.items.count > 0 %}
+        <div class="row">
+            <!-- Left Column: Cart Items -->
+            <div class="col-lg-{% if cart.items.count <= 2 %}6{% else %}8{% endif %} col-md-12 mb-4">
+                <div class="cart-items-container">
+                    {% for item in cart.items.all %}
+                        <div class="cart-item">
+                            <div class="cart-item-image-container">
+                                <a href="{% url 'shop:product_detail' slug=item.product.slug %}">
+                                    {% with primary_image=item.product.images.first %}
+                                        {% if primary_image %}
+                                            <img src="{{ primary_image.image.url }}" alt="{{ item.product.name }}" class="cart-item-image">
+                                        {% else %}
+                                            <img src="{% static 'img/placeholder.jpg' %}" alt="{{ item.product.name }}" class="cart-item-image">
+                                        {% endif %}
+                                    {% endwith %}
+                                </a>
+                            </div>
+                        <div class="cart-item-details">
+                            <div>
+                                <h5><a href="{% url 'shop:product_detail' slug=item.product.slug %}" style="text-decoration: none; color: inherit;">{{ item.product.name }}</a></h5>
+                                {% if item.size %}
+                                    <p class="text-muted mb-1"><strong>Talla:</strong> {{ item.size }}</p>
+                                {% endif %}
+                                <p class="text-muted mb-2">{{ item.product.short_description }}</p>
+                                <div class="mb-3">
+                                    {% if item.product.has_offer %}
+                                        <span class="price-original">{{ item.product.price|currency_clp }}</span>
+                                        <span class="price-offer fs-5">{{ item.unit_price|currency_clp }}</span>
+                                    {% else %}
+                                        <span class="price-normal fs-5">{{ item.unit_price|currency_clp }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                                <div class="cart-item-actions">
+                                    <form method="post" action="{% url 'shop:update_cart_item' item_id=item.id %}" class="d-flex align-items-center gap-2">
+                                        {% csrf_token %}
+                                        <label for="quantity-{{ item.id }}" class="mb-0">Cantidad:</label>
+                                        <input type="number" name="quantity" id="quantity-{{ item.id }}" 
+                                               value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" 
+                                               class="form-control" style="width: 80px;" required>
+                                        <button type="submit" class="btn btn-sm btn-primary">Actualizar</button>
+                                    </form>
+                                    <div class="ms-auto">
+                                        <strong class="fs-5">Total: {{ item.get_line_total|currency_clp }}</strong>
+                                    </div>
+                                    <form method="post" action="{% url 'shop:remove_cart_item' item_id=item.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este producto del carrito?')">
+                                            <i class="bi bi-trash"></i> Eliminar
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Right Column: Order Summary -->
+            <div class="col-lg-{% if cart.items.count <= 2 %}6{% else %}4{% endif %} col-md-12">
+                <div class="cart-summary-container">
+                <div class="cart-summary">
+                    <h4 class="mb-3">Resumen</h4>
+                    
+                    <div class="summary-row">
+                        <span>Subtotal:</span>
+                        <span>{{ cart.get_subtotal|currency_clp }}</span>
+                    </div>
+                    
+                    <!-- Shipping cost will be shown after selection -->
+                    <div class="summary-row" id="shipping-row" style="display: none;">
+                        <span>Envío:</span>
+                        <span id="shipping-cost">$0</span>
+                    </div>
+                    
+                    <!-- Discount from coupon -->
+                    <div class="summary-row" id="discount-row" style="display: none;">
+                        <span>Descuento:</span>
+                        <span id="discount-amount" class="text-success">-$0</span>
+                    </div>
+                    
+                    <div class="summary-row summary-total">
+                        <span>Total:</span>
+                        <span id="total-amount">{{ cart.get_subtotal|currency_clp }}</span>
+                    </div>
+                    
+                    <!-- Coupon Section -->
+                    <div class="card mt-3 mb-3">
+                        <div class="card-body">
+                            <h6 class="mb-2">¿Tienes un cupón de descuento?</h6>
+                            <form method="post" action="{% url 'shop:apply_coupon' %}" class="d-flex gap-2">
+                                {% csrf_token %}
+                                <input type="text" name="code" class="form-control form-control-sm" 
+                                       placeholder="Ej: CUPON2025" style="text-transform: uppercase;" 
+                                       value="{% if request.session.applied_coupon_id %}{{ request.session.applied_coupon_code }}{% endif %}">
+                                <button type="submit" class="btn btn-danger btn-sm">Aplicar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Checkout Form Sections -->
+                <form method="post" action="{% url 'shop:checkout' %}" id="checkout-form">
+                    {% csrf_token %}
+                    
+                    <!-- Shipping Method -->
+                    <div class="checkout-section">
+                        <h5>Método de entrega</h5>
+                        {% for shipping in shipping_methods %}
+                            <div class="checkout-option mb-2">
+                                <input type="radio" name="shipping_method" id="shipping-{{ shipping.id }}" 
+                                       value="{{ shipping.id }}" required
+                                       {% if forloop.first %}checked{% endif %}
+                                       onchange="updateShippingCost({{ shipping.base_price }})">
+                                <label for="shipping-{{ shipping.id }}" class="ms-2">
+                                    <strong>{{ shipping.name }}</strong>
+                                    {% if shipping.base_price == 0 %}
+                                        - Gratis
+                                    {% else %}
+                                        - {{ shipping.base_price|currency_clp }}
+                                    {% endif %}
+                                    <br>
+                                    <small class="text-muted">{{ shipping.description }}</small>
+                                </label>
+                                {% if shipping.base_price > 0 %}
+                                    <div id="shipping-fields-{{ shipping.id }}" style="display: none;" class="mt-3">
+                                        <input type="text" name="shipping_region" class="form-control mb-2" placeholder="Región">
+                                        <input type="text" name="shipping_comuna" class="form-control mb-2" placeholder="Comuna">
+                                        <textarea name="shipping_address" class="form-control" rows="2" placeholder="Dirección"></textarea>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Payment Method -->
+                    <div class="checkout-section">
+                        <h5>Método de pago</h5>
+                        <div class="row g-2">
+                            {% for payment in payment_methods %}
+                                <div class="col-6">
+                                    <div class="checkout-option">
+                                        <input type="radio" name="payment_method" id="payment-{{ payment.id }}" 
+                                               value="{{ payment.id }}" required
+                                               {% if forloop.first %}checked{% endif %}>
+                                        <label for="payment-{{ payment.id }}" class="ms-2">
+                                            {{ payment.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Guest Info (if not logged in) -->
+                    {% if not user.is_authenticated %}
+                        <div class="checkout-section">
+                            <h6>Información de contacto</h6>
+                            <input type="text" name="customer_name" class="form-control mb-2" placeholder="Nombre completo" required>
+                            <input type="email" name="customer_email" class="form-control mb-2" placeholder="Email" required>
+                            <input type="text" name="customer_phone" class="form-control mb-2" placeholder="Teléfono">
+                        </div>
+                    {% endif %}
+                    
+                    <button type="submit" class="btn btn-danger btn-lg w-100 mb-2">
+                        <i class="bi bi-check-circle"></i> Finalizar Compra
+                    </button>
+                </form>
+                
+                <form method="post" action="{% url 'shop:clear_cart' %}" class="mb-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-secondary w-100" 
+                            onclick="return confirm('¿Estás seguro de limpiar todo el carrito?')">
+                        Limpiar Carrito
+                    </button>
+                </form>
+                
+                <a href="{% url 'shop:products_list' %}" class="btn btn-link w-100">
+                    <i class="bi bi-arrow-left"></i> Seguir Comprando
+                </a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center">
+            <h4>Tu carrito está vacío</h4>
+            <p>Agrega productos a tu carrito para comenzar a comprar.</p>
+            <a href="{% url 'shop:products_list' %}" class="btn btn-primary">
+                Ver Productos
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updateShippingCost(cost) {
+        const shippingRow = document.getElementById('shipping-row');
+        const shippingCost = document.getElementById('shipping-cost');
+        const totalAmount = document.getElementById('total-amount');
+        
+        if (cost > 0) {
+            shippingRow.style.display = 'flex';
+            shippingCost.textContent = new Intl.NumberFormat('es-CL', {
+                style: 'currency',
+                currency: 'CLP',
+                minimumFractionDigits: 0
+            }).format(cost).replace('CLP', '$');
+        } else {
+            shippingRow.style.display = 'none';
+        }
+        
+        // Update total (simple calculation, will be recalculated server-side)
+        const subtotal = {{ cart.get_subtotal|default:0 }};
+        const discount = 0; // Will be calculated from coupon if applied
+        const newTotal = subtotal + cost - discount;
+        totalAmount.textContent = new Intl.NumberFormat('es-CL', {
+            style: 'currency',
+            currency: 'CLP',
+            minimumFractionDigits: 0
+        }).format(newTotal).replace('CLP', '$');
+        
+        // Show/hide shipping address fields
+        document.querySelectorAll('[id^="shipping-fields-"]').forEach(field => {
+            field.style.display = 'none';
+        });
+        const selectedShipping = document.querySelector('input[name="shipping_method"]:checked');
+        if (selectedShipping) {
+            const fieldsId = 'shipping-fields-' + selectedShipping.value;
+            const fields = document.getElementById(fieldsId);
+            if (fields && cost > 0) {
+                fields.style.display = 'block';
+                // Make fields required if shipping cost > 0
+                fields.querySelectorAll('input, textarea').forEach(input => {
+                    input.required = true;
+                });
+            }
+        }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectedShipping = document.querySelector('input[name="shipping_method"]:checked');
+        if (selectedShipping) {
+            const shippingOption = selectedShipping.closest('.checkout-option');
+            const cost = shippingOption.querySelector('strong').textContent.includes('Gratis') ? 0 : 
+                       parseInt(shippingOption.textContent.match(/\$[\d.]+/)?.[0].replace(/[$.]/g, '') || '0');
+            updateShippingCost(cost);
+        }
+    });
+    
+    // Update on shipping method change
+    document.querySelectorAll('input[name="shipping_method"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const shippingOption = this.closest('.checkout-option');
+            const costText = shippingOption.textContent;
+            const cost = costText.includes('Gratis') ? 0 : 
+                        parseInt(costText.match(/\$[\d.]+/)?.[0].replace(/[$.]/g, '') || '0');
+            updateShippingCost(cost);
+        });
+    });
+</script>
+{% endblock %}
+

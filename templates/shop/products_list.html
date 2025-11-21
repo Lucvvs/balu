@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load shop_filters %}
+
+{% block title %}Catálogo MotoMoto - Productos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center mb-4">CATÁLOGO MotoMoto</h1>
+    
+    <!-- Filter Bar -->
+    <div class="filter-bar mb-4">
+        <div class="d-flex flex-wrap gap-2 justify-content-center">
+            <a href="{% url 'shop:products_list' %}" class="btn {% if not current_category %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+                Todos
+            </a>
+            {% for category in categories %}
+                <a href="{% url 'shop:products_list' %}?category={{ category.slug }}" 
+                   class="btn {% if current_category == category.slug %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+                    {{ category.name }}
+                </a>
+            {% endfor %}
+        </div>
+        
+        <!-- Search and Sort -->
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <form method="get" class="d-flex">
+                    <input type="text" name="search" class="form-control me-2" placeholder="Buscar productos..." value="{{ current_search }}">
+                    {% if current_category %}
+                        <input type="hidden" name="category" value="{{ current_category }}">
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <select name="sort" class="form-select" onchange="window.location.href=this.value">
+                    <option value="{% url 'shop:products_list' %}{% if current_category %}?category={{ current_category }}{% endif %}">Ordenar por...</option>
+                    <option value="{% url 'shop:products_list' %}?sort=name{% if current_category %}&category={{ current_category }}{% endif %}" {% if current_sort == 'name' %}selected{% endif %}>Nombre A-Z</option>
+                    <option value="{% url 'shop:products_list' %}?sort=price_asc{% if current_category %}&category={{ current_category }}{% endif %}" {% if current_sort == 'price_asc' %}selected{% endif %}>Precio: Menor a Mayor</option>
+                    <option value="{% url 'shop:products_list' %}?sort=price_desc{% if current_category %}&category={{ current_category }}{% endif %}" {% if current_sort == 'price_desc' %}selected{% endif %}>Precio: Mayor a Menor</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Products Grid -->
+    <div class="row">
+        {% for product in products %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="product-card">
+                    {% if product.has_offer %}
+                        <span class="offer-badge">OFERTA</span>
+                    {% endif %}
+                    <a href="{% url 'shop:product_detail' slug=product.slug %}" style="display: block; position: relative;">
+                        {% with images=product.images.all %}
+                            {% if images|length > 0 %}
+                                {% with primary_img=product.get_primary_image %}
+                                    {% if primary_img %}
+                                        <img src="{{ primary_img.image.url }}" alt="{{ product.name }}" class="product-card-img" onerror="this.src='{% static 'img/placeholder.jpg' %}'">
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" class="product-card-img">
+                            {% endif %}
+                        {% endwith %}
+                    </a>
+                    <div class="product-card-body">
+                        <h5 class="product-card-title">{{ product.name }}</h5>
+                        <p class="product-card-description">{{ product.short_description }}</p>
+                        <p class="text-muted small">Stock: {{ product.stock }}</p>
+                        <div class="product-card-price">
+                            {% if product.has_offer %}
+                                <span class="price-original">{{ product.price|currency_clp }}</span>
+                                <span class="price-offer">{{ product.current_price|currency_clp }}</span>
+                            {% else %}
+                                <span class="price-normal">{{ product.current_price|currency_clp }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="product-card-actions">
+                            <a href="{% url 'shop:product_detail' slug=product.slug %}" class="btn btn-view-detail">
+                                Ver Detalle
+                            </a>
+                            <form method="post" action="{% url 'shop:add_to_cart' product_id=product.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-add-cart" title="Agregar al carrito">
+                                    <i class="bi bi-cart-plus"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <p class="text-center text-muted">No se encontraron productos.</p>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if products.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {% if products.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ products.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">Anterior</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in products.paginator.page_range %}
+                    {% if products.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if products.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ products.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}">Siguiente</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+
+<!-- Como Comprar y Canales -->
+{% include 'partials/_como_comprar_y_canales.html' %}
+
+{% endblock %}
+

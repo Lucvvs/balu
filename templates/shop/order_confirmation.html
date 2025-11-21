@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load shop_filters %}
+
+{% block title %}Confirmación de Pedido - MotoMoto{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white text-center">
+                    <h2 class="mb-0">
+                        <i class="bi bi-check-circle"></i> ¡Pedido Confirmado!
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info">
+                        <h5>Número de Pedido: #{{ order.id }}</h5>
+                        <p class="mb-0">Serás contactado por uno de nuestros vendedores para confirmar tu pedido en los próximos minutos.</p>
+                    </div>
+                    
+                    <h4 class="mb-3">Detalles del Pedido</h4>
+                    
+                    <div class="mb-4">
+                        <h5>Productos:</h5>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items.all %}
+                                    <tr>
+                                        <td>{{ item.product_name }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{{ item.unit_price|currency_clp }}</td>
+                                        <td>{{ item.line_total|currency_clp }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h5>Método de Entrega</h5>
+                            <p>{{ order.shipping_method.name }}</p>
+                            {% if order.shipping_address %}
+                                <p><strong>Dirección:</strong><br>
+                                {{ order.shipping_address }}<br>
+                                {{ order.shipping_comuna }}, {{ order.shipping_region }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Método de Pago</h5>
+                            <p>{{ order.payment_method.name }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Subtotal:</strong></p>
+                                    {% if order.coupon %}
+                                        <p class="mb-1"><strong>Descuento ({{ order.coupon.code }}):</strong></p>
+                                    {% endif %}
+                                    <p class="mb-1"><strong>Envío:</strong></p>
+                                    <p class="mb-0"><strong class="text-danger fs-5">Total:</strong></p>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <p class="mb-1">{{ order.subtotal|currency_clp }}</p>
+                                    {% if order.coupon %}
+                                        <p class="mb-1 text-success">-{{ order.discount_total|currency_clp }}</p>
+                                    {% endif %}
+                                    <p class="mb-1">{{ order.shipping_cost|currency_clp }}</p>
+                                    <p class="mb-0"><strong class="text-danger fs-5">{{ order.total|currency_clp }}</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <a href="{% url 'shop:home' %}" class="btn btn-primary me-2">
+                            <i class="bi bi-house"></i> Volver al Inicio
+                        </a>
+                        <a href="{% url 'shop:products_list' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-box-seam"></i> Seguir Comprando
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
