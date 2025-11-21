@@ -141,3 +141,8 @@ Thumbs.db
 /media/products/
 !media/.gitkeep
 !static/img/productos/.gitkeep
+
+# Environment variables
+.env
+.env.local
+.env.production
