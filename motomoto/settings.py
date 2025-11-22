@@ -160,16 +160,14 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Media files
 MEDIA_URL = '/media/'
 
-# Usar disco persistente de Render si está disponible
-# El disco se monta en /opt/render/project/src/media según la configuración en Render
+# Configuración para disco persistente de Render
+# El disco se monta en /opt/render/project/src/media
 RENDER_DISK_PATH = '/opt/render/project/src/media'
 if os.path.exists(RENDER_DISK_PATH):
     MEDIA_ROOT = Path(RENDER_DISK_PATH).resolve()
-    print(f"✅ Usando disco persistente de Render: {MEDIA_ROOT}")
 else:
     # En desarrollo local, usar el directorio del proyecto
     MEDIA_ROOT = (BASE_DIR / 'media').resolve()
-    print(f"📁 Usando directorio local: {MEDIA_ROOT}")
 
 # Crear directorio media y subdirectorio products si no existen
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)

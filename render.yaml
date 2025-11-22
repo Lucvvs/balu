@@ -17,7 +17,11 @@ services:
           name: motomoto-db
           property: connectionString
     healthCheckPath: /
-    plan: free  # Cambia a 'starter' o 'standard' para producción
+    plan: starter  # Requerido para usar disco persistente
+    disks:
+      - name: media-disk
+        mountPath: /opt/render/project/src/media
+        sizeGB: 10
 
 databases:
   # Base de datos PostgreSQL

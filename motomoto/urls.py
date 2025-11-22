@@ -25,13 +25,12 @@ urlpatterns = [
     path('', include('shop.urls')),
 ]
 
-# Servir archivos estáticos en desarrollo
+# Servir archivos estáticos y media en desarrollo
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 else:
-    # En producción, servir archivos media usando una vista personalizada
-    # Los archivos media se almacenan en el disco persistente de Render
+    # En producción, servir archivos media desde el disco persistente
     urlpatterns += [
         re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     ]
