@@ -29,6 +29,5 @@ if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # Servir archivos media en desarrollo y producción
-# NOTA: En Render, los archivos media se pierden en cada despliegue
-# Para producción real, se recomienda usar AWS S3, Cloudinary u otro servicio de almacenamiento
+# Los archivos media se almacenan en el disco persistente de Render (/opt/render/project/src/media)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
