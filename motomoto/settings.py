@@ -164,13 +164,19 @@ MEDIA_URL = '/media/'
 # El disco se monta en /opt/render/project/src/media según la configuración en Render
 RENDER_DISK_PATH = '/opt/render/project/src/media'
 if os.path.exists(RENDER_DISK_PATH):
-    MEDIA_ROOT = Path(RENDER_DISK_PATH)
+    MEDIA_ROOT = Path(RENDER_DISK_PATH).resolve()
+    print(f"✅ Usando disco persistente de Render: {MEDIA_ROOT}")
 else:
     # En desarrollo local, usar el directorio del proyecto
-    MEDIA_ROOT = BASE_DIR / 'media'
+    MEDIA_ROOT = (BASE_DIR / 'media').resolve()
+    print(f"📁 Usando directorio local: {MEDIA_ROOT}")
 
-# Crear directorio media si no existe
+# Crear directorio media y subdirectorio products si no existen
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+(MEDIA_ROOT / 'products').mkdir(parents=True, exist_ok=True)
+
+# Convertir a string para compatibilidad con django.views.static.serve
+MEDIA_ROOT = str(MEDIA_ROOT)
 
 # Configuración de seguridad para producción
 if not DEBUG:
