@@ -59,11 +59,11 @@
                             {% if images|length > 0 %}
                                 {% with primary_img=product.get_primary_image %}
                                     {% if primary_img %}
-                                        <img src="{{ primary_img.image.url }}" alt="{{ product.name }}" class="product-card-img" onerror="this.src='{% static 'img/placeholder.jpg' %}'">
+                                        <img src="{{ primary_img.image.url }}" alt="{{ product.name }}" class="product-card-img" onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
                                     {% endif %}
                                 {% endwith %}
                             {% else %}
-                                <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" class="product-card-img">
+                                <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" class="product-card-img" onerror="this.style.display='none';">
                             {% endif %}
                         {% endwith %}
                     </a>

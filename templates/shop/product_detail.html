@@ -15,10 +15,12 @@
                     {% if images %}
                         <img src="{{ primary_image.image.url|default:images.0.image.url }}" alt="{{ product.name }}" 
                              class="img-fluid main-product-image" id="main-product-image" 
-                             style="max-height: 500px; object-fit: contain;">
+                             style="max-height: 500px; object-fit: contain;"
+                             onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
                     {% else %}
                         <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" 
-                             class="img-fluid main-product-image" style="max-height: 500px; object-fit: contain;">
+                             class="img-fluid main-product-image" style="max-height: 500px; object-fit: contain;"
+                             onerror="this.style.display='none';">
                     {% endif %}
                 </div>
                 

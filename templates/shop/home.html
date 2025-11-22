@@ -144,10 +144,11 @@
                         {% if images|length > 0 %}
                         {% with primary_image=images|first %}
                         <img src="{{ primary_image.image.url }}" alt="{{ product.name }}" class="product-card-img"
-                            onerror="this.src='{% static 'img/placeholder.jpg' %}'">
+                            onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
                         {% endwith %}
                         {% else %}
-                        <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" class="product-card-img">
+                        <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" class="product-card-img"
+                            onerror="this.style.display='none';">
                         {% endif %}
                         {% endwith %}
                     </a>
