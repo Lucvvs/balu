@@ -24,7 +24,11 @@ urlpatterns = [
     path('', include('shop.urls')),
 ]
 
-# Servir archivos estáticos y media en desarrollo
+# Servir archivos estáticos en desarrollo
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Servir archivos media en desarrollo y producción
+# NOTA: En Render, los archivos media se pierden en cada despliegue
+# Para producción real, se recomienda usar AWS S3, Cloudinary u otro servicio de almacenamiento
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
