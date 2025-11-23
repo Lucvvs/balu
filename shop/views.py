@@ -33,6 +33,9 @@ def get_or_create_cart(request):
 
 def home(request):
     """Vista de la página principal"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     # Productos en oferta (máximo 3)
     offers = Product.objects.filter(
         is_active=True,
@@ -41,6 +44,21 @@ def home(request):
     ).select_related('category', 'brand').prefetch_related(
         Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id'))
     )[:3]
+
+    # Logging para ofertas
+    logger.info(f'[HOME] Ofertas encontradas: {offers.count()}')
+    for product in offers:
+        images = product.images.all()
+        logger.info(f'[HOME] Oferta: {product.name} - Imágenes en BD: {images.count()}')
+        if images.count() > 0:
+            first_img = images.first()
+            logger.info(f'[HOME]   Primera imagen: {first_img.image.name} -> URL: {first_img.image.url}')
+            try:
+                logger.info(f'[HOME]   Path físico: {first_img.image.path}')
+            except:
+                logger.warning(f'[HOME]   No se pudo obtener path físico')
+        else:
+            logger.warning(f'[HOME]   [ERROR] No hay imágenes para {product.name}')
 
     # Productos más vendidos (máximo 3)
     best_sellers = Product.objects.filter(
@@ -138,8 +156,25 @@ def product_detail(request, slug):
         category=product.category,
         is_active=True
     ).exclude(id=product.id).select_related('category', 'brand').prefetch_related(
-        Prefetch('images', queryset=ProductImage.objects.filter(is_primary=True))
+        Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id'))
     )[:4]
+    
+    # Logging para productos relacionados
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f'[PRODUCT_DETAIL] Productos relacionados encontrados: {related_products.count()}')
+    for related_product in related_products:
+        images = related_product.images.all()
+        logger.info(f'[PRODUCT_DETAIL] Relacionado: {related_product.name} - Imágenes en BD: {images.count()}')
+        if images.count() > 0:
+            first_img = images.first()
+            logger.info(f'[PRODUCT_DETAIL]   Primera imagen: {first_img.image.name} -> URL: {first_img.image.url}')
+            try:
+                logger.info(f'[PRODUCT_DETAIL]   Path físico: {first_img.image.path}')
+            except:
+                logger.warning(f'[PRODUCT_DETAIL]   No se pudo obtener path físico')
+        else:
+            logger.warning(f'[PRODUCT_DETAIL]   [ERROR] No hay imágenes para {related_product.name}')
 
     # Obtener imágenes del producto
     images = product.images.all()

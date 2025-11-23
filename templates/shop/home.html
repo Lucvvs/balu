@@ -138,14 +138,16 @@
                     {% if product.has_offer %}
                     <span class="offer-badge">OFERTA</span>
                     {% endif %}
-                    <a href="{% url 'shop:product_detail' slug=product.slug %}"
-                        style="display: block; position: relative;">
+                    <a href="{% url 'shop:product_detail' slug=product.slug %}" style="display: block; position: relative;">
                         {% with images=product.images.all %}
                         {% if images|length > 0 %}
-                        {% with primary_image=images|first %}
-                        <img src="{{ primary_image.image.url }}" alt="{{ product.name }}" class="product-card-img"
-                            onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
-                        {% endwith %}
+                        <div class="product-card-image-container">
+                            {% for image in images %}
+                            <img src="{{ image.image.url }}" alt="{{ product.name }}" 
+                                 class="product-card-img {% if forloop.first %}active{% endif %}" 
+                                 onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
+                            {% endfor %}
+                        </div>
                         {% else %}
                         <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" class="product-card-img"
                             onerror="this.style.display='none';">

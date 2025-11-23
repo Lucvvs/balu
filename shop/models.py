@@ -109,10 +109,16 @@ class Product(models.Model):
     
     def get_primary_image(self):
         """Retorna la imagen principal del producto, o la primera si no hay principal"""
-        primary = self.images.filter(is_primary=True).first()
-        if primary:
-            return primary
-        return self.images.first()
+        # El queryset ya está ordenado por -is_primary en el prefetch
+        # Simplemente obtener la primera imagen que aprovecha el prefetch
+        try:
+            images = self.images.all()
+            if images:
+                # Como está ordenado por -is_primary, la primera es la principal o la primera disponible
+                return images[0]
+        except (IndexError, AttributeError, TypeError):
+            pass
+        return None
 
 
 class ProductImage(models.Model):

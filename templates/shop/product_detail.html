@@ -139,17 +139,24 @@
                 {% for related_product in related_products %}
                     <div class="col-md-3 col-sm-6 mb-4">
                         <div class="product-card">
-                            {% with primary_image=related_product.images.first %}
-                                {% if primary_image %}
-                                    <img src="{{ primary_image.image.url }}" alt="{{ related_product.name }}" 
-                                         class="product-card-img" style="cursor: pointer;"
-                                         onclick="window.location.href='{% url 'shop:product_detail' slug=related_product.slug %}'">
+                            <a href="{% url 'shop:product_detail' slug=related_product.slug %}" style="display: block; position: relative;">
+                                {% with images=related_product.images.all %}
+                                {% if images|length > 0 %}
+                                <div class="product-card-image-container">
+                                    {% for image in images %}
+                                    <img src="{{ image.image.url }}" alt="{{ related_product.name }}" 
+                                         class="product-card-img {% if forloop.first %}active{% endif %}" 
+                                         style="cursor: pointer;"
+                                         onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
+                                    {% endfor %}
+                                </div>
                                 {% else %}
-                                    <img src="{% static 'img/placeholder.jpg' %}" alt="{{ related_product.name }}" 
-                                         class="product-card-img" style="cursor: pointer;"
-                                         onclick="window.location.href='{% url 'shop:product_detail' slug=related_product.slug %}'">
+                                <img src="{% static 'img/placeholder.jpg' %}" alt="{{ related_product.name }}" 
+                                     class="product-card-img" style="cursor: pointer;"
+                                     onerror="this.style.display='none';">
                                 {% endif %}
-                            {% endwith %}
+                                {% endwith %}
+                            </a>
                             <div class="product-card-body">
                                 <h6 class="product-card-title" style="cursor: pointer;"
                                     onclick="window.location.href='{% url 'shop:product_detail' slug=related_product.slug %}'">

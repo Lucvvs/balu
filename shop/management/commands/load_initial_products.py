@@ -392,39 +392,37 @@ class Command(BaseCommand):
                     product.save()
                     updated_count += 1
                     
-                    # Obtener las rutas de los archivos antes de eliminar los registros
-                    existing_images = ProductImage.objects.filter(product=product)
-                    image_paths = []
-                    for img in existing_images:
-                        if img.image:
-                            try:
-                                image_paths.append(img.image.path)
-                            except:
-                                pass
-                    
-                    # Limpiar imágenes existentes de la BD
+                    # Limpiar imágenes existentes de la BD (se recargarán)
                     ProductImage.objects.filter(product=product).delete()
-                    
-                    # Eliminar archivos físicos
-                    import os
-                    for img_path in image_paths:
-                        try:
-                            if os.path.exists(img_path):
-                                os.remove(img_path)
-                        except Exception as e:
-                            self.stdout.write(
-                                self.style.WARNING(f'No se pudo eliminar archivo: {str(e)}')
-                            )
                 else:
                     created_count += 1
 
                 # Cargar imágenes del producto
+                # Si se usa --force, ya se eliminaron las imágenes arriba
+                # Si no se usa --force, verificar duplicados
                 for idx, img_file in enumerate(image_list_sorted):
                     try:
                         is_primary = (idx == 0)
                         
+                        # Verificar si la imagen ya existe para evitar duplicados (solo si no se usa --force)
+                        if not options['force']:
+                            existing_image = ProductImage.objects.filter(
+                                product=product,
+                                image__icontains=img_file.stem
+                            ).first()
+                            
+                            if existing_image:
+                                # Si existe, solo actualizar is_primary y order si es necesario
+                                if existing_image.is_primary != is_primary or existing_image.order != idx:
+                                    existing_image.is_primary = is_primary
+                                    existing_image.order = idx
+                                    existing_image.save()
+                                continue
+                        
                         # Leer y guardar la imagen
-                        with open(img_file, 'rb') as f:
+                        # Convertir Path a string para open()
+                        img_path = str(img_file) if isinstance(img_file, Path) else img_file
+                        with open(img_path, 'rb') as f:
                             django_file = ImageFile(f, name=img_file.name)
                             product_image = ProductImage(
                                 product=product,
@@ -453,7 +451,9 @@ class Command(BaseCommand):
                 if global_key in global_images:
                     for global_img in global_images[global_key]:
                         try:
-                            with open(global_img, 'rb') as f:
+                            # Convertir Path a string para open()
+                            global_img_path = str(global_img) if isinstance(global_img, Path) else global_img
+                            with open(global_img_path, 'rb') as f:
                                 django_file = ImageFile(f, name=global_img.name)
                                 product_image = ProductImage(
                                     product=product,

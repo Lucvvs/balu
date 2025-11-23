@@ -36,7 +36,7 @@ DEBUG = DEBUG_ENV == 'True'
 # Si estamos ejecutando comandos localmente (no en producción), forzar DEBUG=True
 import sys
 # Comandos que siempre deben usar SQLite en local
-local_commands = ['runserver', 'loaddata', 'load_initial', 'load_initial_products', 'clean_duplicate_images', 'clean_products', 'migrate', 'makemigrations', 'shell', 'createsuperuser']
+local_commands = ['runserver', 'loaddata', 'load_initial', 'load_initial_data', 'load_initial_products', 'clean_duplicate_images', 'clean_products', 'migrate', 'makemigrations', 'shell', 'createsuperuser', 'set_featured_products', 'set_product_prices', 'verify_images', 'fix_primary_images']
 if any(cmd in sys.argv for cmd in local_commands):
     DEBUG = True
 
@@ -218,3 +218,28 @@ else:
 
 # Email para notificaciones de pedidos al administrador
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@motomoto.cl')
+
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'shop.views': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
