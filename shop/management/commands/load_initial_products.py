@@ -9,7 +9,7 @@ Uso:
 
 El comando:
 1. (Opcional) Limpia productos existentes si se usa --clean
-2. Escanea el directorio de imágenes (media/productos/ por defecto)
+2. Escanea el directorio de imágenes (static/img/productos/ por defecto)
 3. Detecta automáticamente productos basándose en los nombres de archivo
 4. Asigna categorías y marcas según patrones en los nombres
 5. Asigna imágenes globales (AccesoriosShaftGLOB.png, soportemaletaGLOB.png)
@@ -34,8 +34,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--data-dir',
             type=str,
-            default='media/productos',
-            help='Directorio con imágenes de productos (default: media/productos)'
+            default='static/img/productos',
+            help='Directorio con imágenes de productos (default: static/img/productos)'
         )
         parser.add_argument(
             '--force',
@@ -241,11 +241,21 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS('No hay productos para limpiar.'))
                 self.stdout.write('')
         
-        data_dir = Path(options['data_dir'])
+        # Resolver ruta del directorio de datos
+        # Si es una ruta relativa, resolverla desde BASE_DIR
+        data_dir_str = options['data_dir']
+        data_dir = Path(data_dir_str)
+        
+        # Si no es una ruta absoluta, resolverla desde BASE_DIR
+        if not data_dir.is_absolute():
+            data_dir = Path(settings.BASE_DIR) / data_dir_str
         
         if not data_dir.exists():
             self.stdout.write(
                 self.style.ERROR(f'Directorio {data_dir} no existe.')
+            )
+            self.stdout.write(
+                self.style.WARNING(f'BASE_DIR: {settings.BASE_DIR}')
             )
             return
 
