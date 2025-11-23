@@ -130,50 +130,64 @@ MotoMotoCR/
    - Banner de categorías
    - Banner de seguridad y certificaciones
    - Banner de marcas con scroll infinito
-   - Sección de ofertas
+   - Sección de ofertas (con imágenes automáticas)
    - Banner de servicios (envío, retiro, pago)
    - Productos más vendidos con carousel
    - Sección "Cómo comprar" y canales oficiales
+   - Navbar sticky que se achica al hacer scroll
 
-2. **Lista de Productos (`/productos/`)**:
+2. **Lista de Productos (`/productos/`)**: 
    - Filtros por categoría
    - Búsqueda por nombre/marca
    - Ordenamiento (precio, nombre, fecha)
    - Paginación
    - Grid responsive
+   - Efecto hover: cambio automático de imágenes cada 2.5s (simula pasar página)
+   - Alertas de stock bajo ("Pocas unidades disponibles")
 
-3. **Detalle de Producto (`/productos/<slug>/`)**:
+3. **Detalle de Producto (`/productos/<slug>/`)**: 
    - Galería de imágenes con navegación
    - Información completa del producto
    - Agregar al carrito
-   - Productos relacionados
+   - Productos relacionados (con imágenes automáticas)
+   - Selección de colores/tallas cuando aplica
 
-4. **Carrito (`/carrito/`)**:
+4. **Carrito (`/carrito/`)**: 
    - Lista de productos
    - Actualizar cantidades
    - Eliminar productos
    - Aplicar cupones
-   - Selección de método de envío
+   - Selección de método de envío (validación condicional)
    - Selección de método de pago
    - Formulario para usuarios anónimos
+   - Botón "Continuar comprando" prominente
 
-5. **Checkout**:
+5. **Checkout**: 
    - Creación de pedido
    - Actualización de stock
    - Aplicación de cupones
    - Cálculo de totales
+   - Validación inteligente: campos de envío solo si es necesario
+   - Números de pedido personalizados (ID + iniciales + año-día-mes)
 
-6. **Autenticación**:
+6. **Autenticación**: 
    - Registro (`/registro/`)
    - Login (`/iniciar-sesion/`)
    - Logout (`/cerrar-sesion/`)
 
-7. **Confirmación de Pedido**:
-   - Resumen del pedido
+7. **Perfil de Usuario (`/perfil/`)**: 
+   - Edición de información básica (con confirmación)
+   - Visualización de pedidos pasados con estado
+   - Historial completo de compras
+
+8. **Confirmación de Pedido**: 
+   - Resumen del pedido con número personalizado
    - Detalles de productos
    - Información de envío y pago
+   - Mensaje de éxito mejorado con instrucciones de contacto
+   - Email de confirmación automático
 
-8. **Contacto**:
+9. **Contacto**: 
    - Formulario de contacto
 
 ## 🔐 Seguridad
@@ -222,15 +236,17 @@ El diseño es completamente responsive con:
 
 ### Prioridad Media
 
-4. **Notificaciones por Email**:
-   - Envío de confirmación de pedido
-   - Notificación de cambio de estado
-   - Recuperación de contraseña
+4. **Notificaciones por Email**: ✅ **IMPLEMENTADO**
+   - ✅ Envío de confirmación de pedido al cliente
+   - ✅ Notificación al administrador de nuevos pedidos
+   - ✅ Integración con Gmail SMTP
+   - ⏳ Notificación de cambio de estado (pendiente)
+   - ⏳ Recuperación de contraseña (pendiente)
 
-5. **Dashboard de Usuario**:
-   - Historial de pedidos
-   - Edición de perfil
-   - Direcciones guardadas
+5. **Dashboard de Usuario**: ✅ **PARCIALMENTE IMPLEMENTADO**
+   - ✅ Historial de pedidos
+   - ✅ Edición de perfil
+   - ⏳ Direcciones guardadas (pendiente)
 
 6. **Búsqueda Avanzada**:
    - Filtros múltiples (precio, marca, categoría)
@@ -255,25 +271,22 @@ El diseño es completamente responsive con:
 
 ## 🗃️ Base de Datos
 
-Actualmente usa SQLite para desarrollo. Para producción:
+- **Desarrollo**: SQLite (automático cuando `DEBUG=True`)
+- **Producción (Render)**: PostgreSQL (automático cuando `DEBUG=False` o `RENDER=True`)
 
-1. Cambiar a PostgreSQL o MySQL en `settings.py`
-2. Configurar variables de entorno para credenciales
-3. Ejecutar migraciones en el nuevo servidor
+El sistema detecta automáticamente el entorno y configura la base de datos apropiada.
 
-```python
-# settings.py (producción)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'motomoto_db',
-        'USER': 'user',
-        'PASSWORD': 'password',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
-```
+### Configuración Automática
+
+- **Local**: Usa SQLite en `db.sqlite3`
+- **Render**: Usa PostgreSQL desde `DATABASE_URL` (variable de entorno)
+- **Comandos locales**: Fuerzan SQLite para desarrollo (`runserver`, `load_initial_data`, etc.)
+
+### Persistencia de Archivos
+
+- **Local**: `media/` en el proyecto
+- **Render**: `/opt/render/project/src/media` (disco persistente)
+- Las imágenes subidas desde el admin persisten entre despliegues
 
 ## 📝 Notas de Desarrollo
 
@@ -293,6 +306,47 @@ Al iniciar sesión, se puede migrar el carrito de la sesión al usuario.
 
 El stock se actualiza automáticamente al crear un pedido.
 Se valida el stock disponible antes de agregar al carrito y antes de crear el pedido.
+- Los usuarios no ven el stock exacto, solo alertas cuando hay pocas unidades (< 3)
+- Mensaje: "¡Pocas unidades disponibles!" cuando `stock <= 2`
+
+### Gestión de Imágenes
+
+- **Detección automática**: El comando `load_initial_products` detecta automáticamente productos, marcas y categorías desde nombres de archivos
+- **Imágenes globales**: Soporte para imágenes compartidas (ej: `AccesoriosShaftGLOB.png` para todos los cascos SHAFT)
+- **Imágenes principales**: Primera imagen se marca automáticamente como `is_primary=True`
+- **Efecto hover**: En lista de productos, las imágenes cambian automáticamente cada 2.5s al pasar el mouse
+- **Persistencia**: En Render, las imágenes se guardan en disco persistente (`/opt/render/project/src/media`)
+
+### Números de Pedido Personalizados
+
+Formato: `{ID}{InicialUsuario}{InicialEmail}{Año-Día-Mes}`
+
+Ejemplo: `15LM2025` (ID=15, Usuario="Lucas", Email="lucas@mail.com", Año=2025, Día+Mes=23+11=34, 2025-34=1991)
+
+### Comandos de Gestión
+
+```bash
+# Carga completa de datos iniciales
+python manage.py load_initial_data
+
+# Cargar solo productos (con detección automática)
+python manage.py load_initial_products --data-dir static/img/productos
+
+# Asignar precios y stock automáticamente
+python manage.py set_product_prices
+
+# Configurar ofertas y más vendidos
+python manage.py set_featured_products
+
+# Corregir imágenes principales
+python manage.py fix_primary_images
+
+# Verificar estado de imágenes
+python manage.py verify_images
+
+# Limpiar imágenes duplicadas
+python manage.py clean_duplicate_images
+```
 
 ## 🧪 Testing
 

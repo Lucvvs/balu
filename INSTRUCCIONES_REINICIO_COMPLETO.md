@@ -3,11 +3,12 @@
 ## 🎯 Proceso Automatizado Completo
 
 El comando `load_initial_data --force-products` ahora hace TODO automáticamente:
-1. ✅ Carga categorías (4)
-2. ✅ Carga marcas (5)
-3. ✅ Carga productos con imágenes (27 productos)
-4. ✅ Asigna precios y stock realistas automáticamente
-5. ✅ Configura 3 ofertas y 3 más vendidos automáticamente
+1. ✅ Carga categorías (4: Maletas, Cascos, Seguridad, Accesorios)
+2. ✅ Carga marcas (5: HRO, SHAFT, 4RS, motocentric, KOVIX)
+3. ✅ Carga productos con imágenes (detección automática desde `static/img/productos/`)
+4. ✅ Asigna precios y stock realistas automáticamente según categoría
+5. ✅ Corrige imágenes principales automáticamente
+6. ✅ Configura 3 ofertas y 3 más vendidos automáticamente
 
 ## 📋 Comandos para Reiniciar
 
@@ -55,6 +56,20 @@ python manage.py set_featured_products
 ### Limpiar Imágenes Duplicadas
 ```bash
 python manage.py clean_duplicate_images
+```
+
+### Corregir Imágenes Principales
+```bash
+python manage.py fix_primary_images
+```
+
+### Verificar Estado de Imágenes
+```bash
+python manage.py verify_images
+# Solo ofertas:
+python manage.py verify_images --offers-only
+# Solo productos relacionados:
+python manage.py verify_images --related-only
 ```
 
 ## 📊 Datos que se Configuran Automáticamente
@@ -118,13 +133,30 @@ python manage.py set_featured_products
 
 ## 📝 Notas Importantes
 
-1. **Imágenes**: Las imágenes fuente están en `static/img/productos/` (en Git) y se copian a `media/products/` (disco persistente en Render)
+1. **Imágenes**: 
+   - Las imágenes fuente están en `static/img/productos/` (en Git)
+   - Se copian a `media/products/` (disco persistente en Render)
+   - El sistema detecta automáticamente productos, marcas y categorías desde nombres de archivos
+   - Soporte para imágenes globales (ej: `AccesoriosShaftGLOB.png`)
 
-2. **Precios y Stock**: Se asignan automáticamente con valores realistas según categoría y marca
+2. **Precios y Stock**: 
+   - Se asignan automáticamente con valores realistas según categoría y marca
+   - Precios base: Cascos ($50k), Maletas ($80k), Seguridad ($20k), Accesorios ($10k)
+   - Stock: Cascos (2-10), Maletas (1-5), Seguridad (4-15), Accesorios (5-20)
 
-3. **Ofertas**: Se asignan automáticamente al 30% de los productos
+3. **Ofertas**: 
+   - Se asignan automáticamente al 30% de los productos
+   - Descuento: 10-25% del precio base
+   - 3 productos seleccionados automáticamente
 
-4. **Más Vendidos**: Se asignan automáticamente a los 3 productos más recientes con stock
+4. **Más Vendidos**: 
+   - Se asignan automáticamente a los 3 productos más recientes con stock > 0
 
-5. **Sin Duplicados**: El comando verifica y evita duplicar imágenes
+5. **Sin Duplicados**: 
+   - El comando verifica y evita duplicar imágenes
+   - Usa `clean_duplicate_images` para limpiar duplicados existentes
+
+6. **Imágenes Principales**: 
+   - La primera imagen se marca automáticamente como principal
+   - Usa `fix_primary_images` para corregir si es necesario
 

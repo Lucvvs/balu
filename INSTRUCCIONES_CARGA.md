@@ -9,21 +9,34 @@ Coloca todas las imágenes de productos en:
 static/img/productos/
 ```
 
-**Formato de nombres:**
-- Imagen principal: `nombre-producto.png` o `nombre-producto-1.png`
-- Imágenes secundarias: `nombre-producto-2.png`, `nombre-producto-3.png`, etc.
+**Formato de nombres (Detección Automática):**
+El sistema detecta automáticamente productos, marcas y categorías desde los nombres de archivos.
 
-**Ejemplo:**
+**Ejemplos de detección automática:**
+- `Hro514Negro-Rojo1.png` → Producto: "Casco HRO 514 Negro-Rojo", Marca: "HRO", Categoría: "Cascos"
+- `kovixKT6negro.png` → Producto: "Candado KOVIX KT6 Negro", Marca: "KOVIX", Categoría: "Seguridad"
+- `maletaE7601.png` → Producto: "Maleta 4RS E760", Marca: "4RS", Categoría: "Maletas"
+- `trenzaAmarilla.png` → Producto: "Trenzas", Categoría: "Accesorios" (con selección de color)
+
+**Imágenes globales:**
+- `AccesoriosShaftGLOB.png` → Se asigna a todos los cascos SHAFT
+- `soportemaletaGLOB.png` → Se asigna a todas las maletas 4RS
+
+**Ordenamiento:**
+- Las imágenes se ordenan automáticamente por número (1, 2, 3...) o alfabéticamente
+- La primera imagen se marca como principal (`is_primary=True`)
+
+### 2. Configuración Automática vs Manual
+
+**Opción A: Detección Automática (Recomendado)**
+El comando detecta automáticamente productos desde los nombres de archivos. Solo coloca las imágenes en `static/img/productos/` y ejecuta:
+
+```bash
+python manage.py load_initial_data
 ```
-static/img/productos/
-├── casco-shoei-x-spirit.png      (principal)
-├── casco-shoei-x-spirit-2.png    (secundaria)
-└── casco-shoei-x-spirit-3.png    (secundaria)
-```
 
-### 2. Configura los productos
-
-Edita el archivo `shop/management/commands/load_initial_products.py` y modifica la lista `PRODUCTS_DATA` con tus productos reales:
+**Opción B: Configuración Manual**
+Si necesitas configuración específica, edita el archivo `shop/management/commands/load_initial_products.py`:
 
 ```python
 PRODUCTS_DATA = [
@@ -58,7 +71,7 @@ PRODUCTS_DATA = [
 
 ## 🚀 Ejecutar Carga
 
-### Opción 1: Carga Completa (Recomendado)
+### Opción 1: Carga Completa Automática (Recomendado)
 
 Ejecuta un solo comando que carga todo automáticamente:
 
@@ -67,9 +80,12 @@ python manage.py load_initial_data
 ```
 
 Este comando carga en orden:
-1. ✅ Categorías (Equipamiento, Para la Moto, Accesorios)
-2. ✅ Marcas (Shoei, Arai, AGV, etc.)
-3. ✅ Productos con imágenes
+1. ✅ Categorías (Maletas, Cascos, Seguridad, Accesorios)
+2. ✅ Marcas (HRO, SHAFT, 4RS, motocentric, KOVIX)
+3. ✅ Productos con imágenes (detección automática)
+4. ✅ Asignación de precios y stock (automático)
+5. ✅ Corrección de imágenes principales
+6. ✅ Configuración de ofertas y más vendidos (3 de cada uno)
 
 ### Opción 2: Carga Paso a Paso
 
@@ -88,13 +104,38 @@ python manage.py load_initial_products
 
 ### Actualizar Productos Existentes
 
-Si necesitas actualizar productos que ya existen (cambiar precio, stock, descripción, etc.):
+Si necesitas actualizar productos que ya existen:
 
 ```bash
+# Actualizar productos existentes (mantiene datos, actualiza imágenes)
 python manage.py load_initial_products --force
+
+# Reiniciar desde cero (elimina todos los productos e imágenes)
+python manage.py load_initial_products --clean
 ```
 
-⚠️ **Advertencia**: Esto eliminará las imágenes anteriores y volverá a cargarlas.
+⚠️ **Advertencia**: 
+- `--force`: Actualiza productos existentes y reemplaza imágenes
+- `--clean`: Elimina TODOS los productos, items de pedidos e imágenes físicas
+
+### Comandos Adicionales
+
+```bash
+# Solo asignar precios y stock
+python manage.py set_product_prices
+
+# Solo configurar ofertas y más vendidos
+python manage.py set_featured_products
+
+# Corregir imágenes principales
+python manage.py fix_primary_images
+
+# Verificar estado de imágenes
+python manage.py verify_images
+
+# Limpiar imágenes duplicadas
+python manage.py clean_duplicate_images
+```
 
 ## 📁 Estructura de Archivos Después de la Carga
 
@@ -136,19 +177,27 @@ Después de ejecutar los comandos:
 El sistema funciona así:
 
 1. **Imagen Principal** (`is_primary=True`):
-   - La primera imagen en `image_files` se marca automáticamente como principal
-   - Se muestra en listas de productos, cards, etc.
+   - La primera imagen detectada se marca automáticamente como principal
+   - Se muestra en listas de productos, cards, ofertas, etc.
    - Solo puede haber una imagen principal por producto
+   - Si no hay principal, se corrige automáticamente con `fix_primary_images`
 
 2. **Imágenes Secundarias** (`is_primary=False`):
-   - Las siguientes imágenes en `image_files` son secundarias
+   - Las siguientes imágenes son secundarias
    - Se muestran en el detalle del producto en el carrusel
    - Se ordenan por el campo `order`
+   - En lista de productos, al pasar el mouse cambian automáticamente cada 2.5s
 
 3. **En las Vistas**:
-   - **Lista de productos**: Muestra la imagen principal, o la primera si no hay principal
+   - **Lista de productos**: Muestra todas las imágenes con efecto hover (cambio automático)
+   - **Ofertas**: Muestra la imagen principal
+   - **Productos relacionados**: Muestra la imagen principal
    - **Detalle de producto**: Muestra todas las imágenes en carrusel con la principal destacada
    - **Los más vendidos**: Muestra todas las imágenes en carrusel
+
+4. **Prevención de Duplicados**:
+   - El sistema verifica antes de guardar para evitar imágenes duplicadas
+   - Usa `clean_duplicate_images` para limpiar duplicados existentes
 
 ## 📝 Ejemplo Completo
 
