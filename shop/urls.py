@@ -25,6 +25,8 @@ urlpatterns = [
     path('registro/', views.register_view, name='register'),
     path('iniciar-sesion/', views.login_view, name='login'),
     path('cerrar-sesion/', views.logout_view, name='logout'),
+    path('perfil/', views.profile, name='profile'),
+    path('perfil/actualizar/', views.update_profile, name='update_profile'),
     
     # Contacto
     path('contacto/', views.contact_view, name='contact'),

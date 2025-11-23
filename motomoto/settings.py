@@ -29,7 +29,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-%3m5+&7_ens!u3db*_e4w*iz@em9em0++%0y__5bqa(c7jn6vh')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+# En desarrollo local, forzar DEBUG=True para usar SQLite
+# En Render, DEBUG se establece como 'False' en las variables de entorno
+DEBUG_ENV = os.environ.get('DEBUG', 'True')
+DEBUG = DEBUG_ENV == 'True'
+# Si estamos ejecutando comandos localmente (no en producción), forzar DEBUG=True
+import sys
+# Comandos que siempre deben usar SQLite en local
+local_commands = ['runserver', 'loaddata', 'load_initial', 'load_initial_products', 'clean_duplicate_images', 'migrate', 'makemigrations', 'shell', 'createsuperuser']
+if any(cmd in sys.argv for cmd in local_commands):
+    DEBUG = True
 
 # Configuración de ALLOWED_HOSTS
 ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS', '').strip()
@@ -96,8 +105,10 @@ WSGI_APPLICATION = 'motomoto.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # Usar PostgreSQL en producción (Render) o SQLite en desarrollo
+# En desarrollo local (DEBUG=True), siempre usar SQLite
+# En producción (DEBUG=False), usar DATABASE_URL de Render
 DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL:
+if DATABASE_URL and not DEBUG:
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,

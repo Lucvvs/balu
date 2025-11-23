@@ -308,6 +308,34 @@ class Order(models.Model):
             return f"Pedido #{self.id} - {self.user.username}"
         return f"Pedido #{self.id} - {self.customer_name or 'Anónimo'}"
 
+    def generate_order_number(self):
+        """Genera número de pedido según formato: ID + inicial nombre + inicial email + (año - día - mes)"""
+        from datetime import datetime
+        now = datetime.now()
+        
+        # ID del pedido
+        order_id = str(self.id)
+        
+        # Primera inicial del nombre de usuario
+        if self.user:
+            username_init = self.user.username[0].upper() if self.user.username else 'A'
+            email_init = self.user.email[0].upper() if self.user.email else 'A'
+        else:
+            username_init = self.customer_name[0].upper() if self.customer_name else 'A'
+            email_init = self.customer_email[0].upper() if self.customer_email else 'A'
+        
+        # Año - (día + mes)
+        year = now.year
+        day_month = now.day + now.month
+        year_code = year - day_month
+        
+        return f"{order_id}{username_init}{email_init}{year_code}"
+
+    @property
+    def order_number(self):
+        """Retorna el número de pedido formateado"""
+        return self.generate_order_number()
+
 
 class OrderItem(models.Model):
     """Modelo para items de pedido"""

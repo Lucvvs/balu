@@ -158,13 +158,15 @@ class CheckoutForm(forms.Form):
         shipping_comuna = cleaned_data.get('shipping_comuna')
         shipping_address = cleaned_data.get('shipping_address')
 
-        # Si es envío a domicilio, requerir datos de dirección
-        if shipping_method and 'domicilio' in shipping_method.name.lower() and not shipping_region:
-            raise forms.ValidationError("Debe ingresar la región para envío a domicilio.")
-        if shipping_method and 'domicilio' in shipping_method.name.lower() and not shipping_comuna:
-            raise forms.ValidationError("Debe ingresar la comuna para envío a domicilio.")
-        if shipping_method and 'domicilio' in shipping_method.name.lower() and not shipping_address:
-            raise forms.ValidationError("Debe ingresar la dirección para envío a domicilio.")
+        # Solo validar campos de dirección si el método de envío tiene costo (envío a domicilio)
+        # Si base_price es 0, es retiro y no requiere dirección
+        if shipping_method and shipping_method.base_price > 0:
+            if not shipping_region:
+                raise forms.ValidationError("Debe ingresar la región para envío a domicilio.")
+            if not shipping_comuna:
+                raise forms.ValidationError("Debe ingresar la comuna para envío a domicilio.")
+            if not shipping_address:
+                raise forms.ValidationError("Debe ingresar la dirección para envío a domicilio.")
 
         return cleaned_data
 

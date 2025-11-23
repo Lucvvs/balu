@@ -491,7 +491,7 @@ def checkout(request):
         metadata={'order_id': order.id, 'total': total}
     )
 
-    messages.success(request, f'¡Pedido #{order.id} creado exitosamente! Serás contactado por uno de nuestros vendedores.')
+    messages.success(request, f'¡Pedido #{order.order_number} creado exitosamente! Serás contactado por uno de nuestros vendedores.')
     return redirect('shop:order_confirmation', order_id=order.id)
 
 
@@ -574,3 +574,35 @@ def contact_view(request):
         form = ContactForm()
 
     return render(request, 'shop/contact.html', {'form': form})
+
+
+@login_required
+def profile(request):
+    """Vista de perfil del usuario"""
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    
+    context = {
+        'orders': orders,
+    }
+    return render(request, 'shop/profile.html', context)
+
+
+@login_required
+@require_POST
+def update_profile(request):
+    """Actualizar perfil del usuario"""
+    user = request.user
+    
+    # Confirmar con el usuario
+    if request.POST.get('confirm') != 'yes':
+        messages.error(request, 'Debes confirmar los cambios.')
+        return redirect('shop:profile')
+    
+    # Actualizar datos
+    user.first_name = request.POST.get('first_name', user.first_name)
+    user.last_name = request.POST.get('last_name', user.last_name)
+    user.email = request.POST.get('email', user.email)
+    user.save()
+    
+    messages.success(request, 'Perfil actualizado correctamente.')
+    return redirect('shop:profile')

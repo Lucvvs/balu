@@ -70,7 +70,11 @@
                     <div class="product-card-body">
                         <h5 class="product-card-title">{{ product.name }}</h5>
                         <p class="product-card-description">{{ product.short_description }}</p>
-                        <p class="text-muted small">Stock: {{ product.stock }}</p>
+                        {% if product.stock <= 2 and product.stock > 0 %}
+                            <div class="stock-alert-small mb-2">
+                                <i class="bi bi-exclamation-triangle"></i> ¡Pocas unidades disponibles!
+                            </div>
+                        {% endif %}
                         <div class="product-card-price">
                             {% if product.has_offer %}
                                 <span class="price-original">{{ product.price|currency_clp }}</span>

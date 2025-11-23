@@ -3,9 +3,9 @@
     "model": "shop.category",
     "pk": 1,
     "fields": {
-      "name": "Equipamiento",
-      "slug": "equipamiento",
-      "description": "Cascos, chaquetas, guantes y toda la protección necesaria para tu seguridad",
+      "name": "Cascos",
+      "slug": "cascos",
+      "description": "Cascos de alta calidad para tu seguridad",
       "is_active": true,
       "highlight_on_home": true
     }
@@ -14,9 +14,9 @@
     "model": "shop.category",
     "pk": 2,
     "fields": {
-      "name": "Para la Moto",
-      "slug": "para-la-moto",
-      "description": "Accesorios y repuestos para tu motocicleta",
+      "name": "Maletas",
+      "slug": "maletas",
+      "description": "Maletas y sistemas de almacenamiento para tu motocicleta",
       "is_active": true,
       "highlight_on_home": true
     }
@@ -24,6 +24,17 @@
   {
     "model": "shop.category",
     "pk": 3,
+    "fields": {
+      "name": "Seguridad",
+      "slug": "seguridad",
+      "description": "Candados y sistemas de seguridad para tu moto",
+      "is_active": true,
+      "highlight_on_home": true
+    }
+  },
+  {
+    "model": "shop.category",
+    "pk": 4,
     "fields": {
       "name": "Accesorios",
       "slug": "accesorios",

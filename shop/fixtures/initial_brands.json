@@ -3,9 +3,9 @@
     "model": "shop.brand",
     "pk": 1,
     "fields": {
-      "name": "Shoei",
-      "slug": "shoei",
-      "description": "Cascos premium japoneses",
+      "name": "HRO",
+      "slug": "hro",
+      "description": "Cascos de alta calidad",
       "is_active": true
     }
   },
@@ -13,9 +13,9 @@
     "model": "shop.brand",
     "pk": 2,
     "fields": {
-      "name": "Arai",
-      "slug": "arai",
-      "description": "Cascos de alta calidad",
+      "name": "SHAFT",
+      "slug": "shaft",
+      "description": "Cascos de alto rendimiento",
       "is_active": true
     }
   },
@@ -23,9 +23,9 @@
     "model": "shop.brand",
     "pk": 3,
     "fields": {
-      "name": "AGV",
-      "slug": "agv",
-      "description": "Cascos italianos de alto rendimiento",
+      "name": "4RS",
+      "slug": "4rs",
+      "description": "Maletas y sistemas de almacenamiento",
       "is_active": true
     }
   },
@@ -33,9 +33,9 @@
     "model": "shop.brand",
     "pk": 4,
     "fields": {
-      "name": "Alpinestars",
-      "slug": "alpinestars",
-      "description": "Equipamiento de protección deportivo",
+      "name": "motocentric",
+      "slug": "motocentric",
+      "description": "Accesorios para motociclistas",
       "is_active": true
     }
   },
@@ -43,19 +43,9 @@
     "model": "shop.brand",
     "pk": 5,
     "fields": {
-      "name": "Dainese",
-      "slug": "dainese",
-      "description": "Protección y estilo italiano",
-      "is_active": true
-    }
-  },
-  {
-    "model": "shop.brand",
-    "pk": 6,
-    "fields": {
-      "name": "Otros",
-      "slug": "otros",
-      "description": "Otras marcas",
+      "name": "KOVIX",
+      "slug": "kovix",
+      "description": "Candados y sistemas de seguridad",
       "is_active": true
     }
   }

@@ -1,14 +1,17 @@
 """
-Management command para cargar productos iniciales desde imágenes en static/img/productos/
+Management command para cargar productos iniciales detectando automáticamente desde imágenes
 
 Uso:
-    python manage.py load_initial_products
+    python manage.py load_initial_products                    # Cargar productos desde imágenes
+    python manage.py load_initial_products --force           # Actualizar productos existentes
+    python manage.py load_initial_products --data-dir ruta   # Especificar directorio de imágenes
 
-El comando espera encontrar las imágenes en static/img/productos/ con el siguiente formato:
-- producto-nombre.png (imagen principal)
-- producto-nombre-2.png, producto-nombre-3.png, etc. (imágenes secundarias)
-
-Los datos de los productos se definen en este archivo en PRODUCTS_DATA.
+El comando:
+1. Escanea el directorio de imágenes (media/productos/ por defecto)
+2. Detecta automáticamente productos basándose en los nombres de archivo
+3. Asigna categorías y marcas según patrones en los nombres
+4. Asigna imágenes globales (AccesoriosShaftGLOB.png, soportemaletaGLOB.png)
+5. Crea/actualiza los productos en la base de datos
 """
 
 from django.core.management.base import BaseCommand, CommandError
@@ -18,40 +21,19 @@ from django.core.files.images import ImageFile
 from shop.models import Product, Category, Brand, ProductImage
 from pathlib import Path
 import os
-import shutil
-
-
-# Datos iniciales de productos
-# Modifica esta lista según tus productos reales
-PRODUCTS_DATA = [
-    {
-        'name': 'Casco Shoei X-Spirit III',
-        'category': 'Equipamiento',
-        'brand': 'Shoei',
-        'short_description': 'Casco premium de fibra de carbono',
-        'description': 'Casco de alta gama con tecnología avanzada. Certificado DOT y ECE. Visera anti-empañante incluida.',
-        'price': 450000,
-        'offer_price': 399000,
-        'stock': 5,
-        'available_sizes': 'S,M,L,XL',
-        'is_offer': True,
-        'is_best_seller': True,
-        'is_active': True,
-        'image_files': ['casco-shoei-1.png', 'casco-shoei-2.png', 'casco-shoei-3.png']
-    },
-    # Agrega más productos aquí siguiendo el mismo formato
-]
+import re
+from collections import defaultdict
 
 
 class Command(BaseCommand):
-    help = 'Carga productos iniciales desde imágenes en static/img/productos/'
+    help = 'Carga productos iniciales detectando automáticamente desde imágenes'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--data-dir',
             type=str,
-            default='static/img/productos',
-            help='Directorio con imágenes de productos (default: static/img/productos)'
+            default='media/productos',
+            help='Directorio con imágenes de productos (default: media/productos)'
         )
         parser.add_argument(
             '--force',
@@ -59,69 +41,227 @@ class Command(BaseCommand):
             help='Forzar actualización de productos existentes',
         )
 
+    def detect_product_info(self, filename):
+        """
+        Detecta información del producto desde el nombre del archivo
+        Retorna: (product_name, brand_name, category_name, is_global)
+        """
+        filename_upper = filename.upper()
+        base_name = Path(filename).stem
+        
+        # Imágenes globales
+        if 'ACCESORIOSSHAFTGLOB' in filename_upper:
+            return None, 'SHAFT', 'Cascos', True
+        if 'SOPORTEMALETAGLOB' in filename_upper:
+            return None, '4RS', 'Maletas', True
+        
+        # Detectar marca y categoría
+        brand = None
+        category = None
+        
+        # Marcas
+        if filename_upper.startswith('HRO'):
+            brand = 'HRO'
+            category = 'Cascos'
+        elif filename_upper.startswith('SHAFT') or filename_upper.startswith('SHAFT'):
+            brand = 'SHAFT'
+            category = 'Cascos'
+        elif 'KOVIX' in filename_upper:
+            brand = 'KOVIX'
+            category = 'Seguridad'
+        elif 'MALETA' in filename_upper or filename_upper.startswith('E'):
+            brand = '4RS'
+            category = 'Maletas'
+        elif 'MOTOCENTRIC' in filename_upper or 'MC' in filename_upper or 'MUSLERA' in filename_upper or 'PROTECTO' in filename_upper or 'CUBRE' in filename_upper:
+            brand = 'motocentric'
+            category = 'Accesorios'
+        
+        # Productos específicos
+        product_name = None
+        
+        # Cascos HRO
+        if brand == 'HRO':
+            if '514' in base_name:
+                if 'BILT' in filename_upper:
+                    product_name = 'Casco HRO 514 BILT'
+                elif 'GRI' in filename_upper:  # Gris, GRis, GRIS, etc.
+                    product_name = 'Casco HRO 514 Gris'
+                elif 'MORA' in filename_upper:
+                    product_name = 'Casco HRO 514 Mora'
+                elif 'NEGRO' in filename_upper and 'ROJO' in filename_upper:
+                    product_name = 'Casco HRO 514 Negro-Rojo'
+        
+        # Cascos SHAFT
+        elif brand == 'SHAFT':
+            if '502' in base_name:
+                if 'NEGRIS' in filename_upper or 'NEGRO' in filename_upper:
+                    product_name = 'Casco SHAFT 502 Negris'
+                elif 'ROSADO' in filename_upper:
+                    product_name = 'Casco SHAFT 502 Rosado'
+                elif 'SPIKE' in filename_upper:
+                    product_name = 'Casco SHAFT 502 Spike Rojo-Negro'
+            elif '560' in base_name or 'EVO' in filename_upper:
+                product_name = 'Casco SHAFT 560 EVO Negro-Dorado'
+        
+        # Maletas 4RS
+        elif brand == '4RS':
+            if 'E570' in base_name or '570' in base_name:
+                product_name = 'Maleta 4RS E570 Tipo AL'
+            elif 'E63' in base_name or '63' in base_name:
+                product_name = 'Maleta 4RS E63 Parrilla'
+            elif 'E760' in base_name or '760' in base_name:
+                product_name = 'Maleta 4RS E760'
+        
+        # Accesorios motocentric
+        elif brand == 'motocentric':
+            if 'BOLSO' in filename_upper and 'ESTANQUE' in filename_upper:
+                product_name = 'Bolso Estanque motocentric'
+            elif 'MUSLERA' in filename_upper:
+                product_name = 'Muslera motocentric'
+            elif 'PROTECTO' in filename_upper and 'PATA' in filename_upper:
+                product_name = 'Protector Pata motocentric'
+            elif 'CUBRE' in filename_upper and 'ESTANQUE' in filename_upper:
+                product_name = 'Cubre Estanque Goma motocentric'
+        
+        # Seguridad KOVIX
+        elif brand == 'KOVIX':
+            if 'KN1' in base_name:
+                product_name = 'Candado KOVIX KN1 Amarillo'
+            elif 'KNX10' in base_name or 'KNX' in base_name:
+                product_name = 'Candado KOVIX KNX10 Metal'
+            elif 'KT6' in base_name:
+                product_name = 'Candado KOVIX KT6 Verde'
+            elif 'SOPORTE' in filename_upper:
+                product_name = 'Soporte KOVIX'
+        
+        # Otros accesorios
+        if not product_name and not brand:
+            if 'ANTIFOG' in filename_upper:
+                product_name = 'AntiFOG'
+                category = 'Accesorios'
+            elif 'ANTILLUVIA' in filename_upper:
+                product_name = 'Antilluvia'
+                category = 'Accesorios'
+            elif 'INTERLUVIN' in filename_upper:
+                product_name = 'Interluvin'
+                category = 'Accesorios'
+        
+        return product_name, brand, category, False
+
+    def group_images_by_product(self, image_files):
+        """
+        Agrupa imágenes por producto
+        Retorna: dict {product_key: [lista de archivos]}
+        """
+        products = defaultdict(list)
+        global_images = defaultdict(list)
+        
+        for img_file in image_files:
+            if img_file.name.startswith('.'):
+                continue
+            
+            product_name, brand, category, is_global = self.detect_product_info(img_file.name)
+            
+            if is_global:
+                # Imagen global: se asigna a todos los productos de esa marca/categoría
+                key = f"{brand}_{category}"
+                global_images[key].append(img_file)
+            elif product_name:
+                # Producto específico
+                key = f"{product_name}_{brand}_{category}"
+                products[key].append(img_file)
+        
+        return products, global_images
+
     def handle(self, *args, **options):
         data_dir = Path(options['data_dir'])
         
         if not data_dir.exists():
             self.stdout.write(
-                self.style.WARNING(f'Directorio {data_dir} no existe. Creándolo...')
-            )
-            data_dir.mkdir(parents=True, exist_ok=True)
-            self.stdout.write(
-                self.style.SUCCESS(f'Directorio creado. Agrega tus imágenes en: {data_dir}')
+                self.style.ERROR(f'Directorio {data_dir} no existe.')
             )
             return
 
         # Media directory para productos
-        media_products_dir = settings.MEDIA_ROOT / 'products'
+        media_products_dir = Path(settings.MEDIA_ROOT) / 'products'
         media_products_dir.mkdir(parents=True, exist_ok=True)
+
+        # Obtener todas las imágenes
+        image_extensions = ['*.png', '*.jpg', '*.jpeg', '*.PNG', '*.JPG', '*.JPEG']
+        image_files = []
+        for ext in image_extensions:
+            image_files.extend(data_dir.glob(ext))
+        
+        if not image_files:
+            self.stdout.write(
+                self.style.WARNING(f'No se encontraron imágenes en {data_dir}')
+            )
+            return
+
+        # Agrupar imágenes por producto
+        products_dict, global_images = self.group_images_by_product(image_files)
+        
+        self.stdout.write(self.style.SUCCESS(f'Se encontraron {len(products_dict)} productos únicos'))
+        self.stdout.write(self.style.SUCCESS(f'Se encontraron {len(global_images)} grupos de imágenes globales'))
 
         created_count = 0
         updated_count = 0
         error_count = 0
 
-        for product_data in PRODUCTS_DATA:
+        # Procesar cada producto
+        for product_key, image_list in products_dict.items():
             try:
+                # Extraer información del key
+                parts = product_key.split('_', 2)
+                if len(parts) < 3:
+                    continue
+                
+                product_name = parts[0]
+                brand_name = parts[1]
+                category_name = parts[2]
+                
                 # Obtener categoría y marca
                 try:
-                    category = Category.objects.get(name=product_data['category'])
+                    category = Category.objects.get(name=category_name)
                 except Category.DoesNotExist:
                     self.stdout.write(
-                        self.style.ERROR(
-                            f"Categoría '{product_data['category']}' no existe. "
-                            "Ejecuta primero: python manage.py loaddata initial_categories.json"
-                        )
+                        self.style.ERROR(f"Categoría '{category_name}' no existe.")
                     )
                     error_count += 1
                     continue
 
                 brand = None
-                if product_data.get('brand'):
+                if brand_name:
                     try:
-                        brand = Brand.objects.get(name=product_data['brand'])
+                        brand = Brand.objects.get(name=brand_name)
                     except Brand.DoesNotExist:
                         self.stdout.write(
-                            self.style.WARNING(
-                                f"Marca '{product_data['brand']}' no existe. "
-                                "El producto se creará sin marca."
-                            )
+                            self.style.WARNING(f"Marca '{brand_name}' no existe.")
                         )
+
+                # Ordenar imágenes: la primera sin número o con 1 es la principal
+                def sort_key(fname):
+                    name_lower = fname.name.lower()
+                    # Buscar número al final del nombre
+                    match = re.search(r'(\d+)(\.(png|jpg|jpeg))?$', name_lower)
+                    if match:
+                        num = int(match.group(1))
+                        return (0 if num == 1 else 1, num, fname.name)
+                    return (0, 0, fname.name)
+                
+                image_list_sorted = sorted(image_list, key=sort_key)
 
                 # Verificar si el producto ya existe
                 product, created = Product.objects.get_or_create(
-                    name=product_data['name'],
+                    name=product_name,
                     defaults={
                         'category': category,
                         'brand': brand,
-                        'short_description': product_data.get('short_description', ''),
-                        'description': product_data.get('description', ''),
-                        'price': product_data.get('price', 0),
-                        'offer_price': product_data.get('offer_price'),
-                        'stock': product_data.get('stock', 0),
-                        'available_sizes': product_data.get('available_sizes', ''),
-                        'is_offer': product_data.get('is_offer', False),
-                        'is_best_seller': product_data.get('is_best_seller', False),
-                        'is_active': product_data.get('is_active', True),
+                        'short_description': f'{product_name} - {category_name}',
+                        'description': f'{product_name} de alta calidad. {category.description if category.description else ""}',
+                        'price': 0,  # Se debe actualizar manualmente
+                        'stock': 0,  # Se debe actualizar manualmente
+                        'is_active': True,
                     }
                 )
 
@@ -132,86 +272,30 @@ class Command(BaseCommand):
                     continue
                 elif not created and options['force']:
                     # Actualizar producto existente
-                    for key, value in product_data.items():
-                        if key not in ['name', 'image_files']:
-                            if key == 'category':
-                                setattr(product, key, category)
-                            elif key == 'brand':
-                                setattr(product, key, brand)
-                            else:
-                                setattr(product, key, value)
+                    product.category = category
+                    product.brand = brand
                     product.save()
                     updated_count += 1
+                    # Limpiar imágenes existentes
+                    ProductImage.objects.filter(product=product).delete()
                 else:
                     created_count += 1
 
-                # Procesar imágenes
-                image_files = product_data.get('image_files', [])
-                if not image_files:
-                    # Si no hay imágenes especificadas, buscar automáticamente
-                    # Buscar archivos que empiecen con el slug del producto
-                    slug_prefix = product.slug.replace('-', '_')  # Variaciones de slug
-                    slug_alt = product.slug
-                    found_files = []
-                    for ext in ['png', 'jpg', 'jpeg', 'PNG', 'JPG', 'JPEG']:
-                        # Buscar con diferentes variaciones
-                        for prefix in [slug_prefix, slug_alt, slug_prefix.replace('_', '-'), slug_alt.replace('-', '_')]:
-                            pattern = f"{prefix}*.{ext}"
-                            matching_files = list(data_dir.glob(pattern))
-                            if matching_files:
-                                found_files.extend([f.name for f in sorted(matching_files)])
-                                break
-                        if found_files:
-                            break
-                    if found_files:
-                        # Ordenar: primero la que no tiene número o tiene -1, luego las demás
-                        def sort_key(fname):
-                            if '-1.' in fname or fname.endswith(f'.{ext}') and not any(f'-{i}.' in fname for i in range(2, 10)):
-                                return (0, fname)
-                            return (1, fname)
-                        image_files = sorted(list(set(found_files)), key=sort_key)
-
-                # Limpiar imágenes existentes si se fuerza actualización
-                if options['force'] and not created:
-                    ProductImage.objects.filter(product=product).delete()
-
-                # Cargar imágenes
-                for idx, image_file in enumerate(image_files):
-                    source_path = data_dir / image_file
-                    
-                    if not source_path.exists():
-                        self.stdout.write(
-                            self.style.WARNING(
-                                f'Imagen {image_file} no encontrada para producto {product.name}'
-                            )
-                        )
-                        continue
-
-                    # Copiar imagen a media/products/
-                    destination_path = media_products_dir / image_file
-                    
+                # Cargar imágenes del producto
+                for idx, img_file in enumerate(image_list_sorted):
                     try:
-                        # Crear registro de ProductImage
-                        is_primary = (idx == 0)  # Primera imagen es principal
+                        is_primary = (idx == 0)
                         
-                        # Si ya existe una imagen principal, marcar como False
-                        if is_primary and ProductImage.objects.filter(product=product, is_primary=True).exists():
-                            # Asegurar que solo una sea principal
-                            ProductImage.objects.filter(product=product, is_primary=True).update(is_primary=False)
-                        
-                        # Leer y guardar la imagen directamente desde el origen
-                        # Django se encargará de copiarla a media/products/ automáticamente
-                        with open(source_path, 'rb') as f:
-                            django_file = ImageFile(f, name=image_file)
+                        # Leer y guardar la imagen
+                        with open(img_file, 'rb') as f:
+                            django_file = ImageFile(f, name=img_file.name)
                             product_image = ProductImage(
                                 product=product,
                                 is_primary=is_primary,
                                 order=idx
                             )
-                            # Guardar archivo en el campo ImageField
-                            # Django copiará el archivo a media/products/ automáticamente
                             product_image.image.save(
-                                image_file,
+                                img_file.name,
                                 django_file,
                                 save=True
                             )
@@ -219,23 +303,49 @@ class Command(BaseCommand):
                         
                         self.stdout.write(
                             self.style.SUCCESS(
-                                f'  ✓ Imagen {image_file} cargada{" (principal)" if is_primary else ""}'
+                                f'  [OK] Imagen {img_file.name} cargada{" (principal)" if is_primary else ""}'
                             )
                         )
                     except Exception as e:
                         self.stdout.write(
-                            self.style.ERROR(f'Error al cargar {image_file}: {str(e)}')
+                            self.style.ERROR(f'Error al cargar {img_file.name}: {str(e)}')
                         )
-                        error_count += 1
+
+                # Asignar imágenes globales
+                global_key = f"{brand_name}_{category_name}"
+                if global_key in global_images:
+                    for global_img in global_images[global_key]:
+                        try:
+                            with open(global_img, 'rb') as f:
+                                django_file = ImageFile(f, name=global_img.name)
+                                product_image = ProductImage(
+                                    product=product,
+                                    is_primary=False,
+                                    order=999  # Al final
+                                )
+                                product_image.image.save(
+                                    global_img.name,
+                                    django_file,
+                                    save=True
+                                )
+                                django_file.close()
+                            
+                            self.stdout.write(
+                                self.style.SUCCESS(f'  [OK] Imagen global {global_img.name} asignada')
+                            )
+                        except Exception as e:
+                            self.stdout.write(
+                                self.style.ERROR(f'Error al cargar imagen global {global_img.name}: {str(e)}')
+                            )
 
                 action = "Creado" if created else "Actualizado"
                 self.stdout.write(
-                    self.style.SUCCESS(f'{action}: {product.name} (Stock: {product.stock})')
+                    self.style.SUCCESS(f'{action}: {product.name} ({len(image_list)} imágenes)')
                 )
 
             except Exception as e:
                 self.stdout.write(
-                    self.style.ERROR(f'Error al procesar {product_data.get("name", "producto desconocido")}: {str(e)}')
+                    self.style.ERROR(f'Error al procesar {product_key}: {str(e)}')
                 )
                 error_count += 1
                 continue
@@ -251,18 +361,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f'  Errores: {error_count}'))
         self.stdout.write(self.style.SUCCESS('=' * 50))
         
-        if created_count == 0 and updated_count == 0 and error_count == 0:
+        if created_count > 0 or updated_count > 0:
             self.stdout.write('')
             self.stdout.write(self.style.WARNING(
-                'No se procesaron productos. Verifica que:'
-            ))
-            self.stdout.write(self.style.WARNING(
-                '  1. PRODUCTS_DATA en load_initial_products.py tenga datos'
-            ))
-            self.stdout.write(self.style.WARNING(
-                '  2. Las categorías y marcas existan (ejecuta loaddata)'
-            ))
-            self.stdout.write(self.style.WARNING(
-                f'  3. Las imágenes estén en {data_dir}'
+                'IMPORTANTE: Revisa y actualiza manualmente los precios y stock de los productos en el admin de Django.'
             ))
 
