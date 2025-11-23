@@ -15,9 +15,24 @@
                     </h2>
                 </div>
                 <div class="card-body p-4">
-                    <div class="alert alert-info">
-                        <h5>Número de Pedido: #{{ order.order_number }}</h5>
-                        <p class="mb-0">Serás contactado por uno de nuestros vendedores para confirmar tu pedido en los próximos minutos.</p>
+                    <div class="alert alert-success border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                        <div class="text-center">
+                            <h2 class="mb-3" style="color: white; font-weight: bold;">
+                                <i class="bi bi-check-circle-fill" style="font-size: 2.5rem;"></i>
+                                ¡Pedido Creado Exitosamente!
+                            </h2>
+                            <div class="bg-white rounded p-3 mb-3" style="display: inline-block;">
+                                <h3 class="text-danger mb-0" style="font-weight: bold; font-size: 2rem;">
+                                    #{{ order.order_number }}
+                                </h3>
+                            </div>
+                            <p class="mb-2" style="font-size: 1.1rem; color: white;">
+                                <strong>Serás contactado por uno de nuestros vendedores en breve.</strong>
+                            </p>
+                            <p class="mb-0" style="font-size: 1rem; color: rgba(255,255,255,0.9);">
+                                <i class="bi bi-info-circle"></i> Puedes contactarnos indicando tu número de pedido: <strong>#{{ order.order_number }}</strong>
+                            </p>
+                        </div>
                     </div>
                     
                     <h4 class="mb-3">Detalles del Pedido</h4>

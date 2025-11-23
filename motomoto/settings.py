@@ -36,7 +36,7 @@ DEBUG = DEBUG_ENV == 'True'
 # Si estamos ejecutando comandos localmente (no en producción), forzar DEBUG=True
 import sys
 # Comandos que siempre deben usar SQLite en local
-local_commands = ['runserver', 'loaddata', 'load_initial', 'load_initial_products', 'clean_duplicate_images', 'migrate', 'makemigrations', 'shell', 'createsuperuser']
+local_commands = ['runserver', 'loaddata', 'load_initial', 'load_initial_products', 'clean_duplicate_images', 'clean_products', 'migrate', 'makemigrations', 'shell', 'createsuperuser']
 if any(cmd in sys.argv for cmd in local_commands):
     DEBUG = True
 
@@ -200,3 +200,21 @@ if not DEBUG:
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Email Configuration
+# En desarrollo: mostrar emails en consola (para testing)
+# En producción: usar SMTP con Gmail
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    # Producción: usar SMTP con Gmail
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+
+# Email para notificaciones de pedidos al administrador
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@motomoto.cl')

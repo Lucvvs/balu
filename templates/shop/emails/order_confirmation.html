@@ -1,0 +1,184 @@
+{% load shop_filters %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Pedido - MotoMoto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #dc3545;
+        }
+        .header h1 {
+            color: #dc3545;
+            margin: 0;
+            font-size: 28px;
+        }
+        .order-number {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .info-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .info-section h3 {
+            margin-top: 0;
+            color: #dc3545;
+            font-size: 18px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        table th {
+            background-color: #dc3545;
+            color: white;
+        }
+        .total-section {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            text-align: right;
+        }
+        .total-section strong {
+            font-size: 20px;
+            color: #dc3545;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .contact-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+        .contact-info h3 {
+            margin-top: 0;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>MotoMoto</h1>
+            <p>Accesorios para Motocicletas</p>
+        </div>
+        
+        <div class="order-number">
+            ¡Pedido Confirmado! #{{ order.order_number }}
+        </div>
+        
+        <p>Hola <strong>{{ order.customer_name|default:"Cliente" }}</strong>,</p>
+        
+        <p>Gracias por tu compra en MotoMoto. Hemos recibido tu pedido y te contactaremos en breve para confirmar los detalles.</p>
+        
+        <div class="info-section">
+            <h3>Detalles del Pedido</h3>
+            <p><strong>Número de Pedido:</strong> #{{ order.order_number }}</p>
+            <p><strong>Fecha:</strong> {{ order.created_at|date:"d/m/Y H:i" }}</p>
+            <p><strong>Estado:</strong> {{ order.get_status_display }}</p>
+        </div>
+        
+        <div class="info-section">
+            <h3>Productos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order_items %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.unit_price|currency_clp }}</td>
+                        <td>{{ item.line_total|currency_clp }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="info-section">
+            <h3>Información de Entrega</h3>
+            <p><strong>Método:</strong> {{ order.shipping_method.name }}</p>
+            {% if order.shipping_address %}
+            <p><strong>Dirección:</strong><br>
+            {{ order.shipping_address }}<br>
+            {{ order.shipping_comuna }}, {{ order.shipping_region }}</p>
+            {% endif %}
+            <p><strong>Método de Pago:</strong> {{ order.payment_method.name }}</p>
+        </div>
+        
+        <div class="total-section">
+            <p><strong>Subtotal:</strong> {{ order.subtotal|currency_clp }}</p>
+            {% if order.coupon %}
+            <p><strong>Descuento ({{ order.coupon.code }}):</strong> -{{ order.discount_total|currency_clp }}</p>
+            {% endif %}
+            <p><strong>Envío:</strong> {{ order.shipping_cost|currency_clp }}</p>
+            <p><strong style="font-size: 24px;">Total: {{ order.total|currency_clp }}</strong></p>
+        </div>
+        
+        <div class="contact-info">
+            <h3>¿Necesitas ayuda?</h3>
+            <p>Puedes contactarnos indicando tu número de pedido: <strong>#{{ order.order_number }}</strong></p>
+            <p>
+                <strong>WhatsApp:</strong> +569 8211 7748 | +569 8881 5568<br>
+                <strong>Instagram:</strong> @motomotocl<br>
+                <strong>Web:</strong> www.motomoto.cl
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>Este es un email automático, por favor no respondas a este mensaje.</p>
+            <p>&copy; 2025 MotoMoto. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>
+

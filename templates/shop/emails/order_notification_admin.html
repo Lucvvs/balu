@@ -1,0 +1,132 @@
+{% load shop_filters %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Nuevo Pedido - MotoMoto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .alert {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .order-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th, table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        table th {
+            background-color: #dc3545;
+            color: white;
+        }
+        .info-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .info-section h3 {
+            margin-top: 0;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="alert">
+            <h2>Nuevo Pedido Recibido</h2>
+            <p class="order-number">Pedido #{{ order.order_number }}</p>
+        </div>
+        
+        <div class="info-section">
+            <h3>Información del Cliente</h3>
+            <p><strong>Nombre:</strong> {{ order.customer_name|default:"N/A" }}</p>
+            <p><strong>Email:</strong> {{ order.customer_email|default:"N/A" }}</p>
+            <p><strong>Teléfono:</strong> {{ order.customer_phone|default:"N/A" }}</p>
+            {% if order.user %}
+            <p><strong>Usuario:</strong> {{ order.user.username }} ({{ order.user.email }})</p>
+            {% else %}
+            <p><strong>Usuario:</strong> Cliente no registrado</p>
+            {% endif %}
+        </div>
+        
+        <div class="info-section">
+            <h3>Productos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order_items %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.unit_price|currency_clp }}</td>
+                        <td>{{ item.line_total|currency_clp }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="info-section">
+            <h3>Totales</h3>
+            <p><strong>Subtotal:</strong> {{ order.subtotal|currency_clp }}</p>
+            {% if order.coupon %}
+            <p><strong>Descuento ({{ order.coupon.code }}):</strong> -{{ order.discount_total|currency_clp }}</p>
+            {% endif %}
+            <p><strong>Envío:</strong> {{ order.shipping_cost|currency_clp }}</p>
+            <p><strong style="font-size: 20px; color: #dc3545;">Total: {{ order.total|currency_clp }}</strong></p>
+        </div>
+        
+        <div class="info-section">
+            <h3>Método de Entrega</h3>
+            <p><strong>{{ order.shipping_method.name }}</strong></p>
+            {% if order.shipping_address %}
+            <p><strong>Dirección:</strong><br>
+            {{ order.shipping_address }}<br>
+            {{ order.shipping_comuna }}, {{ order.shipping_region }}</p>
+            {% endif %}
+            <p><strong>Método de Pago:</strong> {{ order.payment_method.name }}</p>
+        </div>
+        
+        <div class="info-section">
+            <p><strong>Fecha del Pedido:</strong> {{ order.created_at|date:"d/m/Y H:i" }}</p>
+            <p><strong>Estado:</strong> {{ order.get_status_display }}</p>
+        </div>
+    </div>
+</body>
+</html>
+

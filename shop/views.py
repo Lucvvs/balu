@@ -17,6 +17,7 @@ from .forms import (
     UserRegistrationForm, AddToCartForm, UpdateCartItemForm, CouponForm,
     CheckoutForm, ContactForm
 )
+from .utils import send_order_confirmation_email, send_order_notification_to_admin
 
 
 def get_or_create_cart(request):
@@ -170,7 +171,15 @@ def product_detail(request, slug):
 @require_POST
 def add_to_cart(request, product_id):
     """Agregar producto al carrito"""
-    product = get_object_or_404(Product, id=product_id, is_active=True, stock__gt=0)
+    try:
+        product = Product.objects.get(id=product_id, is_active=True)
+    except Product.DoesNotExist:
+        messages.error(request, 'El producto no existe o no está disponible.')
+        return redirect('shop:products_list')
+    
+    if product.stock <= 0:
+        messages.error(request, f'Lo sentimos, {product.name} no tiene stock disponible en este momento.')
+        return redirect('shop:product_detail', slug=product.slug)
     
     form = AddToCartForm(request.POST, product=product)
     if not form.is_valid():
@@ -491,7 +500,25 @@ def checkout(request):
         metadata={'order_id': order.id, 'total': total}
     )
 
-    messages.success(request, f'¡Pedido #{order.order_number} creado exitosamente! Serás contactado por uno de nuestros vendedores.')
+    # Enviar email de confirmación al cliente
+    try:
+        send_order_confirmation_email(order)
+    except Exception as e:
+        # No fallar el checkout si el email falla, solo loguear
+        print(f'Error al enviar email de confirmación: {str(e)}')
+    
+    # Enviar notificación al administrador
+    try:
+        send_order_notification_to_admin(order)
+    except Exception as e:
+        print(f'Error al enviar notificación al admin: {str(e)}')
+
+    # Mensaje de éxito más llamativo
+    messages.success(request, 
+        f'¡Pedido #{order.order_number} creado exitosamente! 🎉 Serás contactado por uno de nuestros vendedores en breve. '
+        f'Puedes contactarnos indicando tu número de pedido: #{order.order_number}',
+        extra_tags='alert-success alert-dismissible fade show'
+    )
     return redirect('shop:order_confirmation', order_id=order.id)
 
 
@@ -499,15 +526,12 @@ def order_confirmation(request, order_id):
     """Vista de confirmación de pedido"""
     order = get_object_or_404(Order, id=order_id)
     
-    # Verificar que el pedido pertenece al usuario o sesión
+    # Permitir ver el pedido si:
+    # - El usuario está autenticado y es el dueño o es staff
+    # - O si es usuario anónimo (no verificamos permisos, solo mostramos el pedido)
     if request.user.is_authenticated:
         if order.user != request.user and not request.user.is_staff:
-            messages.error(request, 'No tienes permiso para ver este pedido.')
-            return redirect('shop:home')
-    else:
-        # Para usuarios anónimos, verificar por email o mostrar error
-        if order.customer_email and order.customer_email != request.session.get('guest_email'):
-            messages.error(request, 'No tienes permiso para ver este pedido.')
+            # Si no es el dueño ni staff, redirigir sin mensaje de error
             return redirect('shop:home')
 
     context = {

@@ -7,6 +7,8 @@ Uso:
 
 from django.core.management.base import BaseCommand
 from shop.models import Product, ProductImage
+from django.conf import settings
+from pathlib import Path
 from collections import defaultdict
 import os
 
@@ -86,8 +88,82 @@ class Command(BaseCommand):
                             )
                         )
         
+        # Limpiar archivos huérfanos (archivos físicos sin registro en BD)
+        self.stdout.write('')
+        self.stdout.write(self.style.SUCCESS('Limpiando archivos huérfanos...'))
+        
+        media_products_dir = Path(settings.MEDIA_ROOT) / 'products'
+        orphan_files_deleted = 0
+        
+        if media_products_dir.exists():
+            # Obtener todas las rutas de archivos que están registradas en la BD
+            registered_paths = set()
+            for img in ProductImage.objects.all():
+                if img.image:
+                    try:
+                        # Obtener la ruta completa del archivo
+                        full_path = img.image.path
+                        registered_paths.add(full_path)
+                        # También registrar solo el nombre del archivo
+                        registered_paths.add(os.path.basename(full_path))
+                    except:
+                        try:
+                            # Si no se puede obtener el path, usar el name
+                            registered_paths.add(os.path.basename(img.image.name))
+                        except:
+                            pass
+            
+            # Buscar archivos físicos que no están en la BD
+            for file_path in media_products_dir.glob('*'):
+                if file_path.is_file() and file_path.name != '.gitkeep':
+                    filename = file_path.name
+                    full_path = str(file_path.resolve())
+                    
+                    # Verificar si el archivo está registrado
+                    is_registered = False
+                    
+                    # Verificar ruta completa
+                    if full_path in registered_paths:
+                        is_registered = True
+                    # Verificar nombre del archivo
+                    elif filename in registered_paths:
+                        is_registered = True
+                    else:
+                        # Verificar si hay alguna coincidencia parcial (para archivos con sufijos)
+                        # Extraer el nombre base sin extensión
+                        base_name_without_ext = os.path.splitext(filename)[0]
+                        # Si tiene sufijo de Django (formato: nombre_sufijoAleatorio)
+                        if '_' in base_name_without_ext:
+                            # Intentar extraer el nombre original
+                            parts = base_name_without_ext.rsplit('_', 1)
+                            if len(parts) == 2 and len(parts[1]) <= 10:
+                                # Probablemente es un sufijo de Django
+                                original_name = parts[0] + os.path.splitext(filename)[1]
+                                if original_name in registered_paths:
+                                    is_registered = True
+                    
+                    if not is_registered:
+                        try:
+                            file_path.unlink()
+                            orphan_files_deleted += 1
+                            if orphan_files_deleted <= 20:  # Mostrar solo los primeros 20
+                                self.stdout.write(
+                                    self.style.SUCCESS(f'  Eliminado archivo huérfano: {filename}')
+                                )
+                        except Exception as e:
+                            self.stdout.write(
+                                self.style.WARNING(f'  No se pudo eliminar {filename}: {str(e)}')
+                            )
+            
+            if orphan_files_deleted > 20:
+                self.stdout.write(
+                    self.style.SUCCESS(f'  ... y {orphan_files_deleted - 20} archivos huérfanos más eliminados')
+                )
+        
         self.stdout.write('')
         self.stdout.write(self.style.SUCCESS('=' * 50))
         self.stdout.write(self.style.SUCCESS(f'Total de imágenes duplicadas eliminadas: {total_deleted}'))
+        if orphan_files_deleted > 0:
+            self.stdout.write(self.style.SUCCESS(f'Total de archivos huérfanos eliminados: {orphan_files_deleted}'))
         self.stdout.write(self.style.SUCCESS('=' * 50))
 

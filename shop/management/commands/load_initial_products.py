@@ -4,21 +4,23 @@ Management command para cargar productos iniciales detectando automáticamente d
 Uso:
     python manage.py load_initial_products                    # Cargar productos desde imágenes
     python manage.py load_initial_products --force           # Actualizar productos existentes
+    python manage.py load_initial_products --clean           # Limpiar y cargar desde cero
     python manage.py load_initial_products --data-dir ruta   # Especificar directorio de imágenes
 
 El comando:
-1. Escanea el directorio de imágenes (media/productos/ por defecto)
-2. Detecta automáticamente productos basándose en los nombres de archivo
-3. Asigna categorías y marcas según patrones en los nombres
-4. Asigna imágenes globales (AccesoriosShaftGLOB.png, soportemaletaGLOB.png)
-5. Crea/actualiza los productos en la base de datos
+1. (Opcional) Limpia productos existentes si se usa --clean
+2. Escanea el directorio de imágenes (media/productos/ por defecto)
+3. Detecta automáticamente productos basándose en los nombres de archivo
+4. Asigna categorías y marcas según patrones en los nombres
+5. Asigna imágenes globales (AccesoriosShaftGLOB.png, soportemaletaGLOB.png)
+6. Crea/actualiza los productos en la base de datos
 """
 
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.core.files import File
 from django.core.files.images import ImageFile
-from shop.models import Product, Category, Brand, ProductImage
+from shop.models import Product, Category, Brand, ProductImage, OrderItem
 from pathlib import Path
 import os
 import re
@@ -39,6 +41,11 @@ class Command(BaseCommand):
             '--force',
             action='store_true',
             help='Forzar actualización de productos existentes',
+        )
+        parser.add_argument(
+            '--clean',
+            action='store_true',
+            help='Eliminar todos los productos existentes antes de cargar (limpieza completa)',
         )
 
     def detect_product_info(self, filename):
@@ -94,7 +101,9 @@ class Command(BaseCommand):
         # Cascos SHAFT
         elif brand == 'SHAFT':
             if '502' in base_name:
-                if 'NEGRIS' in filename_upper or 'NEGRO' in filename_upper:
+                if 'SP' in filename_upper and 'AZUL' in filename_upper:
+                    product_name = 'Casco SHAFT 502 SP Azul'
+                elif 'NEGRIS' in filename_upper or ('NEGRO' in filename_upper and 'SPIKE' not in filename_upper):
                     product_name = 'Casco SHAFT 502 Negris'
                 elif 'ROSADO' in filename_upper:
                     product_name = 'Casco SHAFT 502 Rosado'
@@ -125,12 +134,18 @@ class Command(BaseCommand):
         
         # Seguridad KOVIX
         elif brand == 'KOVIX':
-            if 'KN1' in base_name:
-                product_name = 'Candado KOVIX KN1 Amarillo'
+            if 'KN1' in base_name.upper() or 'KNN1' in base_name.upper():
+                if 'NEGRO' in filename_upper:
+                    product_name = 'Candado KOVIX KN1 Negro'
+                else:
+                    product_name = 'Candado KOVIX KN1 Amarillo'
             elif 'KNX10' in base_name or 'KNX' in base_name:
                 product_name = 'Candado KOVIX KNX10 Metal'
             elif 'KT6' in base_name:
-                product_name = 'Candado KOVIX KT6 Verde'
+                if 'NEGRO' in filename_upper:
+                    product_name = 'Candado KOVIX KT6 Negro'
+                else:
+                    product_name = 'Candado KOVIX KT6 Verde'
             elif 'SOPORTE' in filename_upper:
                 product_name = 'Soporte KOVIX'
         
@@ -144,6 +159,12 @@ class Command(BaseCommand):
                 category = 'Accesorios'
             elif 'INTERLUVIN' in filename_upper:
                 product_name = 'Interluvin'
+                category = 'Accesorios'
+            elif 'KITREPLLANT' in filename_upper or ('KIT' in filename_upper and 'REP' in filename_upper and 'LLANT' in filename_upper):
+                product_name = 'Kit de Reparación de Llantas'
+                category = 'Accesorios'
+            elif 'TRENZA' in filename_upper:
+                product_name = 'Trenzas'
                 category = 'Accesorios'
         
         return product_name, brand, category, False
@@ -168,12 +189,58 @@ class Command(BaseCommand):
                 global_images[key].append(img_file)
             elif product_name:
                 # Producto específico
-                key = f"{product_name}_{brand}_{category}"
+                # Para trenzas, agrupar todas las variantes de color en un solo producto
+                if product_name == 'Trenzas':
+                    key = f"{product_name}_{brand or 'None'}_{category}"
+                else:
+                    key = f"{product_name}_{brand}_{category}"
                 products[key].append(img_file)
         
         return products, global_images
 
     def handle(self, *args, **options):
+        # Limpiar productos existentes si se solicita
+        if options['clean']:
+            product_count = Product.objects.count()
+            if product_count > 0:
+                self.stdout.write('')
+                self.stdout.write(self.style.WARNING('=' * 60))
+                self.stdout.write(self.style.WARNING(f'Limpiando {product_count} productos existentes...'))
+                self.stdout.write(self.style.WARNING('=' * 60))
+                
+                # Eliminar primero los OrderItem que referencian productos
+                order_items_count = OrderItem.objects.count()
+                if order_items_count > 0:
+                    self.stdout.write(self.style.WARNING(f'Eliminando {order_items_count} items de pedidos...'))
+                    OrderItem.objects.all().delete()
+                    self.stdout.write(self.style.SUCCESS(f'[OK] {order_items_count} items de pedidos eliminados'))
+                
+                # Ahora eliminar productos
+                Product.objects.all().delete()
+                self.stdout.write(self.style.SUCCESS(f'[OK] {product_count} productos eliminados'))
+                
+                # Limpiar archivos físicos de imágenes
+                import os
+                media_products_dir = Path(settings.MEDIA_ROOT) / 'products'
+                if media_products_dir.exists():
+                    deleted_files = 0
+                    for img_file in media_products_dir.glob('*'):
+                        if img_file.is_file() and img_file.name != '.gitkeep':
+                            try:
+                                img_file.unlink()
+                                deleted_files += 1
+                            except Exception as e:
+                                self.stdout.write(
+                                    self.style.WARNING(f'No se pudo eliminar {img_file.name}: {str(e)}')
+                                )
+                    if deleted_files > 0:
+                        self.stdout.write(self.style.SUCCESS(f'[OK] {deleted_files} archivos físicos eliminados'))
+                
+                self.stdout.write('')
+            else:
+                self.stdout.write(self.style.SUCCESS('No hay productos para limpiar.'))
+                self.stdout.write('')
+        
         data_dir = Path(options['data_dir'])
         
         if not data_dir.exists():
@@ -242,6 +309,14 @@ class Command(BaseCommand):
                 # Ordenar imágenes: la primera sin número o con 1 es la principal
                 def sort_key(fname):
                     name_lower = fname.name.lower()
+                    # Para trenzas, ordenar por color (Amarilla, Azul, Morada, Roja, Rosa)
+                    if product_name == 'Trenzas':
+                        color_order = {'amarilla': 1, 'azul': 2, 'morada': 3, 'roja': 4, 'rosa': 5}
+                        for color, order in color_order.items():
+                            if color in name_lower:
+                                return (0, order, fname.name)
+                        return (0, 99, fname.name)
+                    
                     # Buscar número al final del nombre
                     match = re.search(r'(\d+)(\.(png|jpg|jpeg))?$', name_lower)
                     if match:
@@ -251,19 +326,49 @@ class Command(BaseCommand):
                 
                 image_list_sorted = sorted(image_list, key=sort_key)
 
+                # Detectar colores para trenzas
+                available_colors = None
+                if product_name == 'Trenzas':
+                    colors = []
+                    for img_file in image_list:
+                        filename_upper = img_file.name.upper()
+                        if 'AMARILL' in filename_upper:
+                            colors.append('Amarilla')
+                        elif 'AZUL' in filename_upper:
+                            colors.append('Azul')
+                        elif 'MORAD' in filename_upper:
+                            colors.append('Morada')
+                        elif 'ROJA' in filename_upper and 'ROS' not in filename_upper:
+                            colors.append('Roja')
+                        elif 'ROSA' in filename_upper or 'ROS' in filename_upper:
+                            colors.append('Rosa')
+                    if colors:
+                        available_colors = ','.join(sorted(set(colors)))
+                
                 # Verificar si el producto ya existe
+                product_defaults = {
+                    'category': category,
+                    'brand': brand,
+                    'short_description': f'{product_name} - {category_name}',
+                    'description': f'{product_name} de alta calidad. {category.description if category.description else ""}',
+                    'price': 0,  # Se debe actualizar manualmente
+                    'stock': 0,  # Se debe actualizar manualmente
+                    'is_active': True,
+                }
+                
+                # Agregar colores disponibles para trenzas
+                if available_colors:
+                    product_defaults['available_sizes'] = available_colors
+                
                 product, created = Product.objects.get_or_create(
                     name=product_name,
-                    defaults={
-                        'category': category,
-                        'brand': brand,
-                        'short_description': f'{product_name} - {category_name}',
-                        'description': f'{product_name} de alta calidad. {category.description if category.description else ""}',
-                        'price': 0,  # Se debe actualizar manualmente
-                        'stock': 0,  # Se debe actualizar manualmente
-                        'is_active': True,
-                    }
+                    defaults=product_defaults
                 )
+                
+                # Si el producto ya existe y es Trenzas, actualizar colores disponibles
+                if not created and product_name == 'Trenzas' and available_colors:
+                    product.available_sizes = available_colors
+                    product.save()
 
                 if not created and not options['force']:
                     self.stdout.write(
@@ -276,8 +381,30 @@ class Command(BaseCommand):
                     product.brand = brand
                     product.save()
                     updated_count += 1
-                    # Limpiar imágenes existentes
+                    
+                    # Obtener las rutas de los archivos antes de eliminar los registros
+                    existing_images = ProductImage.objects.filter(product=product)
+                    image_paths = []
+                    for img in existing_images:
+                        if img.image:
+                            try:
+                                image_paths.append(img.image.path)
+                            except:
+                                pass
+                    
+                    # Limpiar imágenes existentes de la BD
                     ProductImage.objects.filter(product=product).delete()
+                    
+                    # Eliminar archivos físicos
+                    import os
+                    for img_path in image_paths:
+                        try:
+                            if os.path.exists(img_path):
+                                os.remove(img_path)
+                        except Exception as e:
+                            self.stdout.write(
+                                self.style.WARNING(f'No se pudo eliminar archivo: {str(e)}')
+                            )
                 else:
                     created_count += 1
 

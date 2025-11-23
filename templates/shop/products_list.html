@@ -57,11 +57,14 @@
                     <a href="{% url 'shop:product_detail' slug=product.slug %}" style="display: block; position: relative;">
                         {% with images=product.images.all %}
                             {% if images|length > 0 %}
-                                {% with primary_img=product.get_primary_image %}
-                                    {% if primary_img %}
-                                        <img src="{{ primary_img.image.url }}" alt="{{ product.name }}" class="product-card-img" onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
-                                    {% endif %}
-                                {% endwith %}
+                                <div class="product-card-image-container" data-product-id="{{ product.id }}">
+                                    {% for image in images %}
+                                        <img src="{{ image.image.url }}" alt="{{ product.name }}" 
+                                             class="product-card-img {% if forloop.first %}active{% endif %}" 
+                                             data-image-index="{{ forloop.counter0 }}"
+                                             onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
+                                    {% endfor %}
+                                </div>
                             {% else %}
                                 <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" class="product-card-img" onerror="this.style.display='none';">
                             {% endif %}
@@ -139,6 +142,83 @@
 
 <!-- Como Comprar y Canales -->
 {% include 'partials/_como_comprar_y_canales.html' %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const productCards = document.querySelectorAll('.product-card');
+    const imageIntervals = new Map();
+    
+    productCards.forEach(card => {
+        const imageContainer = card.querySelector('.product-card-image-container');
+        if (!imageContainer) return;
+        
+        const images = imageContainer.querySelectorAll('.product-card-img');
+        if (images.length <= 1) return;
+        
+        let currentIndex = 0;
+        let intervalId = null;
+        
+        // Función para cambiar a la siguiente imagen
+        function nextImage() {
+            const currentImg = images[currentIndex];
+            currentImg.classList.remove('active', 'flip-in');
+            currentImg.classList.add('flip-out');
+            
+            currentIndex = (currentIndex + 1) % images.length;
+            
+            setTimeout(() => {
+                currentImg.classList.remove('flip-out');
+                const nextImg = images[currentIndex];
+                nextImg.classList.remove('flip-out');
+                nextImg.classList.add('flip-in', 'active');
+                
+                // Limpiar clases después de la animación
+                setTimeout(() => {
+                    images.forEach(img => {
+                        img.classList.remove('flip-in', 'flip-out');
+                        if (img !== nextImg) {
+                            img.classList.remove('active');
+                        }
+                    });
+                }, 600);
+            }, 50);
+        }
+        
+        // Iniciar cambio automático al hacer hover
+        card.addEventListener('mouseenter', function() {
+            if (images.length > 1) {
+                intervalId = setInterval(nextImage, 2500);
+            }
+        });
+        
+        // Detener cambio automático al quitar el mouse
+        card.addEventListener('mouseleave', function() {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+            // Volver a la primera imagen
+            images.forEach((img, index) => {
+                img.classList.remove('active', 'flip-in', 'flip-out');
+                if (index === 0) {
+                    img.classList.add('active');
+                }
+            });
+            currentIndex = 0;
+        });
+        
+        // Detener al hacer click
+        card.addEventListener('click', function() {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
 
 {% endblock %}
 

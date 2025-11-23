@@ -392,14 +392,24 @@ body.navbar-scrolled {
 }
 
 .brand-logo {
-    height: 60px;
+    height: 94px; /* Aumentado otro 25% (de 75px a 94px) */
     width: auto;
     object-fit: contain;
     filter: grayscale(100%);
     transition: filter 0.3s, transform 0.3s;
     cursor: pointer;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
+/* Mantener 4RS en tamaño original */
+.brand-logo-4rs {
+    height: 60px; /* Tamaño original */
+}
+
+/* Motocentric ya está centrado por .brand-logo-link */
 
 .brand-logo:hover {
     filter: grayscale(0%);
@@ -407,9 +417,12 @@ body.navbar-scrolled {
 }
 
 .brand-logo-link {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     text-decoration: none;
     color: var(--text-color);
+    height: 94px; /* Altura fija para alinear verticalmente */
 }
 
 .brand-logo-text {
@@ -434,13 +447,6 @@ body.navbar-scrolled {
     }
 }
 
-/* Asegurar que las imágenes de carr mantengan el mismo comportamiento */
-.brand-logo-link {
-    display: inline-block;
-    text-decoration: none;
-    color: var(--text-color);
-}
-
 /* Product Cards */
 .product-card {
     background-color: var(--white);
@@ -459,18 +465,49 @@ body.navbar-scrolled {
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
+.product-card-image-container {
+    width: 100%;
+    height: 250px;
+    position: relative;
+    overflow: hidden;
+    background-color: #f8f9fa;
+    perspective: 1200px;
+    transform-style: preserve-3d;
+}
+
 .product-card-img {
     width: 100%;
     height: 250px;
     object-fit: contain;
     cursor: pointer;
-    transition: transform 0.3s;
     background-color: #f8f9fa;
     padding: 0.75rem;
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transform: rotateY(90deg) scale(0.8);
+    transition: transform 0.7s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.7s ease-in-out;
+    backface-visibility: hidden;
+    transform-origin: left center;
 }
 
-.product-card-img:hover {
-    transform: scale(1.05);
+.product-card-img.active {
+    opacity: 1;
+    transform: rotateY(0deg) scale(1);
+    z-index: 1;
+}
+
+.product-card-img.flip-out {
+    transform: rotateY(-90deg) scale(0.8);
+    opacity: 0;
+    z-index: 0;
+}
+
+.product-card-img.flip-in {
+    transform: rotateY(0deg) scale(1);
+    opacity: 1;
+    z-index: 2;
 }
 
 .product-card-body {
