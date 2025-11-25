@@ -6,7 +6,7 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="text-center mb-4">CATÁLOGO MotoMoto</h1>
+    <h1 class="text-center mb-4">CATÁLOGO DICIEMBRE</h1>
     
     <!-- Filter Bar -->
     <div class="filter-bar mb-4">
@@ -71,22 +71,24 @@
                         {% endwith %}
                     </a>
                     <div class="product-card-body">
-                        <h5 class="product-card-title">{{ product.name }}</h5>
-                        <p class="product-card-description">{{ product.short_description }}</p>
-                        {% if product.stock <= 2 and product.stock > 0 %}
-                            <div class="stock-alert-small mb-2">
-                                <i class="bi bi-exclamation-triangle"></i> ¡Pocas unidades disponibles!
-                            </div>
-                        {% endif %}
-                        <div class="product-card-price">
-                            {% if product.has_offer %}
-                                <span class="price-original">{{ product.price|currency_clp }}</span>
-                                <span class="price-offer">{{ product.current_price|currency_clp }}</span>
-                            {% else %}
-                                <span class="price-normal">{{ product.current_price|currency_clp }}</span>
+                        <a href="{% url 'shop:product_detail' slug=product.slug %}" class="product-card-link-text">
+                            <h5 class="product-card-title">{{ product.name }}</h5>
+                            <p class="product-card-description">{{ product.short_description }}</p>
+                            {% if product.stock <= 2 and product.stock > 0 %}
+                                <div class="stock-alert-small mb-2">
+                                    <i class="bi bi-exclamation-triangle"></i> ¡Pocas unidades disponibles!
+                                </div>
                             {% endif %}
-                        </div>
-                        <div class="product-card-actions">
+                            <div class="product-card-price">
+                                {% if product.has_offer %}
+                                    <span class="price-original">{{ product.price|currency_clp }}</span>
+                                    <span class="price-offer">{{ product.current_price|currency_clp }}</span>
+                                {% else %}
+                                    <span class="price-normal">{{ product.current_price|currency_clp }}</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                        <div class="product-card-actions" onclick="event.stopPropagation();">
                             <a href="{% url 'shop:product_detail' slug=product.slug %}" class="btn btn-view-detail">
                                 Ver Detalle
                             </a>

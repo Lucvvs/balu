@@ -1,0 +1,938 @@
+[
+  {
+    "_comment": "PRODUCTO 1: Casco HRO 514 BILT",
+    "name": "Casco HRO 514 BILT",
+    "_name_comment": "Nombre completo del producto que aparecerá en la tienda",
+    "short_description": "Casco HRO 514 BILT, certificado DOT y ECE",
+    "_short_description_comment": "Descripción corta visible en listados y cards de productos",
+    "description": "Casco de alta calidad HRO 514 modelo BILT. Certificado DOT y ECE para máxima seguridad. Visera anti-empañante incluida. Diseño aerodinámico y cómodo para viajes largos. Disponible en múltiples tallas.",
+    "_description_comment": "Descripción completa visible en la página de detalle del producto",
+    "category": "Cascos",
+    "_category_comment": "Nombre exacto de la categoría (debe existir en initial_categories.json): Cascos, Maletas, Seguridad, Accesorios",
+    "brand": "HRO",
+    "_brand_comment": "Nombre exacto de la marca (debe existir en initial_brands.json): HRO, SHAFT, 4RS, motocentric, KOVIX",
+    "price": 55000,
+    "_price_comment": "Precio original en CLP (pesos chilenos) - siempre requerido",
+    "offer_price": 49900,
+    "_offer_price_comment": "Precio de oferta en CLP. Usa null si no tiene oferta, o un número menor que price si tiene descuento",
+    "stock": 5,
+    "_stock_comment": "Cantidad disponible en inventario (número entero)",
+    "available_sizes": "S,M,L,XL",
+    "_available_sizes_comment": "Tallas disponibles separadas por coma. Usa cadena vacía '' si el producto no tiene tallas (ej: candados, accesorios)",
+    "is_active": true,
+    "_is_active_comment": "true = producto visible en la tienda, false = oculto",
+    "is_offer": true,
+    "_is_offer_comment": "true = aparece en la sección de ofertas, false = no aparece",
+    "is_best_seller": false,
+    "_is_best_seller_comment": "true = aparece en la sección de más vendidos, false = no aparece",
+    "images": [
+      {
+        "file": "Hro514BILT1.png",
+        "_file_comment": "Nombre exacto del archivo de imagen en static/img/productos/",
+        "is_primary": true,
+        "_is_primary_comment": "true = imagen principal (se muestra en listados), solo una imagen por producto debe ser primary",
+        "order": 0
+      },
+      {
+        "file": "Hro514BILT2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "Hro514BILT3.png",
+        "is_primary": false,
+        "order": 2
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 2: Casco HRO 514 Gris",
+    "name": "Casco HRO 514 Gris",
+    "short_description": "Casco HRO 514 en color Gris, certificado DOT y ECE",
+    "description": "Casco de alta calidad HRO 514 en elegante color gris. Certificado DOT y ECE para máxima seguridad. Visera anti-empañante incluida. Diseño aerodinámico y cómodo.",
+    "category": "Cascos",
+    "brand": "HRO",
+    "price": 55000,
+    "offer_price": null,
+    "stock": 4,
+    "available_sizes": "S,M,L,XL",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "Hro514GRis1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "Hro514GRis2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "Hro514GRis3.png",
+        "is_primary": false,
+        "order": 2
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 3: Casco HRO 514 Mora",
+    "name": "Casco HRO 514 Mora",
+    "short_description": "Casco HRO 514 en color Mora, certificado DOT y ECE",
+    "description": "Casco de alta calidad HRO 514 en vibrante color mora. Certificado DOT y ECE. Visera anti-empañante incluida. Diseño moderno y seguro.",
+    "category": "Cascos",
+    "brand": "HRO",
+    "price": 55000,
+    "offer_price": 49900,
+    "stock": 3,
+    "available_sizes": "S,M,L,XL",
+    "is_active": true,
+    "is_offer": true,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "Hro514Mora1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "Hro514Mora2.png",
+        "is_primary": false,
+        "order": 1
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 4: Casco HRO 514 Negro-Rojo",
+    "name": "Casco HRO 514 Negro-Rojo",
+    "short_description": "Casco HRO 514 en color Negro-Rojo, certificado DOT y ECE",
+    "description": "Casco de alta calidad HRO 514 en combinación Negro-Rojo. Certificado DOT y ECE. Visera anti-empañante incluida. Diseño deportivo y seguro.",
+    "category": "Cascos",
+    "brand": "HRO",
+    "price": 55000,
+    "offer_price": null,
+    "stock": 6,
+    "available_sizes": "S,M,L,XL",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": true,
+    "images": [
+      {
+        "file": "Hro514Negro-Rojo1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "Hro514Negro-Rojo2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "Hro514Negro-Rojo3.png",
+        "is_primary": false,
+        "order": 2
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 5: Casco SHAFT 502 Negris",
+    "name": "Casco SHAFT 502 Negris",
+    "short_description": "Casco SHAFT 502 en color Negris, certificado DOT",
+    "description": "Casco SHAFT 502 en elegante color negris. Certificado DOT para máxima seguridad. Diseño moderno y cómodo. Ideal para uso urbano y carretera.",
+    "category": "Cascos",
+    "brand": "SHAFT",
+    "price": 65000,
+    "offer_price": null,
+    "stock": 5,
+    "available_sizes": "S,M,L,XL",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "shaft502Negris1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "shaft502Negris2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "shaft502Negris3.png",
+        "is_primary": false,
+        "order": 2
+      },
+      {
+        "file": "AccesoriosShaftGLOB.png",
+        "is_primary": false,
+        "order": 10
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 6: Casco SHAFT 502 Rosado",
+    "name": "Casco SHAFT 502 Rosado",
+    "short_description": "Casco SHAFT 502 en color Rosado, certificado DOT",
+    "description": "Casco SHAFT 502 en color rosado. Certificado DOT. Diseño moderno y seguro. Perfecto para quienes buscan estilo y seguridad.",
+    "category": "Cascos",
+    "brand": "SHAFT",
+    "price": 65000,
+    "offer_price": 58900,
+    "stock": 3,
+    "available_sizes": "S,M,L,XL",
+    "is_active": true,
+    "is_offer": true,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "shaft502Rosado1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "shaft502Rosado2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "shaft502Rosado3.png",
+        "is_primary": false,
+        "order": 2
+      },
+      {
+        "file": "AccesoriosShaftGLOB.png",
+        "is_primary": false,
+        "order": 10
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 7: Casco SHAFT 502 SP Azul",
+    "name": "Casco SHAFT 502 SP Azul",
+    "short_description": "Casco SHAFT 502 SP en color Azul, certificado DOT",
+    "description": "Casco SHAFT 502 SP en vibrante color azul. Certificado DOT. Diseño deportivo y aerodinámico. Máxima seguridad y confort.",
+    "category": "Cascos",
+    "brand": "SHAFT",
+    "price": 70000,
+    "offer_price": null,
+    "stock": 4,
+    "available_sizes": "S,M,L,XL",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": true,
+    "images": [
+      {
+        "file": "shaft502spAzul1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "shaft502spAzul2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "shaft502spAzul3.png",
+        "is_primary": false,
+        "order": 2
+      },
+      {
+        "file": "shaft502spAzul4.png",
+        "is_primary": false,
+        "order": 3
+      },
+      {
+        "file": "AccesoriosShaftGLOB.png",
+        "is_primary": false,
+        "order": 10
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 8: Casco SHAFT 502 Spike Rojo-Negro",
+    "name": "Casco SHAFT 502 Spike Rojo-Negro",
+    "short_description": "Casco SHAFT 502 Spike en color Rojo-Negro, certificado DOT",
+    "description": "Casco SHAFT 502 modelo Spike en combinación Rojo-Negro. Certificado DOT. Diseño deportivo y seguro. Ideal para uso en carretera.",
+    "category": "Cascos",
+    "brand": "SHAFT",
+    "price": 68000,
+    "offer_price": 61900,
+    "stock": 2,
+    "available_sizes": "S,M,L,XL",
+    "is_active": true,
+    "is_offer": true,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "shaft502SpikeRojoNeg1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "shaft502SpikeRojoNeg2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "shaft502SpikeRojoNeg3.png",
+        "is_primary": false,
+        "order": 2
+      },
+      {
+        "file": "AccesoriosShaftGLOB.png",
+        "is_primary": false,
+        "order": 10
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 9: Casco SHAFT 560 EVO Negro-Dorado",
+    "name": "Casco SHAFT 560 EVO Negro-Dorado",
+    "short_description": "Casco SHAFT 560 EVO en color Negro-Dorado, certificado DOT",
+    "description": "Casco SHAFT 560 EVO en elegante combinación Negro-Dorado. Certificado DOT. Modelo de alta gama con tecnología avanzada. Máximo confort y seguridad.",
+    "category": "Cascos",
+    "brand": "SHAFT",
+    "price": 85000,
+    "offer_price": 79900,
+    "stock": 3,
+    "available_sizes": "S,M,L,XL",
+    "is_active": true,
+    "is_offer": true,
+    "is_best_seller": true,
+    "images": [
+      {
+        "file": "Shaft560EVONegro-Dor1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "Shaft560EVONegro-Dor2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "Shaft560EVONegro-Dor3.png",
+        "is_primary": false,
+        "order": 2
+      },
+      {
+        "file": "AccesoriosShaftGLOB.png",
+        "is_primary": false,
+        "order": 10
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 10: Maleta 4RS E570 Tipo AL",
+    "name": "Maleta 4RS E570 Tipo AL",
+    "short_description": "Maleta 4RS E570 Tipo AL para motocicleta",
+    "description": "Maleta 4RS E570 Tipo AL. Sistema de almacenamiento robusto y seguro para tu motocicleta. Resistente a la intemperie. Capacidad amplia para tus viajes.",
+    "category": "Maletas",
+    "brand": "4RS",
+    "price": 120000,
+    "offer_price": 109900,
+    "stock": 2,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": true,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "maletaE570tipoAL1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "maletaE570tipoAL2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "maletaE570tipoAL3.png",
+        "is_primary": false,
+        "order": 2
+      },
+      {
+        "file": "maletaE570tipoAL4.png",
+        "is_primary": false,
+        "order": 3
+      },
+      {
+        "file": "soportemaletaGLOB.png",
+        "is_primary": false,
+        "order": 10
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 11: Maleta 4RS E63 Parrilla",
+    "name": "Maleta 4RS E63 Parrilla",
+    "short_description": "Maleta 4RS E63 con parrilla para motocicleta",
+    "description": "Maleta 4RS E63 con sistema de parrilla. Diseño funcional y resistente. Perfecta para viajes largos. Fácil instalación y gran capacidad de almacenamiento.",
+    "category": "Maletas",
+    "brand": "4RS",
+    "price": 95000,
+    "offer_price": null,
+    "stock": 3,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "maletaE63parrilla1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "maletaE63parrilla2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "maletaE63parrilla3.png",
+        "is_primary": false,
+        "order": 2
+      },
+      {
+        "file": "soportemaletaGLOB.png",
+        "is_primary": false,
+        "order": 10
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 12: Maleta 4RS E760",
+    "name": "Maleta 4RS E760",
+    "short_description": "Maleta 4RS E760 para motocicleta",
+    "description": "Maleta 4RS E760. Sistema de almacenamiento de alta calidad. Resistente y espaciosa. Ideal para viajes y uso diario. Excelente relación calidad-precio.",
+    "category": "Maletas",
+    "brand": "4RS",
+    "price": 110000,
+    "offer_price": null,
+    "stock": 2,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": true,
+    "images": [
+      {
+        "file": "maletaE7601.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "maletaE7602.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "maletaE7603.png",
+        "is_primary": false,
+        "order": 2
+      },
+      {
+        "file": "soportemaletaGLOB.png",
+        "is_primary": false,
+        "order": 10
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 13: Candado KOVIX KN1 Amarillo",
+    "name": "Candado KOVIX KN1 Amarillo",
+    "short_description": "Candado de seguridad KOVIX KN1 en color Amarillo",
+    "description": "Candado de seguridad KOVIX KN1 en color amarillo. Sistema anti-corte de alta resistencia. Ideal para proteger tu motocicleta. Duradero y confiable.",
+    "category": "Seguridad",
+    "brand": "KOVIX",
+    "price": 35000,
+    "offer_price": null,
+    "stock": 8,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "kovixKN1Amarillo1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "kovixKN1marillo2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "kovixKN1Amarillo3.png",
+        "is_primary": false,
+        "order": 2
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 14: Candado KOVIX KN1 Negro",
+    "name": "Candado KOVIX KN1 Negro",
+    "short_description": "Candado de seguridad KOVIX KN1 en color Negro",
+    "description": "Candado de seguridad KOVIX KN1 en color negro. Sistema anti-corte de alta resistencia. Diseño discreto y robusto. Protección confiable para tu moto.",
+    "category": "Seguridad",
+    "brand": "KOVIX",
+    "price": 35000,
+    "offer_price": 31900,
+    "stock": 10,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": true,
+    "is_best_seller": true,
+    "images": [
+      {
+        "file": "kovixknn1negro1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "kovixknn1negro2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "kovixknn1negro3.png",
+        "is_primary": false,
+        "order": 2
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 15: Candado KOVIX KNX10 Metal",
+    "name": "Candado KOVIX KNX10 Metal",
+    "short_description": "Candado de seguridad KOVIX KNX10 en metal",
+    "description": "Candado de seguridad KOVIX KNX10 en acabado metal. Máxima resistencia anti-corte. Diseño robusto y confiable. Protección superior para tu motocicleta.",
+    "category": "Seguridad",
+    "brand": "KOVIX",
+    "price": 45000,
+    "offer_price": null,
+    "stock": 6,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "kovixKNX10Metal1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "kovixKNX10Metal2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "kovixKNX10Metal3.png",
+        "is_primary": false,
+        "order": 2
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 16: Candado KOVIX KT6 Negro",
+    "name": "Candado KOVIX KT6 Negro",
+    "short_description": "Candado de seguridad KOVIX KT6 en color Negro",
+    "description": "Candado de seguridad KOVIX KT6 en color negro. Sistema de bloqueo avanzado. Alta resistencia y durabilidad. Protección confiable para tu motocicleta.",
+    "category": "Seguridad",
+    "brand": "KOVIX",
+    "price": 40000,
+    "offer_price": null,
+    "stock": 7,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "kovixKT6negro.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "kovixKT6Negro1.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "kovixKT6Negro2.png",
+        "is_primary": false,
+        "order": 2
+      },
+      {
+        "file": "kovixKT6Negro3.png",
+        "is_primary": false,
+        "order": 3
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 17: Candado KOVIX KT6 Verde",
+    "name": "Candado KOVIX KT6 Verde",
+    "short_description": "Candado de seguridad KOVIX KT6 en color Verde",
+    "description": "Candado de seguridad KOVIX KT6 en color verde. Sistema de bloqueo avanzado. Alta resistencia y durabilidad. Diseño llamativo y seguro.",
+    "category": "Seguridad",
+    "brand": "KOVIX",
+    "price": 40000,
+    "offer_price": 36900,
+    "stock": 5,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": true,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "kovixKT6Verde1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "kovixKT6Verde2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "kovixKT6Verde3.png",
+        "is_primary": false,
+        "order": 2
+      },
+      {
+        "file": "kovixKT6Verde4.png",
+        "is_primary": false,
+        "order": 3
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 18: Soporte KOVIX",
+    "name": "Soporte KOVIX",
+    "short_description": "Soporte para candado KOVIX",
+    "description": "Soporte universal para candados KOVIX. Fácil instalación. Mantiene tu candado seguro y accesible. Compatible con diferentes modelos de candados KOVIX.",
+    "category": "Seguridad",
+    "brand": "KOVIX",
+    "price": 15000,
+    "offer_price": null,
+    "stock": 12,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "soporteKovix1.png",
+        "is_primary": true,
+        "order": 0
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 19: Bolso Estanque motocentric",
+    "name": "Bolso Estanque motocentric",
+    "short_description": "Bolso para estanque motocentric",
+    "description": "Bolso para estanque motocentric. Diseño práctico y resistente. Protege y transporta elementos en tu estanque. Material resistente al agua. Fácil instalación.",
+    "category": "Accesorios",
+    "brand": "motocentric",
+    "price": 25000,
+    "offer_price": null,
+    "stock": 8,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "BolsoEstanqueMC1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "BolsoEstanqueMC2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "BolsoEstanqueMC3.png",
+        "is_primary": false,
+        "order": 2
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 20: Muslera motocentric",
+    "name": "Muslera motocentric",
+    "short_description": "Muslera motocentric para motociclista",
+    "description": "Muslera motocentric. Protección y comodidad para el motociclista. Diseño ergonómico. Material de alta calidad. Ideal para viajes largos.",
+    "category": "Accesorios",
+    "brand": "motocentric",
+    "price": 18000,
+    "offer_price": 15900,
+    "stock": 10,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": true,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "muslera1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "muslera2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "muslera3.png",
+        "is_primary": false,
+        "order": 2
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 21: Protector Pata motocentric",
+    "name": "Protector Pata motocentric",
+    "short_description": "Protector de pata motocentric",
+    "description": "Protector de pata motocentric. Protege la pata de apoyo de tu motocicleta. Material resistente y duradero. Fácil instalación. Evita daños por impacto.",
+    "category": "Accesorios",
+    "brand": "motocentric",
+    "price": 12000,
+    "offer_price": null,
+    "stock": 15,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "ProtectoPata1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "ProtectoPata2.png",
+        "is_primary": false,
+        "order": 1
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 22: Cubre Estanque Goma motocentric",
+    "name": "Cubre Estanque Goma motocentric",
+    "short_description": "Cubre estanque de goma motocentric",
+    "description": "Cubre estanque de goma motocentric. Protección para tu estanque de combustible. Material de goma resistente. Fácil de instalar y mantener.",
+    "category": "Accesorios",
+    "brand": "motocentric",
+    "price": 15000,
+    "offer_price": null,
+    "stock": 12,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "CubreEstanqueGoma1.png",
+        "is_primary": true,
+        "order": 0
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 23: AntiFOG",
+    "name": "AntiFOG",
+    "short_description": "Tratamiento anti-empañante para viseras",
+    "description": "Tratamiento anti-empañante para viseras de cascos. Previene el empañamiento. Fácil aplicación. Efecto duradero. Ideal para clima húmedo o frío.",
+    "category": "Accesorios",
+    "brand": null,
+    "price": 8000,
+    "offer_price": null,
+    "stock": 20,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "AntiFOG1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "AntiFOG2.png",
+        "is_primary": false,
+        "order": 1
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 24: Antilluvia",
+    "name": "Antilluvia",
+    "short_description": "Cubierta antilluvia para motocicleta",
+    "description": "Cubierta antilluvia para motocicleta. Protección contra la lluvia. Material impermeable. Fácil de instalar. Protege tu moto de los elementos.",
+    "category": "Accesorios",
+    "brand": null,
+    "price": 18000,
+    "offer_price": 15900,
+    "stock": 15,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": true,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "Antilluvia1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "Antilluvia2.png",
+        "is_primary": false,
+        "order": 1
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 25: Interluvin",
+    "name": "Interluvin",
+    "short_description": "Forro interior impermeable",
+    "description": "Forro interior impermeable Interluvin. Protección adicional contra la lluvia. Material resistente al agua. Cómodo y funcional.",
+    "category": "Accesorios",
+    "brand": null,
+    "price": 12000,
+    "offer_price": null,
+    "stock": 18,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "interluvin1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "interluvin2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "interluvin3.png",
+        "is_primary": false,
+        "order": 2
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 26: Kit de Reparación de Llantas",
+    "name": "Kit de Reparación de Llantas",
+    "short_description": "Kit completo para reparación de pinchazos",
+    "description": "Kit completo para reparación de pinchazos en llantas. Incluye todo lo necesario para reparaciones de emergencia. Fácil de usar. Esencial para viajes.",
+    "category": "Accesorios",
+    "brand": null,
+    "price": 15000,
+    "offer_price": null,
+    "stock": 10,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "kitrepllant1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "kitrepllant2.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "kitrepllan3.png",
+        "is_primary": false,
+        "order": 2
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 27: Trenzas",
+    "name": "Trenzas",
+    "short_description": "Trenzas decorativas para motocicleta en múltiples colores",
+    "description": "Trenzas decorativas para motocicleta. Disponible en múltiples colores: Amarilla, Azul, Morada, Roja y Rosa. Personaliza el estilo de tu moto. Fácil instalación.",
+    "category": "Accesorios",
+    "brand": null,
+    "price": 5000,
+    "offer_price": null,
+    "stock": 25,
+    "available_sizes": "Amarilla,Azul,Morada,Roja,Rosa",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": true,
+    "images": [
+      {
+        "file": "TrenaAmarilla.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "TrenzaAzul.png",
+        "is_primary": false,
+        "order": 1
+      },
+      {
+        "file": "TrenzaMorada.png",
+        "is_primary": false,
+        "order": 2
+      },
+      {
+        "file": "TrenzaRoja.png",
+        "is_primary": false,
+        "order": 3
+      },
+      {
+        "file": "TrenzaRosa.png",
+        "is_primary": false,
+        "order": 4
+      }
+    ]
+  },
+  {
+    "_comment": "PRODUCTO 28: Rodilleras Slider",
+    "name": "Rodilleras Slider",
+    "short_description": "Rodilleras protectoras tipo slider",
+    "description": "Rodilleras protectoras tipo slider. Protección para rodillas. Diseño cómodo y seguro. Material resistente. Ideal para uso urbano y deportivo.",
+    "category": "Accesorios",
+    "brand": null,
+    "price": 22000,
+    "offer_price": null,
+    "stock": 8,
+    "available_sizes": "",
+    "is_active": true,
+    "is_offer": false,
+    "is_best_seller": false,
+    "images": [
+      {
+        "file": "rodilleraslider1.png",
+        "is_primary": true,
+        "order": 0
+      },
+      {
+        "file": "rodilleraslider2.png",
+        "is_primary": false,
+        "order": 1
+      }
+    ]
+  }
+]
+

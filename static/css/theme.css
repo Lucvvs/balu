@@ -378,7 +378,10 @@ body.navbar-scrolled {
     overflow: hidden;
     width: 100%;
 }
-
+.navbar-logo {
+    height: 150px; /* Ajusta la altura según necesites */
+    width: auto;
+}
 .brands-scroll {
     display: inline-flex;
     animation: scrollInfinite 50s linear infinite;
@@ -517,11 +520,25 @@ body.navbar-scrolled {
     flex-direction: column;
 }
 
+/* Enlace que envuelve texto, descripción y precio en tarjetas de productos */
+.product-card-link-text {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    cursor: pointer;
+}
+
+.product-card-link-text:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
 .product-card-title {
     font-size: 1.1rem;
     font-weight: bold;
     margin-bottom: 0.5rem;
     color: var(--text-color);
+    cursor: pointer;
 }
 
 .product-card-description {
@@ -533,10 +550,12 @@ body.navbar-scrolled {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .product-card-price {
     margin-top: auto;
+    cursor: pointer;
 }
 
 .price-original {
@@ -715,8 +734,8 @@ body.navbar-scrolled {
 }
 
 .service-main-image {
-    max-width: 120px;
-    max-height: 80px;
+    max-width: 160px;
+    max-height: 120px;
     width: auto;
     height: auto;
     object-fit: contain;
@@ -724,14 +743,22 @@ body.navbar-scrolled {
 }
 
 .service-small-image {
-    max-width: 150px;
-    max-height: 40px;
+    max-width: 200px;
+    max-height: 200px;
     width: auto;
     height: auto;
     object-fit: contain;
     display: block;
     margin: 0.5rem auto;
 }
+
+/* Imagen de gratismetro más pequeña */
+.service-small-image-metro {
+    max-width: 120px; /* 40% más pequeña que 200px (200px * 0.6 = 120px) */
+    max-height: 120px;
+}
+
+
 
 .service-icon {
     font-size: 2.5rem;
@@ -758,8 +785,28 @@ body.navbar-scrolled {
 }
 
 .best-sellers-section .container {
-    max-width: 80%;
+    max-width: 65%; /* Reducido 30% de 80% (80% * 0.7 = 56%) */
     margin: 0 auto;
+}
+
+/* Responsividad: en pantallas medianas y pequeñas, usar más ancho */
+@media (max-width: 992px) {
+    .best-sellers-section .container {
+        max-width: 85%;
+    }
+}
+
+@media (max-width: 768px) {
+    .best-sellers-section .container {
+        max-width: 95%;
+    }
+}
+
+@media (max-width: 576px) {
+    .best-sellers-section .container {
+        max-width: 100%;
+        padding: 0 1rem;
+    }
 }
 
 .best-sellers-section .section-title {
@@ -791,6 +838,14 @@ body.navbar-scrolled {
 
 .best-seller-item-wrapper {
     margin-bottom: 1.5rem;
+    position: relative;
+}
+
+/* Hover en el wrapper para evitar conflictos con elementos hijos */
+.best-seller-item-wrapper:hover .best-seller-card {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 20px 50px rgba(220, 53, 69, 0.4), 0 10px 20px rgba(0,0,0,0.2);
+    border-color: var(--primary-color);
 }
 
 .best-seller-card {
@@ -805,25 +860,10 @@ body.navbar-scrolled {
     position: relative;
 }
 
-.best-seller-card::before {
-    content: '';
+/* Las flechas del carrusel mantienen su z-index alto */
+.best-seller-card .carousel-arrow {
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    transition: left 0.5s;
-}
-
-.best-seller-card:hover::before {
-    left: 100%;
-}
-
-.best-seller-card:hover {
-    transform: translateY(-12px) scale(1.02);
-    box-shadow: 0 20px 50px rgba(220, 53, 69, 0.4), 0 10px 20px rgba(0,0,0,0.2);
-    border-color: var(--primary-color);
+    z-index: 10;
 }
 
 .best-seller-image-section {
@@ -867,7 +907,8 @@ body.navbar-scrolled {
 .carousel-arrow {
     position: absolute;
     top: 50%;
-    transform: translateY(-50%);
+    left: 50%;
+    transform: translate(-50%, -50%);
     cursor: pointer;
     font-size: 2rem;
     color: var(--white);
@@ -885,10 +926,13 @@ body.navbar-scrolled {
 
 .carousel-arrow.prev-arrow {
     left: 15px;
+    transform: translateY(-50%);
 }
 
 .carousel-arrow.next-arrow {
     right: 15px;
+    left: auto;
+    transform: translateY(-50%);
 }
 
 .carousel-arrow:hover {
@@ -897,7 +941,23 @@ body.navbar-scrolled {
     box-shadow: 0 6px 16px rgba(0,0,0,0.4);
 }
 
+.carousel-arrow.prev-arrow:hover {
+    transform: translateY(-50%) scale(1.15);
+}
+
+.carousel-arrow.next-arrow:hover {
+    transform: translateY(-50%) scale(1.15);
+}
+
 .carousel-arrow:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.carousel-arrow.prev-arrow:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.carousel-arrow.next-arrow:active {
     transform: translateY(-50%) scale(0.95);
 }
 
@@ -946,22 +1006,38 @@ body.navbar-scrolled {
     text-align: left;
 }
 
+/* Enlace que envuelve texto, descripción y precio en más vendidos */
+.best-seller-link-text {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    cursor: pointer;
+}
+
+.best-seller-link-text:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
 .best-seller-info h3 {
     font-size: 1.3rem;
     font-weight: bold;
     margin-bottom: 0.5rem;
     color: var(--text-color);
     line-height: 1.3;
+    cursor: pointer;
 }
 
 .best-seller-info .product-short-desc {
     color: var(--text-muted);
     font-size: 0.9rem;
     margin-bottom: 1rem;
+    cursor: pointer;
 }
 
 .best-seller-price {
     margin-bottom: 1rem;
+    cursor: pointer;
 }
 
 .best-seller-price .price-offer {

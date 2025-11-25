@@ -39,7 +39,6 @@
 </section>
 
 <!-- Separator -->
-<div class="separator"></div>
 
 <!-- Security Banner -->
 <section class="security-banner">
@@ -56,13 +55,14 @@
                     onerror="this.style.display='none'">
             </div>
             <div class="security-image-item">
-                <img src="{% static 'img/seguridad2.png' %}" alt="Seguridad 2" class="security-image"
-                    onerror="this.style.display='none'">
-            </div>
-            <div class="security-image-item">
                 <img src="{% static 'img/seguridad3.png' %}" alt="Seguridad 3" class="security-image"
                     onerror="this.style.display='none'">
             </div>
+            <div class="security-image-item">
+                <img src="{% static 'img/seguridad2.png' %}" alt="Seguridad 2" class="security-image"
+                    onerror="this.style.display='none'">
+            </div>
+            
             <div class="security-image-item">
                 <img src="{% static 'img/seguridad4.png' %}" alt="Seguridad 4" class="security-image"
                     onerror="this.style.display='none'">
@@ -134,17 +134,18 @@
         <div class="row">
             {% for product in offers %}
             <div class="col-md-4 mb-4">
-                <div class="product-card">
+                <div class="product-card offer-card" data-offer-index="{{ forloop.counter0 }}">
                     {% if product.has_offer %}
                     <span class="offer-badge">OFERTA</span>
                     {% endif %}
                     <a href="{% url 'shop:product_detail' slug=product.slug %}" style="display: block; position: relative;">
                         {% with images=product.images.all %}
                         {% if images|length > 0 %}
-                        <div class="product-card-image-container">
+                        <div class="product-card-image-container offer-image-container" data-product-id="{{ product.id }}">
                             {% for image in images %}
                             <img src="{{ image.image.url }}" alt="{{ product.name }}" 
-                                 class="product-card-img {% if forloop.first %}active{% endif %}" 
+                                 class="product-card-img offer-product-img {% if forloop.first %}active{% endif %}" 
+                                 data-image-index="{{ forloop.counter0 }}"
                                  onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
                             {% endfor %}
                         </div>
@@ -155,17 +156,19 @@
                         {% endwith %}
                     </a>
                     <div class="product-card-body">
-                        <h5 class="product-card-title">{{ product.name }}</h5>
-                        <p class="product-card-description">{{ product.short_description }}</p>
-                        <div class="product-card-price">
-                            {% if product.has_offer %}
-                            <span class="price-original">{{ product.price|currency_clp }}</span>
-                            <span class="price-offer">{{ product.current_price|currency_clp }}</span>
-                            {% else %}
-                            <span class="price-normal">{{ product.current_price|currency_clp }}</span>
-                            {% endif %}
-                        </div>
-                        <div class="product-card-actions">
+                        <a href="{% url 'shop:product_detail' slug=product.slug %}" class="product-card-link-text">
+                            <h5 class="product-card-title">{{ product.name }}</h5>
+                            <p class="product-card-description">{{ product.short_description }}</p>
+                            <div class="product-card-price">
+                                {% if product.has_offer %}
+                                <span class="price-original">{{ product.price|currency_clp }}</span>
+                                <span class="price-offer">{{ product.current_price|currency_clp }}</span>
+                                {% else %}
+                                <span class="price-normal">{{ product.current_price|currency_clp }}</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                        <div class="product-card-actions" onclick="event.stopPropagation();">
                             <a href="{% url 'shop:product_detail' slug=product.slug %}" class="btn btn-view-detail">
                                 Ver Detalle
                             </a>
@@ -194,14 +197,17 @@
     </div>
 </section>
 
+<!-- Separator -->
+<div class="separator"></div>
+
 <!-- Service Banner -->
 <section class="service-banner">
     <div class="service-item">
         <img src="{% static 'img/envios.png' %}" alt="Envíos" class="service-main-image"
             onerror="this.style.display='none'">
-        <h5 class="service-title">Envíos a toda la RM</h5>
-        <p class="service-text">Por solo $4.000</p>
-        <small class="service-text">(Compras superiores a $50.000)</small>
+        <h5 class="service-title">Envíos a toda la Región Metropolitana</h5>
+        <p class="service-text">Por solo $3.500</p>
+        <small class="service-text">(Compras superiores a $40.000)</small>
         <img src="{% static 'img/couriers.png' %}" alt="Couriers" class="service-small-image mt-2"
             onerror="this.style.display='none'">
         
@@ -210,8 +216,9 @@
         <img src="{% static 'img/retiros.png' %}" alt="Retiros" class="service-main-image"
             onerror="this.style.display='none'">
         <h5 class="service-title">Retiros en Bodega MotoMoto</h5>
+        <p class="service-text">Av. Santisima Trinidad #1935, Puente Alto</p>
         <p class="service-text">Cercano a Metro Sótero del Río</p>
-        <img src="{% static 'img/gratismetro.png' %}" alt="Gratis Metro" class="service-small-image mt-1"
+        <img src="{% static 'img/gratismetro.png' %}" alt="Gratis Metro" class="service-small-image service-small-image-metro mt-1"
             onerror="this.style.display='none'">
         
     </div>
@@ -219,7 +226,7 @@
         <img src="{% static 'img/metodospago.png' %}" alt="Métodos de Pago" class="service-main-image"
             onerror="this.style.display='none'">
         <h5 class="service-title">Métodos de Pago</h5>
-        <p class="service-text">Aceptamos Transferencia, Efectivo y Tarjetas</p>
+        <p class="service-text">Aceptamos Todo medio de pago, Transferencia, Efectivo y Tarjetas</p>
         <img src="{% static 'img/tarjetas.png' %}" alt="Tarjetas" class="service-small-image mt-2"
             onerror="this.style.display='none'">
     </div>
@@ -234,7 +241,7 @@
         <h2 class="section-title">Los Más Vendidos</h2>
         {% for product in best_sellers %}
         <div class="best-seller-item-wrapper">
-            <div class="best-seller-card">
+            <div class="best-seller-card sparkle-border-card" data-sparkle-index="{{ forloop.counter0 }}">
                 <div class="best-seller-image-section">
                     {% with images=product.images.all %}
                     {% if images|length > 0 %}
@@ -285,16 +292,18 @@
                 </div>
                 <div class="best-seller-info-section">
                     <div class="best-seller-info">
-                        <h3>{{ product.name }}</h3>
-                        <p class="product-short-desc">{{ product.short_description }}</p>
-                        <div class="best-seller-price">
-                            {% if product.has_offer %}
-                            <span class="price-original">{{ product.price|currency_clp }}</span>
-                            <span class="price-offer">{{ product.current_price|currency_clp }}</span>
-                            {% else %}
-                            <span class="price-normal">{{ product.current_price|currency_clp }}</span>
-                            {% endif %}
-                        </div>
+                        <a href="{% url 'shop:product_detail' slug=product.slug %}" class="best-seller-link-text">
+                            <h3>{{ product.name }}</h3>
+                            <p class="product-short-desc">{{ product.short_description }}</p>
+                            <div class="best-seller-price">
+                                {% if product.has_offer %}
+                                <span class="price-original">{{ product.price|currency_clp }}</span>
+                                <span class="price-offer">{{ product.current_price|currency_clp }}</span>
+                                {% else %}
+                                <span class="price-normal">{{ product.current_price|currency_clp }}</span>
+                                {% endif %}
+                            </div>
+                        </a>
                         <a href="{% url 'shop:product_detail' slug=product.slug %}"
                             class="btn btn-danger btn-lg best-seller-btn">
                             <i class="bi bi-cart-plus"></i> ¡Lo Quiero!
@@ -321,6 +330,53 @@
 
 {% block extra_js %}
 <script>
+    // Rotación escalonada de imágenes en ofertas
+    document.addEventListener('DOMContentLoaded', function() {
+        const offerCards = document.querySelectorAll('.offer-card');
+        
+        offerCards.forEach((card, index) => {
+            const imageContainer = card.querySelector('.offer-image-container');
+            if (!imageContainer) return;
+            
+            const images = imageContainer.querySelectorAll('.offer-product-img');
+            if (images.length <= 1) return;
+            
+            let currentImageIndex = 0;
+            const delay = (index + 1) * 2000; // 2s, 4s, 6s...
+            
+            function changeToNextImage() {
+                const currentImg = images[currentImageIndex];
+                currentImg.classList.remove('active', 'flip-in');
+                currentImg.classList.add('flip-out');
+                
+                currentImageIndex = (currentImageIndex + 1) % images.length;
+                
+                setTimeout(() => {
+                    currentImg.classList.remove('flip-out');
+                    const nextImg = images[currentImageIndex];
+                    nextImg.classList.remove('flip-out');
+                    nextImg.classList.add('flip-in', 'active');
+                    
+                    setTimeout(() => {
+                        images.forEach(img => {
+                            img.classList.remove('flip-in', 'flip-out');
+                            if (img !== nextImg) {
+                                img.classList.remove('active');
+                            }
+                        });
+                    }, 600);
+                }, 50);
+            }
+            
+            // Iniciar cambio después del delay inicial
+            setTimeout(() => {
+                changeToNextImage();
+                // Cambiar cada 6 segundos después del primer cambio
+                setInterval(changeToNextImage, 6000);
+            }, delay);
+        });
+    });
+    
     // Store current indices for each product carousel
     const carouselIndices = {};
 
@@ -413,4 +469,6 @@
         img.style.transition = 'opacity 0.3s ease-in-out';
     });
 </script>
+
+
 {% endblock %}
