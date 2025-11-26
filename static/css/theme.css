@@ -63,10 +63,16 @@ body.navbar-scrolled {
     font-weight: bold;
     color: var(--primary-color) !important;
     transition: font-size 0.3s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .navbar-motomoto.scrolled .navbar-brand {
     font-size: 1.5rem;
+}
+
+.navbar-motomoto .navbar-nav.me-auto {
+    margin-left: 1.5rem !important;
 }
 
 .navbar-motomoto .nav-link {
@@ -152,6 +158,95 @@ body.navbar-scrolled {
     50% {
         opacity: 0.7;
         transform: scale(1.1);
+    }
+}
+
+/* Carrito móvil - visible solo en pantallas pequeñas */
+.cart-mobile {
+    position: relative;
+    color: var(--white) !important;
+    font-size: 1.5rem;
+    padding: 0.5rem 0.75rem !important;
+    margin-right: 0.5rem;
+    animation: cartPulse 3s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    order: 2;
+}
+
+.cart-mobile:hover {
+    color: var(--primary-color) !important;
+    animation: cartShake 0.5s ease-in-out;
+}
+
+.cart-mobile .cart-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translate(25%, -25%);
+}
+
+/* Asegurar que el navbar container use flexbox */
+.navbar-motomoto .container {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+/* Ajustar orden de elementos en móvil */
+.navbar-motomoto .navbar-brand {
+    order: 0;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.navbar-motomoto .navbar-toggler {
+    order: 3;
+    margin-left: 0;
+    flex-shrink: 0;
+}
+
+.navbar-motomoto .navbar-collapse {
+    order: 4;
+    width: 100%;
+    flex-basis: 100%;
+}
+
+/* En pantallas pequeñas, agrupar carrito y botón hamburguesa */
+@media (max-width: 991.98px) {
+    .navbar-motomoto .container {
+        position: relative;
+        flex-wrap: nowrap;
+    }
+    
+    .navbar-motomoto .navbar-brand {
+        font-size: 1.3rem;
+        flex-shrink: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .cart-mobile {
+        margin-left: auto;
+        flex-shrink: 0;
+        font-size: 1.3rem;
+        padding: 0.4rem 0.5rem !important;
+    }
+    
+    .navbar-motomoto .navbar-toggler {
+        flex-shrink: 0;
     }
 }
 
@@ -524,7 +619,9 @@ body.navbar-scrolled {
 .product-card-link-text {
     text-decoration: none;
     color: inherit;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
     cursor: pointer;
 }
 
@@ -536,26 +633,55 @@ body.navbar-scrolled {
 .product-card-title {
     font-size: 1.1rem;
     font-weight: bold;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     color: var(--text-color);
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 .product-card-description {
-    color: var(--text-muted);
+    color: #495057;
     font-size: 0.85rem;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0;
+    margin-top: 0;
     line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* Espacio flexible que empuja precio/alerta hacia abajo */
+.product-card-link-text::after {
+    content: '';
+    flex-grow: 1;
+    min-height: 0;
+    order: 10;
+}
+
+/* Alerta antes del precio, ambos después del espacio flexible */
+.stock-alert-small {
+    order: 20;
+    flex-shrink: 0;
 }
 
 .product-card-price {
-    margin-top: auto;
+    order: 30;
+    flex-shrink: 0;
+}
+
+.product-card-price {
+    margin-top: 2.8rem; /* Margen por defecto cuando no hay alerta (reserva espacio) */
+    margin-bottom: 0;
     cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* Cuando hay alerta, el precio está justo después (menos margen) */
+.product-card-link-text .stock-alert-small ~ .product-card-price {
+    margin-top: 0.2rem;
 }
 
 .price-original {
@@ -579,7 +705,9 @@ body.navbar-scrolled {
 .product-card-actions {
     display: flex;
     gap: 0.5rem;
-    margin-top: 0.75rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    flex-shrink: 0;
 }
 
 .btn-view-detail {
@@ -1371,22 +1499,30 @@ body.navbar-scrolled {
     height: 32px;
     object-fit: contain;
     flex-shrink: 0;
-}
-
-.channel-item i {
-    font-size: 1.5rem;
-    color: var(--primary-color);
+    transition: opacity 0.3s, transform 0.3s;
 }
 
 .channel-link {
     color: var(--white);
     text-decoration: none;
     transition: color 0.3s;
+    display: inline-flex;
+    align-items: center;
 }
 
 .channel-link:hover {
     color: var(--primary-color);
     text-decoration: underline;
+}
+
+.channel-link:hover .channel-logo {
+    opacity: 0.8;
+    transform: scale(1.1);
+}
+
+.channel-item i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
 }
 
 .footer-logo {
@@ -1609,13 +1745,22 @@ body.navbar-scrolled {
     }
     
     .navbar-motomoto .navbar-brand {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 50%;
     }
     
     .navbar-motomoto .nav-link {
         font-size: 0.9rem;
         margin: 0 0.25rem;
         padding: 0.5rem !important;
+    }
+    
+    .cart-mobile {
+        font-size: 1.2rem;
+        padding: 0.35rem 0.4rem !important;
     }
     
     .brand-logo {
@@ -1648,8 +1793,12 @@ body.navbar-scrolled {
         margin-bottom: 0.5rem;
     }
     
+    .product-card-image-container {
+        height: 380px;
+    }
+    
     .product-card-img {
-        height: 180px;
+        height: 380px;
     }
     
     .cart-item {
@@ -1762,7 +1911,7 @@ body.navbar-scrolled {
     }
     
     .navbar-brand {
-        font-size: 1.2rem !important;
+        font-size: 1.1rem !important;
     }
     
     .cart-badge {
@@ -1815,6 +1964,15 @@ body.navbar-scrolled {
     font-size: 0.8rem;
     font-weight: bold;
     display: inline-block;
+    margin-bottom: 0.2rem;
+    margin-top: 0;
+    flex-shrink: 0;
+}
+
+/* Sobrescribir el mb-2 de Bootstrap en la alerta dentro de las tarjetas */
+.product-card-link-text .stock-alert-small.mb-2 {
+    margin-bottom: 0.2rem !important;
+    margin-top: 0 !important;
 }
 
 /* Pagination */

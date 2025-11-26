@@ -36,14 +36,15 @@ def home(request):
     import logging
     logger = logging.getLogger(__name__)
     
-    # Productos en oferta (máximo 3)
+    # Productos en oferta (máximo 3, ordenados por offer_order)
     offers = Product.objects.filter(
         is_active=True,
         is_offer=True,
-        stock__gt=0
+        stock__gt=0,
+        offer_order__gt=0  # Solo productos con orden asignado
     ).select_related('category', 'brand').prefetch_related(
         Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id'))
-    )[:3]
+    ).order_by('offer_order', '-created_at')[:3]
 
     # Logging para ofertas
     logger.info(f'[HOME] Ofertas encontradas: {offers.count()}')
@@ -60,14 +61,15 @@ def home(request):
         else:
             logger.warning(f'[HOME]   [ERROR] No hay imágenes para {product.name}')
 
-    # Productos más vendidos (máximo 3)
+    # Productos más vendidos (máximo 3, ordenados por featured_order)
     best_sellers = Product.objects.filter(
         is_active=True,
         is_best_seller=True,
-        stock__gt=0
+        stock__gt=0,
+        featured_order__gt=0  # Solo productos con orden asignado
     ).select_related('category', 'brand').prefetch_related(
         Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id'))
-    )[:3]
+    ).order_by('featured_order', '-created_at')[:3]
 
     # Categorías destacadas
     categories = Category.objects.filter(is_active=True, highlight_on_home=True)[:3]

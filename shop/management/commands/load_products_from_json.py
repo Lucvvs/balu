@@ -183,6 +183,8 @@ class Command(BaseCommand):
                     'is_active': product_data.get('is_active', True),
                     'is_offer': product_data.get('is_offer', False),
                     'is_best_seller': product_data.get('is_best_seller', False),
+                    'offer_order': int(product_data.get('offer_order', 0)),
+                    'featured_order': int(product_data.get('featured_order', 0)),
                 }
                 
                 # Crear o actualizar producto

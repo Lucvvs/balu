@@ -71,6 +71,10 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="Activo")
     is_offer = models.BooleanField(default=False, verbose_name="En oferta")
     is_best_seller = models.BooleanField(default=False, verbose_name="Más vendido")
+    offer_order = models.IntegerField(default=0, verbose_name="Orden en ofertas", 
+                                      help_text="Número menor = aparece primero. Solo se muestran los 3 primeros. Usar 0 para no mostrar en ofertas.")
+    featured_order = models.IntegerField(default=0, verbose_name="Orden en más vendidos",
+                                         help_text="Número menor = aparece primero. Solo se muestran los 3 primeros. Usar 0 para no mostrar en más vendidos.")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Fecha de actualización")
 
@@ -109,12 +113,14 @@ class Product(models.Model):
     
     def get_primary_image(self):
         """Retorna la imagen principal del producto, o la primera si no hay principal"""
-        # El queryset ya está ordenado por -is_primary en el prefetch
-        # Simplemente obtener la primera imagen que aprovecha el prefetch
         try:
+            # Primero intentar obtener la imagen con is_primary=True
+            primary_image = self.images.filter(is_primary=True).first()
+            if primary_image:
+                return primary_image
+            # Si no hay imagen principal, retornar la primera disponible
             images = self.images.all()
             if images:
-                # Como está ordenado por -is_primary, la primera es la principal o la primera disponible
                 return images[0]
         except (IndexError, AttributeError, TypeError):
             pass

@@ -187,6 +187,8 @@
     "is_active": true,
     "is_offer": true,
     "is_best_seller": true,
+    "offer_order": 1,
+    "featured_order": 1,
     "images": [
       {
         "file": "shaft502Rosado1.png",
@@ -218,7 +220,7 @@
     "category": "Cascos",
     "brand": "SHAFT",
     "price": 69990,
-    "offer_price": null,
+    "offer_price": 62990,
     "stock": 2,
     "available_sizes": "M,L,",
     "is_active": true,
@@ -417,8 +419,10 @@
     "stock": 2,
     "available_sizes": "",
     "is_active": true,
-    "is_offer": false,
+    "is_offer": true,
     "is_best_seller": true,
+    "offer_order": 3,
+    "featured_order": 3,
     "images": [
       {
         "file": "maletaE7601.png",
@@ -471,6 +475,11 @@
         "file": "kovixKN1Amarillo3.png",
         "is_primary": false,
         "order": 2
+      },
+      {
+        "file": "candadosglobno.png",
+        "is_primary": false,
+        "order": 3
       }
     ]
   },
@@ -503,6 +512,11 @@
         "file": "kovixknn1negro3.png",
         "is_primary": false,
         "order": 2
+      },
+      {
+        "file": "candadosglobno.png",
+        "is_primary": false,
+        "order": 3
       }
     ]
   },
@@ -535,6 +549,11 @@
         "file": "kovixKNX10Metal3.png",
         "is_primary": false,
         "order": 2
+      },
+      {
+        "file": "kovixKT6Verde4.png",
+        "is_primary": false,
+        "order": 3
       }
     ]
   },
@@ -572,7 +591,13 @@
         "file": "kovixKT6Negro3.png",
         "is_primary": false,
         "order": 3
+      },
+      {
+        "file": "kovixKT6Verde4.png",
+        "is_primary": false,
+        "order": 4
       }
+      
     ]
   },
   {
@@ -587,8 +612,10 @@
     "stock": 3,
     "available_sizes": "",
     "is_active": true,
-    "is_offer": false,
-    "is_best_seller": false,
+    "is_offer": true,
+    "is_best_seller": true,
+    "offer_order": 2,
+    "featured_order": 2,
     "images": [
       {
         "file": "kovixKT6Verde1.png",

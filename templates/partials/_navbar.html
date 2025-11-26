@@ -6,6 +6,14 @@
             <i class="fa-solid fa-motorcycle"></i> MotoMoto
         </a>
         
+        <!-- Carrito móvil (solo visible en pantallas pequeñas) -->
+        <a class="nav-link cart-mobile d-lg-none" href="{% url 'shop:cart' %}">
+            <i class="bi bi-cart3"></i>
+            {% if cart_items_count > 0 %}
+                <span class="cart-badge">{{ cart_items_count }}</span>
+            {% endif %}
+        </a>
+        
         <!-- Toggle button para mobile -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -28,8 +36,8 @@
             
             <!-- Right side items -->
             <ul class="navbar-nav ms-auto">
-                <!-- Carrito -->
-                <li class="nav-item">
+                <!-- Carrito (solo visible en pantallas grandes) -->
+                <li class="nav-item d-none d-lg-block">
                     <a class="nav-link" href="{% url 'shop:cart' %}">
                         <i class="bi bi-cart3"></i>
                         Carrito

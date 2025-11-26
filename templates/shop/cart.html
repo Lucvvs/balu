@@ -24,7 +24,7 @@
                         <div class="cart-item">
                             <div class="cart-item-image-container">
                                 <a href="{% url 'shop:product_detail' slug=item.product.slug %}">
-                                    {% with primary_image=item.product.images.first %}
+                                    {% with primary_image=item.product.get_primary_image %}
                                         {% if primary_image %}
                                             <img src="{{ primary_image.image.url }}" alt="{{ item.product.name }}" class="cart-item-image"
                                                  onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">

@@ -31,7 +31,7 @@ class ProductImageInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'brand', 'current_price_display', 'stock', 'is_active', 'is_offer', 'is_best_seller', 'created_at')
+    list_display = ('name', 'category', 'brand', 'current_price_display', 'stock', 'is_active', 'is_offer', 'offer_order', 'is_best_seller', 'featured_order', 'created_at')
     list_filter = ('is_active', 'is_offer', 'is_best_seller', 'category', 'brand', 'created_at')
     search_fields = ('name', 'short_description', 'description')
     prepopulated_fields = {'slug': ('name',)}
@@ -49,6 +49,10 @@ class ProductAdmin(admin.ModelAdmin):
         }),
         ('Stock y Estado', {
             'fields': ('stock', 'available_sizes', 'is_active', 'is_offer', 'is_best_seller')
+        }),
+        ('Orden en Destacados', {
+            'fields': ('offer_order', 'featured_order'),
+            'description': 'Asigna números de orden (1, 2, 3) para controlar qué productos aparecen primero. Solo se muestran los 3 primeros. Usa 0 para no mostrar.'
         }),
         ('Fechas', {
             'fields': ('created_at', 'updated_at'),
