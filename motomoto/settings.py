@@ -33,11 +33,16 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-%3m5+&7_ens!u3db*_e4w
 # En Render, DEBUG se establece como 'False' en las variables de entorno
 DEBUG_ENV = os.environ.get('DEBUG', 'True')
 DEBUG = DEBUG_ENV == 'True'
+
+# Detectar si estamos en Render (producción)
+# Render monta el disco persistente en /opt/render/project/src/media
+IS_RENDER = os.path.exists('/opt/render/project/src/media')
+
 # Si estamos ejecutando comandos localmente (no en producción), forzar DEBUG=True
 import sys
-# Comandos que siempre deben usar SQLite en local
-local_commands = ['runserver', 'loaddata', 'load_initial', 'load_initial_data', 'load_initial_products', 'clean_duplicate_images', 'clean_products', 'migrate', 'makemigrations', 'shell', 'createsuperuser', 'set_featured_products', 'set_product_prices', 'verify_images', 'fix_primary_images']
-if any(cmd in sys.argv for cmd in local_commands):
+# Comandos que siempre deben usar SQLite en local (si no estamos en Render)
+local_commands = ['runserver', 'loaddata', 'load_initial', 'load_initial_data', 'load_initial_products', 'clean_duplicate_images', 'clean_products', 'migrate', 'makemigrations', 'shell', 'createsuperuser', 'set_featured_products', 'set_product_prices', 'verify_images', 'fix_primary_images', 'load_products_from_json']
+if any(cmd in sys.argv for cmd in local_commands) and not IS_RENDER:
     DEBUG = True
 
 # Configuración de ALLOWED_HOSTS
@@ -105,10 +110,11 @@ WSGI_APPLICATION = 'motomoto.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # Usar PostgreSQL en producción (Render) o SQLite en desarrollo
-# En desarrollo local (DEBUG=True), siempre usar SQLite
-# En producción (DEBUG=False), usar DATABASE_URL de Render
+# En desarrollo local (DEBUG=True o no estamos en Render), siempre usar SQLite
+# En producción (Render con DEBUG=False), usar DATABASE_URL de Render
 DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL and not DEBUG:
+if DATABASE_URL and IS_RENDER and not DEBUG:
+    # En Render (producción), usar PostgreSQL
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
@@ -117,6 +123,7 @@ if DATABASE_URL and not DEBUG:
         )
     }
 else:
+    # En localhost (desarrollo), usar SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

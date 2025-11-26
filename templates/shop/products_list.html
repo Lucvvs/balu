@@ -73,7 +73,7 @@
                     <div class="product-card-body">
                         <a href="{% url 'shop:product_detail' slug=product.slug %}" class="product-card-link-text">
                             <h5 class="product-card-title">{{ product.name }}</h5>
-                            <p class="product-card-description">{{ product.short_description }}</p>
+                            <p class="product-card-description">{{ product.short_description|linebreaks }}</p>
                             {% if product.stock <= 2 and product.stock > 0 %}
                                 <div class="stock-alert-small mb-2">
                                     <i class="bi bi-exclamation-triangle"></i> ¡Pocas unidades disponibles!

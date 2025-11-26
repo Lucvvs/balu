@@ -51,7 +51,7 @@
         <!-- Right Column: Product Details -->
         <div class="col-md-6">
             <h1 class="mb-3">{{ product.name }}</h1>
-            <p class="text-muted mb-2">{{ product.short_description }}</p>
+            <p class="text-muted mb-2">{{ product.short_description|linebreaks }}</p>
             <p class="mb-3">
                 <span class="badge bg-secondary">{{ product.category.name }}</span>
                 {% if product.brand %}

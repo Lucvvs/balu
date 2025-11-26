@@ -41,7 +41,7 @@
                                 {% if item.size %}
                                     <p class="text-muted mb-1"><strong>Talla:</strong> {{ item.size }}</p>
                                 {% endif %}
-                                <p class="text-muted mb-2">{{ item.product.short_description }}</p>
+                                <p class="text-muted mb-2">{{ item.product.short_description|linebreaks }}</p>
                                 <div class="mb-3">
                                     {% if item.product.has_offer %}
                                         <span class="price-original">{{ item.product.price|currency_clp }}</span>

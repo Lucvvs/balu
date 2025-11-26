@@ -158,7 +158,7 @@
                     <div class="product-card-body">
                         <a href="{% url 'shop:product_detail' slug=product.slug %}" class="product-card-link-text">
                             <h5 class="product-card-title">{{ product.name }}</h5>
-                            <p class="product-card-description">{{ product.short_description }}</p>
+                            <p class="product-card-description">{{ product.short_description|linebreaks }}</p>
                             <div class="product-card-price">
                                 {% if product.has_offer %}
                                 <span class="price-original">{{ product.price|currency_clp }}</span>
@@ -294,7 +294,7 @@
                     <div class="best-seller-info">
                         <a href="{% url 'shop:product_detail' slug=product.slug %}" class="best-seller-link-text">
                             <h3>{{ product.name }}</h3>
-                            <p class="product-short-desc">{{ product.short_description }}</p>
+                            <p class="product-short-desc">{{ product.short_description|linebreaks }}</p>
                             <div class="best-seller-price">
                                 {% if product.has_offer %}
                                 <span class="price-original">{{ product.price|currency_clp }}</span>
