@@ -20,6 +20,10 @@ urlpatterns = [
     
     # Pedidos
     path('pedido/<int:order_id>/', views.order_confirmation, name='order_confirmation'),
+
+    # Mercado Pago (Checkout Pro)
+    path('mercadopago/return/<str:status>/<int:order_id>/', views.mp_return, name='mp_return'),
+    path('mercadopago/webhook/', views.mp_webhook, name='mp_webhook'),
     
     # Autenticación
     path('registro/', views.register_view, name='register'),

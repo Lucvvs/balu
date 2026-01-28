@@ -5,9 +5,14 @@ from django.contrib import messages
 from django.db.models import Q, Prefetch
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, HttpRequest
 from django.utils import timezone
 from django.db import transaction
+from django.urls import reverse
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+import json
+from urllib.parse import urlparse
 
 from .models import (
     Product, Category, Brand, ProductImage, Cart, CartItem, Order, OrderItem,
@@ -18,6 +23,7 @@ from .forms import (
     CheckoutForm, ContactForm
 )
 from .utils import send_order_confirmation_email, send_order_notification_to_admin
+from .mercadopago_client import create_checkout_pro_preference, get_payment
 
 
 def get_or_create_cart(request):
@@ -489,6 +495,34 @@ def checkout(request):
 
     total = subtotal + shipping_cost - discount_total
 
+    payment_method = form.cleaned_data['payment_method']
+    # Determinar si el método elegido debe ir por Mercado Pago (tarjeta crédito/débito)
+    pm_name = (payment_method.name or "").strip().lower()
+    mp_base_name = (settings.MP_PAYMENT_METHOD_NAME or "mercado pago").strip().lower()
+
+    # Normalización básica: quitar acentos y espacios extra
+    def _norm(s: str) -> str:
+        return (
+            s.replace('á', 'a')
+             .replace('é', 'e')
+             .replace('í', 'i')
+             .replace('ó', 'o')
+             .replace('ú', 'u')
+             .replace('ñ', 'n')
+             .strip()
+        )
+
+    norm_name = _norm(pm_name)
+    norm_mp_name = _norm(mp_base_name)
+
+    # Considerar varias formas comunes de nombrar tarjetas
+    is_card_mp = (
+        'tarjeta' in norm_name
+        and ('credito' in norm_name or 'debito' in norm_name)
+    )
+
+    is_mp = norm_name == norm_mp_name or is_card_mp
+
     # Crear pedido
     order = Order.objects.create(
         user=request.user if request.user.is_authenticated else None,
@@ -497,7 +531,7 @@ def checkout(request):
         shipping_comuna=form.cleaned_data.get('shipping_comuna'),
         shipping_address=form.cleaned_data.get('shipping_address'),
         shipping_cost=shipping_cost,
-        payment_method=form.cleaned_data['payment_method'],
+        payment_method=payment_method,
         coupon=coupon,
         subtotal=subtotal,
         discount_total=discount_total,
@@ -505,10 +539,10 @@ def checkout(request):
         customer_name=form.cleaned_data.get('customer_name') or (request.user.get_full_name() if request.user.is_authenticated else None),
         customer_email=form.cleaned_data.get('customer_email') or (request.user.email if request.user.is_authenticated else None),
         customer_phone=form.cleaned_data.get('customer_phone'),
-        status='pending',
+        status='pending_payment' if is_mp else 'pending',
     )
 
-    # Crear items del pedido y actualizar stock
+    # Crear items del pedido y (si NO es Mercado Pago) actualizar stock inmediatamente
     for cart_item in cart.items.all():
         OrderItem.objects.create(
             order=order,
@@ -518,9 +552,11 @@ def checkout(request):
             quantity=cart_item.quantity,
             line_total=cart_item.get_line_total(),
         )
-        # Actualizar stock
-        cart_item.product.stock -= cart_item.quantity
-        cart_item.product.save()
+        if not is_mp:
+            # Actualizar stock (flujo existente)
+            cart_item.product.stock -= cart_item.quantity
+            cart_item.product.save()
+            order.stock_committed = True
 
     # Limpiar carrito
     cart.items.all().delete()
@@ -537,26 +573,182 @@ def checkout(request):
         metadata={'order_id': order.id, 'total': total}
     )
 
-    # Enviar email de confirmación al cliente
-    try:
-        send_order_confirmation_email(order)
-    except Exception as e:
-        # No fallar el checkout si el email falla, solo loguear
-        print(f'Error al enviar email de confirmación: {str(e)}')
-    
-    # Enviar notificación al administrador
-    try:
-        send_order_notification_to_admin(order)
-    except Exception as e:
-        print(f'Error al enviar notificación al admin: {str(e)}')
+    # Enviar emails solo si NO es Mercado Pago (en MP se envía al aprobar vía webhook)
+    if not is_mp:
+        try:
+            send_order_confirmation_email(order)
+        except Exception as e:
+            print(f'Error al enviar email de confirmación: {str(e)}')
+        try:
+            send_order_notification_to_admin(order)
+        except Exception as e:
+            print(f'Error al enviar notificación al admin: {str(e)}')
 
-    # Mensaje de éxito más llamativo
-    messages.success(request, 
+    if is_mp:
+        base_url = (settings.MP_BASE_URL or '').strip().rstrip('/')
+        if not base_url:
+            messages.error(request, 'Mercado Pago no está configurado (falta MP_BASE_URL).')
+            return redirect('shop:order_confirmation', order_id=order.id)
+        # MP exige HTTPS y URLs con formato válido. Error típico: pegar la línea completa de ngrok
+        # "Forwarding https://... -> http://localhost:8000" en vez de solo la URL.
+        parsed = urlparse(base_url)
+        if parsed.scheme != 'https' or not parsed.netloc or ' ' in base_url or '->' in base_url:
+            messages.error(
+                request,
+                f'MP_BASE_URL inválido. Debe ser solo una URL HTTPS (ej: https://xxxx.ngrok-free.dev). Valor actual: "{base_url}"'
+            )
+            return redirect('shop:order_confirmation', order_id=order.id)
+
+        success_url = f"{base_url}{reverse('shop:mp_return', kwargs={'status': 'success', 'order_id': order.id})}"
+        pending_url = f"{base_url}{reverse('shop:mp_return', kwargs={'status': 'pending', 'order_id': order.id})}"
+        failure_url = f"{base_url}{reverse('shop:mp_return', kwargs={'status': 'failure', 'order_id': order.id})}"
+
+        notification_url = (settings.MP_WEBHOOK_URL or "").strip()
+        if not notification_url:
+            notification_url = f"{base_url}{reverse('shop:mp_webhook')}"
+        # Sanitizar notification_url también
+        nparsed = urlparse(notification_url)
+        if nparsed.scheme != 'https' or not nparsed.netloc or ' ' in notification_url:
+            messages.error(
+                request,
+                f'MP_WEBHOOK_URL inválido (debe ser HTTPS). Valor actual: "{notification_url}"'
+            )
+            return redirect('shop:order_confirmation', order_id=order.id)
+
+        pref = create_checkout_pro_preference(
+            order_id=order.id,
+            order_number=order.order_number,
+            total_amount_clp=order.total,
+            buyer_email=order.customer_email,
+            success_url=success_url,
+            pending_url=pending_url,
+            failure_url=failure_url,
+            notification_url=notification_url,
+        )
+        order.mp_preference_id = pref.preference_id
+        order.mp_init_point = pref.init_point
+        order.save(update_fields=['mp_preference_id', 'mp_init_point', 'status', 'stock_committed'])
+
+        return redirect(pref.init_point)
+
+    # Mensaje de éxito (flujo existente)
+    messages.success(
+        request,
         f'¡Pedido #{order.order_number} creado exitosamente! 🎉 Serás contactado por uno de nuestros vendedores en breve. '
         f'Puedes contactarnos indicando tu número de pedido: #{order.order_number}',
         extra_tags='alert-success alert-dismissible fade show'
     )
+    order.save(update_fields=['stock_committed'])
     return redirect('shop:order_confirmation', order_id=order.id)
+
+
+def mp_return(request: HttpRequest, status: str, order_id: int):
+    """
+    Retorno del Checkout Pro (NO confiable para confirmar pago).
+    La confirmación real se hace por webhook.
+    """
+    order = get_object_or_404(Order, id=order_id)
+
+    if status == 'success':
+        messages.info(request, 'Pago recibido. Estamos confirmando tu transacción… (puede tardar unos segundos).')
+    elif status == 'pending':
+        messages.warning(request, 'Tu pago quedó pendiente. Puedes reintentar o esperar la confirmación.')
+    else:
+        messages.error(request, 'El pago fue rechazado o cancelado. Puedes reintentar el pago.')
+
+    return redirect('shop:order_confirmation', order_id=order.id)
+
+
+@csrf_exempt
+def mp_webhook(request: HttpRequest):
+    """
+    Webhook de Mercado Pago.
+    - Recibe notificaciones de pagos
+    - Consulta el pago vía API (source of truth)
+    - Actualiza Order y descuenta stock cuando el pago queda aprobado (idempotente)
+    """
+    if request.method not in ('POST', 'GET'):
+        return HttpResponse(status=405)
+
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}') if request.body else {}
+    except Exception:
+        payload = {}
+
+    # Mercado Pago puede enviar payment_id por query o por body
+    payment_id = (
+        request.GET.get('data.id')
+        or request.GET.get('id')
+        or (payload.get('data') or {}).get('id')
+        or payload.get('id')
+    )
+    if not payment_id:
+        # Aceptar igualmente (evita reintentos infinitos por payloads no-payment)
+        return HttpResponse(status=200)
+
+    payment = get_payment(str(payment_id))
+    external_reference = payment.get('external_reference')
+    status = payment.get('status')
+
+    if not external_reference:
+        return HttpResponse(status=200)
+
+    try:
+        order_id = int(str(external_reference))
+    except ValueError:
+        return HttpResponse(status=200)
+
+    with transaction.atomic():
+        order = Order.objects.select_for_update().filter(id=order_id).first()
+        if not order:
+            return HttpResponse(status=200)
+
+        order.mp_payment_id = str(payment_id)
+        order.mp_payment_status = str(status) if status else None
+        order.mp_last_event_at = timezone.now()
+
+        # Si se aprobó, confirmar y descontar stock una sola vez
+        if status == 'approved':
+            order.status = 'confirmed'
+            if not order.stock_committed:
+                # Descontar stock de manera segura
+                for item in order.items.select_related('product').all():
+                    product = Product.objects.select_for_update().get(id=item.product_id)
+                    if item.quantity > product.stock:
+                        # Si no hay stock, cancelar pedido (edge-case por carreras)
+                        order.status = 'cancelled'
+                        order.save(update_fields=['mp_payment_id', 'mp_payment_status', 'mp_last_event_at', 'status'])
+                        return HttpResponse(status=200)
+                    product.stock -= item.quantity
+                    product.save(update_fields=['stock'])
+                order.stock_committed = True
+
+                # Emails post-pago
+                try:
+                    send_order_confirmation_email(order)
+                except Exception as e:
+                    print(f'Error al enviar email de confirmación (MP): {str(e)}')
+                try:
+                    send_order_notification_to_admin(order)
+                except Exception as e:
+                    print(f'Error al enviar notificación al admin (MP): {str(e)}')
+
+        elif status in ('rejected', 'cancelled', 'charged_back', 'refunded'):
+            order.status = 'cancelled'
+        else:
+            # in_process / pending / etc.
+            if order.status == 'pending':
+                order.status = 'pending_payment'
+
+        order.save(update_fields=[
+            'mp_payment_id',
+            'mp_payment_status',
+            'mp_last_event_at',
+            'status',
+            'stock_committed',
+        ])
+
+    return HttpResponse(status=200)
 
 
 def order_confirmation(request, order_id):

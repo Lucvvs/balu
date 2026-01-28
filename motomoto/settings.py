@@ -226,6 +226,23 @@ else:
 # Email para notificaciones de pedidos al administrador
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@motomoto.cl')
 
+# =========================
+# Mercado Pago (Checkout Pro)
+# =========================
+# Requeridos:
+# - MP_ACCESS_TOKEN: token privado del vendedor (NO exponer en frontend)
+# - MP_PUBLIC_KEY: llave pública (opcional si luego integras Bricks)
+# - MP_BASE_URL: URL pública de tu sitio (ej: https://tu-dominio.com) para back_urls y webhooks
+MP_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN', '')
+MP_PUBLIC_KEY = os.environ.get('MP_PUBLIC_KEY', '')
+MP_BASE_URL = os.environ.get('MP_BASE_URL', '').rstrip('/')
+
+# Opcional: URL pública fija para webhooks (si no quieres depender de MP_BASE_URL)
+MP_WEBHOOK_URL = os.environ.get('MP_WEBHOOK_URL', '').strip()
+
+# Nombre del método de pago en tu tabla PaymentMethod para activar el flujo de Mercado Pago
+MP_PAYMENT_METHOD_NAME = os.environ.get('MP_PAYMENT_METHOD_NAME', 'Mercado Pago')
+
 # Logging Configuration
 LOGGING = {
     'version': 1,

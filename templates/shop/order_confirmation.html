@@ -9,31 +9,106 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow">
-                <div class="card-header bg-success text-white text-center">
-                    <h2 class="mb-0">
-                        <i class="bi bi-check-circle"></i> ¡Pedido Confirmado!
-                    </h2>
-                </div>
+                {% with pm=order.payment_method.name|default:'' %}
+                {% if 'mercado' in pm|lower %}
+                    {% if order.mp_payment_status == 'approved' or order.status == 'confirmed' %}
+                        <div class="card-header bg-success text-white text-center">
+                            <h2 class="mb-0">
+                                <i class="bi bi-check-circle"></i> ¡Pago Aprobado!
+                            </h2>
+                        </div>
+                    {% elif order.mp_payment_status == 'rejected' or order.status == 'cancelled' %}
+                        <div class="card-header bg-danger text-white text-center">
+                            <h2 class="mb-0">
+                                <i class="bi bi-x-circle"></i> Pago Rechazado / Cancelado
+                            </h2>
+                        </div>
+                    {% else %}
+                        <div class="card-header bg-warning text-dark text-center">
+                            <h2 class="mb-0">
+                                <i class="bi bi-hourglass-split"></i> Pago Pendiente
+                            </h2>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="card-header bg-success text-white text-center">
+                        <h2 class="mb-0">
+                            <i class="bi bi-check-circle"></i> ¡Pedido Confirmado!
+                        </h2>
+                    </div>
+                {% endif %}
+                {% endwith %}
                 <div class="card-body p-4">
-                    <div class="alert alert-success border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    {% with pm=order.payment_method.name|default:'' %}
+                    {% if 'mercado' in pm|lower %}
+                        {% if order.mp_payment_status == 'approved' or order.status == 'confirmed' %}
+                            <div class="alert alert-success border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                        {% elif order.mp_payment_status == 'rejected' or order.status == 'cancelled' %}
+                            <div class="alert alert-danger border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); color: white;">
+                        {% else %}
+                            <div class="alert alert-warning border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); color: #111;">
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-success border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    {% endif %}
                         <div class="text-center">
                             <h2 class="mb-3" style="color: white; font-weight: bold;">
                                 <i class="bi bi-check-circle-fill" style="font-size: 2.5rem;"></i>
-                                ¡Pedido Creado Exitosamente!
+                                {% if 'mercado' in pm|lower %}
+                                    {% if order.mp_payment_status == 'approved' or order.status == 'confirmed' %}
+                                        ¡Pago confirmado!
+                                    {% elif order.mp_payment_status == 'rejected' or order.status == 'cancelled' %}
+                                        Tu pago no se pudo procesar
+                                    {% else %}
+                                        Estamos esperando tu pago
+                                    {% endif %}
+                                {% else %}
+                                    ¡Pedido Creado Exitosamente!
+                                {% endif %}
                             </h2>
                             <div class="bg-white rounded p-3 mb-3" style="display: inline-block;">
                                 <h3 class="text-danger mb-0" style="font-weight: bold; font-size: 2rem;">
                                     #{{ order.order_number }}
                                 </h3>
                             </div>
-                            <p class="mb-2" style="font-size: 1.1rem; color: white;">
-                                <strong>Serás contactado por uno de nuestros vendedores en breve.</strong>
-                            </p>
+                            {% if 'mercado' in pm|lower %}
+                                {% if order.mp_payment_status == 'approved' or order.status == 'confirmed' %}
+                                    <p class="mb-2" style="font-size: 1.1rem; color: white;">
+                                        <strong>¡Gracias! Tu pago fue aprobado y tu pedido está confirmado.</strong>
+                                    </p>
+                                {% elif order.mp_payment_status == 'rejected' or order.status == 'cancelled' %}
+                                    <p class="mb-2" style="font-size: 1.1rem; color: white;">
+                                        <strong>Puedes reintentar el pago cuando quieras.</strong>
+                                    </p>
+                                {% else %}
+                                    <p class="mb-2" style="font-size: 1.1rem; color: #111;">
+                                        <strong>Si ya pagaste, espera unos segundos: la confirmación llega por webhook.</strong>
+                                    </p>
+                                {% endif %}
+                            {% else %}
+                                <p class="mb-2" style="font-size: 1.1rem; color: white;">
+                                    <strong>Serás contactado por uno de nuestros vendedores en breve.</strong>
+                                </p>
+                            {% endif %}
                             <p class="mb-0" style="font-size: 1rem; color: rgba(255,255,255,0.9);">
                                 <i class="bi bi-info-circle"></i> Puedes contactarnos indicando tu número de pedido: <strong>#{{ order.order_number }}</strong>
                             </p>
+
+                            {% if 'mercado' in pm|lower and order.mp_init_point %}
+                                <div class="mt-3">
+                                    <a class="btn btn-dark btn-lg" href="{{ order.mp_init_point }}">
+                                        <i class="bi bi-credit-card"></i>
+                                        {% if order.mp_payment_status == 'approved' or order.status == 'confirmed' %}
+                                            Ver comprobante / volver a Mercado Pago
+                                        {% else %}
+                                            Pagar con tarjeta (Mercado Pago)
+                                        {% endif %}
+                                    </a>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
+                    {% endwith %}
                     
                     <h4 class="mb-3">Detalles del Pedido</h4>
                     

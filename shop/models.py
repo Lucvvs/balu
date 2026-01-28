@@ -275,6 +275,7 @@ class Order(models.Model):
     """Modelo para pedidos"""
     STATUS_CHOICES = [
         ('pending', 'Pendiente'),
+        ('pending_payment', 'Pendiente de pago'),
         ('confirmed', 'Confirmado'),
         ('preparing', 'Preparando'),
         ('shipped', 'Enviado'),
@@ -304,6 +305,14 @@ class Order(models.Model):
     subtotal = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Subtotal (CLP)")
     discount_total = models.IntegerField(validators=[MinValueValidator(0)], default=0, verbose_name="Descuento total (CLP)")
     total = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Total (CLP)")
+
+    # Mercado Pago (Checkout Pro)
+    mp_preference_id = models.CharField(max_length=100, blank=True, null=True, verbose_name="MP Preference ID")
+    mp_init_point = models.URLField(blank=True, null=True, verbose_name="MP Init Point")
+    mp_payment_id = models.CharField(max_length=100, blank=True, null=True, verbose_name="MP Payment ID")
+    mp_payment_status = models.CharField(max_length=50, blank=True, null=True, verbose_name="MP Payment Status")
+    mp_last_event_at = models.DateTimeField(blank=True, null=True, verbose_name="Último evento MP")
+    stock_committed = models.BooleanField(default=False, verbose_name="Stock descontado (MP)")
     
     # Datos del cliente (para usuarios no registrados)
     customer_name = models.CharField(max_length=200, blank=True, null=True, verbose_name="Nombre del cliente")
