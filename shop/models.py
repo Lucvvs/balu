@@ -1,8 +1,69 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator
 from django.utils import timezone
+
+
+class CustomUserManager(BaseUserManager):
+    """Manager personalizado para el modelo de usuario"""
+    def create_user(self, email, password=None, **extra_fields):
+        """Crea y guarda un usuario con email y contraseña"""
+        if not email:
+            raise ValueError('El email es obligatorio')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        """Crea y guarda un superusuario con email y contraseña"""
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser debe tener is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser debe tener is_superuser=True.')
+
+        return self.create_user(email, password, **extra_fields)
+
+
+class CustomUser(AbstractBaseUser, PermissionsMixin):
+    """Modelo de usuario personalizado que usa email como username"""
+    email = models.EmailField(unique=True, verbose_name="Correo electrónico")
+    first_name = models.CharField(max_length=30, verbose_name="Nombre")
+    last_name = models.CharField(max_length=30, verbose_name="Apellido")
+    phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Teléfono")
+    is_active = models.BooleanField(default=True, verbose_name="Activo")
+    is_staff = models.BooleanField(default=False, verbose_name="Es staff")
+    date_joined = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
+
+    objects = CustomUserManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name']
+
+    class Meta:
+        verbose_name = "Usuario"
+        verbose_name_plural = "Usuarios"
+
+    def __str__(self):
+        return self.email
+
+    def get_full_name(self):
+        """Retorna el nombre completo"""
+        return f"{self.first_name} {self.last_name}".strip()
+
+    def get_short_name(self):
+        """Retorna el primer nombre"""
+        return self.first_name
+    
+    @property
+    def username(self):
+        """Propiedad username que retorna el email para compatibilidad con django-allauth"""
+        return self.email
 
 
 class Brand(models.Model):
@@ -225,7 +286,7 @@ class PaymentMethod(models.Model):
 
 class Cart(models.Model):
     """Modelo para carritos de compra"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='carts', verbose_name="Usuario")
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='carts', verbose_name="Usuario")
     session_key = models.CharField(max_length=40, null=True, blank=True, verbose_name="Clave de sesión")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Fecha de actualización")
@@ -237,7 +298,7 @@ class Cart(models.Model):
 
     def __str__(self):
         if self.user:
-            return f"Carrito de {self.user.username}"
+            return f"Carrito de {self.user.email}"
         return f"Carrito anónimo {self.session_key}"
 
     def get_total_items(self):
@@ -283,7 +344,7 @@ class Order(models.Model):
         ('cancelled', 'Cancelado'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders', verbose_name="Usuario")
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders', verbose_name="Usuario")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Fecha de actualización")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Estado")
@@ -326,7 +387,7 @@ class Order(models.Model):
 
     def __str__(self):
         if self.user:
-            return f"Pedido #{self.id} - {self.user.username}"
+            return f"Pedido #{self.id} - {self.user.email}"
         return f"Pedido #{self.id} - {self.customer_name or 'Anónimo'}"
 
     def generate_order_number(self):
@@ -337,12 +398,12 @@ class Order(models.Model):
         # ID del pedido
         order_id = str(self.id)
         
-        # Primera inicial del nombre de usuario
+        # Primera inicial del nombre y email
         if self.user:
-            username_init = self.user.username[0].upper() if self.user.username else 'A'
+            name_init = self.user.first_name[0].upper() if self.user.first_name else 'A'
             email_init = self.user.email[0].upper() if self.user.email else 'A'
         else:
-            username_init = self.customer_name[0].upper() if self.customer_name else 'A'
+            name_init = self.customer_name[0].upper() if self.customer_name else 'A'
             email_init = self.customer_email[0].upper() if self.customer_email else 'A'
         
         # Año - (día + mes)
@@ -350,7 +411,7 @@ class Order(models.Model):
         day_month = now.day + now.month
         year_code = year - day_month
         
-        return f"{order_id}{username_init}{email_init}{year_code}"
+        return f"{order_id}{name_init}{email_init}{year_code}"
 
     @property
     def order_number(self):
@@ -403,7 +464,7 @@ class MetricEvent(models.Model):
     ]
 
     event_type = models.CharField(max_length=50, choices=EVENT_TYPE_CHOICES, verbose_name="Tipo de evento")
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Usuario")
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Usuario")
     session_key = models.CharField(max_length=40, blank=True, null=True, verbose_name="Clave de sesión")
     ip_address = models.GenericIPAddressField(blank=True, null=True, verbose_name="Dirección IP")
     metadata = models.JSONField(default=dict, blank=True, verbose_name="Metadatos")

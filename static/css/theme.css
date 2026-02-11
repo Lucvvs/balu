@@ -552,7 +552,7 @@ body.navbar-scrolled {
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     transition: transform 0.3s, box-shadow 0.3s;
-    height: 100%;
+    height: auto;
     display: flex;
     flex-direction: column;
     position: relative;
@@ -609,10 +609,13 @@ body.navbar-scrolled {
 }
 
 .product-card-body {
-    padding: 0.75rem;
-    flex-grow: 1;
+    padding: 0.2rem 0.5rem;
+    flex-grow: 0;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
 }
 
 /* Enlace que envuelve texto, descripción y precio en tarjetas de productos */
@@ -621,7 +624,8 @@ body.navbar-scrolled {
     color: inherit;
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
+    flex-grow: 0;
+    flex-shrink: 0;
     cursor: pointer;
 }
 
@@ -631,20 +635,21 @@ body.navbar-scrolled {
 }
 
 .product-card-title {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: bold;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.05rem;
     color: var(--text-color);
     cursor: pointer;
     flex-shrink: 0;
+    line-height: 1.1;
 }
 
 .product-card-description {
     color: #495057;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     margin-bottom: 0;
     margin-top: 0;
-    line-height: 1.3;
+    line-height: 1.1;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -656,9 +661,11 @@ body.navbar-scrolled {
 /* Espacio flexible que empuja precio/alerta hacia abajo */
 .product-card-link-text::after {
     content: '';
-    flex-grow: 1;
+    flex-grow: 0;
     min-height: 0;
     order: 10;
+    height: 0;
+    display: none;
 }
 
 /* Alerta antes del precio, ambos después del espacio flexible */
@@ -670,18 +677,14 @@ body.navbar-scrolled {
 .product-card-price {
     order: 30;
     flex-shrink: 0;
-}
-
-.product-card-price {
-    margin-top: 2.8rem; /* Margen por defecto cuando no hay alerta (reserva espacio) */
+    margin-top: 0.15rem; /* Margen por defecto cuando no hay alerta (reserva espacio) */
     margin-bottom: 0;
     cursor: pointer;
-    flex-shrink: 0;
 }
 
 /* Cuando hay alerta, el precio está justo después (menos margen) */
 .product-card-link-text .stock-alert-small ~ .product-card-price {
-    margin-top: 0.2rem;
+    margin-top: 0.05rem;
 }
 
 .price-original {
@@ -692,21 +695,23 @@ body.navbar-scrolled {
 
 .price-offer {
     color: var(--primary-color);
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-weight: bold;
+    line-height: 1.1;
 }
 
 .price-normal {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-weight: bold;
     color: var(--text-color);
+    line-height: 1.1;
 }
 
 .product-card-actions {
     display: flex;
     gap: 0.5rem;
-    margin-top: auto;
-    padding-top: 0.5rem;
+    margin-top: 0.1rem;
+    padding-top: 0.05rem;
     flex-shrink: 0;
 }
 
@@ -788,7 +793,7 @@ body.navbar-scrolled {
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
     border: 2px solid transparent;
-    height: 100%;
+    height: auto;
     display: flex;
     flex-direction: column;
 }

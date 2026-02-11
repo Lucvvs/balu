@@ -1,5 +1,8 @@
 # 📝 Guía de Campos para Productos - JSON
 
+admin@motomoto.cl
+admin123
+
 Esta guía explica cada campo del archivo `shop/fixtures/initial_products.json` para que puedas personalizar completamente tus productos.
 
 ## 📋 Estructura General

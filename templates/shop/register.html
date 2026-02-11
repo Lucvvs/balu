@@ -30,11 +30,6 @@
                             </div>
                         {% endif %}
                         
-                        <div class="mb-3">
-                            <label for="{{ form.username.id_for_label }}" class="form-label">{{ form.username.label }}</label>
-                            {{ form.username }}
-                        </div>
-                        
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }}</label>
@@ -66,15 +61,28 @@
                             {{ form.password2 }}
                         </div>
                         
-                        <!-- Placeholder for reCAPTCHA -->
-                        <div id="recaptcha-placeholder" class="mb-3">
-                            <!-- TODO: Integrar Google reCAPTCHA aquí -->
+                        <!-- reCAPTCHA - Solo se muestra en producción (cuando DEBUG=False) -->
+                        {% if form.captcha %}
+                        <div class="mb-3" id="captcha-container" style="min-height: 50px; width: 100%; overflow: hidden; position: relative;">
+                            <div style="display: flex; align-items: center; justify-content: flex-start; width: 100%;">
+                                {{ form.captcha }}
+                            </div>
                         </div>
+                        {% endif %}
                         
                         <button type="submit" class="btn btn-danger w-100 btn-lg">
                             Registrarse
                         </button>
                     </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center mb-3">
+                        <p class="mb-2">O regístrate con:</p>
+                        <a href="/accounts/google/login/?process=signup" class="btn btn-outline-danger w-100">
+                            <i class="bi bi-google"></i> Continuar con Google
+                        </a>
+                    </div>
                     
                     <hr class="my-4">
                     

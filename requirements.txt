@@ -6,4 +6,8 @@ gunicorn>=21.2.0
 dj-database-url>=2.1.0
 python-dotenv>=1.0.0
 mercadopago==2.2.1
+django-allauth>=0.57.0
+django-recaptcha>=4.0.0
+PyJWT>=2.0.0
+cryptography>=3.0.0
 

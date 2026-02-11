@@ -1,7 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
-from .models import Product, Coupon, ContactMessage, ShippingMethod, PaymentMethod
+from django.conf import settings
+from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.widgets import ReCaptchaV3
+from .models import Product, Coupon, ContactMessage, ShippingMethod, PaymentMethod, CustomUser
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -29,10 +31,6 @@ class UserRegistrationForm(UserCreationForm):
         label="Teléfono",
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono'})
     )
-    username = forms.CharField(
-        label="Usuario",
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Usuario'})
-    )
     password1 = forms.CharField(
         label="Contraseña",
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'})
@@ -41,16 +39,34 @@ class UserRegistrationForm(UserCreationForm):
         label="Confirmar contraseña",
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirmar contraseña'})
     )
+    captcha = ReCaptchaField(
+        widget=ReCaptchaV3,
+        label='',
+        required=False  # No requerido por defecto, se hará requerido solo en producción
+    )
 
     class Meta:
-        model = User
-        fields = ('username', 'first_name', 'last_name', 'email', 'phone', 'password1', 'password2')
+        model = CustomUser
+        fields = ('email', 'first_name', 'last_name', 'phone', 'password1', 'password2')
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Deshabilitar captcha en desarrollo (DEBUG=True)
+        if settings.DEBUG:
+            # Eliminar el campo captcha del formulario en desarrollo
+            if 'captcha' in self.fields:
+                del self.fields['captcha']
+        else:
+            # En producción, hacer el captcha requerido
+            if 'captcha' in self.fields:
+                self.fields['captcha'].required = True
 
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
+        user.phone = self.cleaned_data.get('phone', '')
         if commit:
             user.save()
         return user

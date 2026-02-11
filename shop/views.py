@@ -39,9 +39,6 @@ def get_or_create_cart(request):
 
 def home(request):
     """Vista de la página principal"""
-    import logging
-    logger = logging.getLogger(__name__)
-    
     # Productos en oferta (máximo 3, ordenados por offer_order)
     offers = Product.objects.filter(
         is_active=True,
@@ -51,21 +48,6 @@ def home(request):
     ).select_related('category', 'brand').prefetch_related(
         Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id'))
     ).order_by('offer_order', '-created_at')[:3]
-
-    # Logging para ofertas
-    logger.info(f'[HOME] Ofertas encontradas: {offers.count()}')
-    for product in offers:
-        images = product.images.all()
-        logger.info(f'[HOME] Oferta: {product.name} - Imágenes en BD: {images.count()}')
-        if images.count() > 0:
-            first_img = images.first()
-            logger.info(f'[HOME]   Primera imagen: {first_img.image.name} -> URL: {first_img.image.url}')
-            try:
-                logger.info(f'[HOME]   Path físico: {first_img.image.path}')
-            except:
-                logger.warning(f'[HOME]   No se pudo obtener path físico')
-        else:
-            logger.warning(f'[HOME]   [ERROR] No hay imágenes para {product.name}')
 
     # Productos más vendidos (máximo 3, ordenados por featured_order)
     best_sellers = Product.objects.filter(
@@ -779,7 +761,7 @@ def register_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, '¡Cuenta creada exitosamente!')
+            messages.success(request, f'¡Cuenta creada exitosamente, {user.first_name}!')
             return redirect('shop:home')
     else:
         form = UserRegistrationForm()
@@ -788,24 +770,29 @@ def register_view(request):
 
 
 def login_view(request):
-    """Vista de login"""
-    from django.contrib.auth.forms import AuthenticationForm
+    """Vista de login con email"""
+    from django.contrib.auth import authenticate
 
     if request.user.is_authenticated:
         return redirect('shop:home')
 
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            messages.success(request, f'¡Bienvenido, {user.get_full_name() or user.username}!')
-            next_url = request.GET.get('next', 'shop:home')
-            return redirect(next_url)
-    else:
-        form = AuthenticationForm()
-
-    return render(request, 'shop/login.html', {'form': form})
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        
+        if email and password:
+            user = authenticate(request, username=email, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, f'¡Bienvenido, {user.first_name or user.email}!')
+                next_url = request.GET.get('next', 'shop:home')
+                return redirect(next_url)
+            else:
+                messages.error(request, 'Correo electrónico o contraseña incorrectos.')
+        else:
+            messages.error(request, 'Por favor completa todos los campos.')
+    
+    return render(request, 'shop/login.html')
 
 
 def logout_view(request):

@@ -1,9 +1,33 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from .models import (
-    Brand, Category, Product, ProductImage, Coupon, ShippingMethod, PaymentMethod,
+    CustomUser, Brand, Category, Product, ProductImage, Coupon, ShippingMethod, PaymentMethod,
     Cart, CartItem, Order, OrderItem, ContactMessage, MetricEvent
 )
+
+
+@admin.register(CustomUser)
+class CustomUserAdmin(BaseUserAdmin):
+    """Admin para el modelo de usuario personalizado"""
+    list_display = ('email', 'first_name', 'last_name', 'is_staff', 'is_active', 'date_joined')
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'date_joined')
+    search_fields = ('email', 'first_name', 'last_name')
+    ordering = ('email',)
+    
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        ('Información Personal', {'fields': ('first_name', 'last_name', 'phone')}),
+        ('Permisos', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Fechas importantes', {'fields': ('last_login', 'date_joined')}),
+    )
+    
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'first_name', 'last_name', 'password1', 'password2'),
+        }),
+    )
 
 
 @admin.register(Brand)
@@ -125,13 +149,13 @@ class CartItemInline(admin.TabularInline):
 class CartAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_display', 'session_key_display', 'items_count', 'subtotal_display', 'updated_at')
     list_filter = ('created_at', 'updated_at')
-    search_fields = ('user__username', 'user__email', 'session_key')
+    search_fields = ('user__email', 'session_key')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [CartItemInline]
 
     def user_display(self, obj):
         if obj.user:
-            return obj.user.username
+            return obj.user.email
         return "Anónimo"
     user_display.short_description = 'Usuario'
 
@@ -162,7 +186,7 @@ class OrderItemInline(admin.TabularInline):
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_display', 'status', 'total_display', 'payment_method', 'shipping_method', 'created_at')
     list_filter = ('status', 'payment_method', 'shipping_method', 'created_at')
-    search_fields = ('id', 'user__username', 'customer_name', 'customer_email', 'customer_phone')
+    search_fields = ('id', 'user__email', 'customer_name', 'customer_email', 'customer_phone')
     readonly_fields = ('created_at', 'updated_at', 'total', 'subtotal', 'discount_total', 'shipping_cost')
     inlines = [OrderItemInline]
     fieldsets = (
@@ -243,13 +267,13 @@ class ContactMessageAdmin(admin.ModelAdmin):
 class MetricEventAdmin(admin.ModelAdmin):
     list_display = ('event_type', 'user_display', 'created_at', 'metadata_summary')
     list_filter = ('event_type', 'created_at')
-    search_fields = ('user__username', 'session_key', 'ip_address')
+    search_fields = ('user__email', 'session_key', 'ip_address')
     readonly_fields = ('created_at',)
     date_hierarchy = 'created_at'
 
     def user_display(self, obj):
         if obj.user:
-            return obj.user.username
+            return obj.user.email
         return "Anónimo"
     user_display.short_description = 'Usuario'
 

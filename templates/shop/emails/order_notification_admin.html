@@ -71,7 +71,7 @@
             <p><strong>Email:</strong> {{ order.customer_email|default:"N/A" }}</p>
             <p><strong>Teléfono:</strong> {{ order.customer_phone|default:"N/A" }}</p>
             {% if order.user %}
-            <p><strong>Usuario:</strong> {{ order.user.username }} ({{ order.user.email }})</p>
+            <p><strong>Usuario:</strong> {{ order.user.get_full_name|default:order.user.email }} ({{ order.user.email }})</p>
             {% else %}
             <p><strong>Usuario:</strong> Cliente no registrado</p>
             {% endif %}
