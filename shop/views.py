@@ -838,10 +838,10 @@ def update_profile(request):
         messages.error(request, 'Debes confirmar los cambios.')
         return redirect('shop:profile')
     
-    # Actualizar datos (NO actualizar email ya que es la credencial de inicio de sesión)
+    # Actualizar datos
     user.first_name = request.POST.get('first_name', user.first_name)
     user.last_name = request.POST.get('last_name', user.last_name)
-    user.phone = request.POST.get('phone', user.phone)
+    user.email = request.POST.get('email', user.email)
     user.save()
     
     messages.success(request, 'Perfil actualizado correctamente.')

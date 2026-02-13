@@ -59,11 +59,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         """Retorna el primer nombre"""
         return self.first_name
-    
-    @property
-    def username(self):
-        """Propiedad username que retorna el email para compatibilidad con django-allauth"""
-        return self.email
 
 
 class Brand(models.Model):

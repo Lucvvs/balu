@@ -33,16 +33,9 @@
                         
                         <div class="mb-3">
                             <label class="form-label"><strong>Email</strong></label>
-                            <input type="email" name="email" class="form-control" value="{{ user.email }}" readonly style="background-color: #e9ecef; cursor: not-allowed;">
-                            <small class="form-text text-muted">
-                                <i class="bi bi-info-circle"></i> El correo electrónico no se puede modificar ya que es tu credencial de inicio de sesión.
-                            </small>
+                            <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
                         </div>
                         
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Teléfono</strong></label>
-                            <input type="text" name="phone" class="form-control" value="{{ user.phone|default:'' }}" placeholder="Ingresa tu teléfono">
-                        </div>
                         
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-check-circle"></i> Guardar Cambios
