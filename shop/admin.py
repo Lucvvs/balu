@@ -14,6 +14,7 @@ class CustomUserAdmin(BaseUserAdmin):
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'date_joined')
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
+    readonly_fields = ('date_joined', 'last_login')
     
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
@@ -128,9 +129,16 @@ class ShippingMethodAdmin(admin.ModelAdmin):
 
 @admin.register(PaymentMethod)
 class PaymentMethodAdmin(admin.ModelAdmin):
-    list_display = ('name', 'is_active')
+    list_display = ('name', 'is_active', 'has_image')
     list_filter = ('is_active',)
     search_fields = ('name', 'description')
+    fields = ('name', 'description', 'image', 'is_active')
+    
+    def has_image(self, obj):
+        """Indica si el método de pago tiene imagen"""
+        return bool(obj.image)
+    has_image.boolean = True
+    has_image.short_description = 'Tiene imagen'
 
 
 class CartItemInline(admin.TabularInline):

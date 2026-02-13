@@ -273,6 +273,7 @@ class PaymentMethod(models.Model):
     """Modelo para métodos de pago"""
     name = models.CharField(max_length=100, verbose_name="Nombre")
     description = models.TextField(blank=True, null=True, verbose_name="Descripción")
+    image = models.ImageField(upload_to='payment_methods/', blank=True, null=True, verbose_name="Imagen/Icono")
     is_active = models.BooleanField(default=True, verbose_name="Activo")
 
     class Meta:

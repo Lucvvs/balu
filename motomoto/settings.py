@@ -268,14 +268,11 @@ AUTHENTICATION_BACKENDS = [
 # Configuración moderna de django-allauth (sin deprecaciones)
 ACCOUNT_ADAPTER = 'shop.adapters.CustomAccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'shop.adapters.CustomSocialAccountAdapter'
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
+# Configuración moderna (reemplaza las configuraciones deprecadas)
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # Cambiar a 'mandatory' si quieres verificación de email
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_SIGNUP_EMAIL_ENTER_TWICE = False
 LOGIN_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 

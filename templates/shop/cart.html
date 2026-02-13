@@ -163,8 +163,12 @@
                                         <input type="radio" name="payment_method" id="payment-{{ payment.id }}" 
                                                value="{{ payment.id }}" required
                                                {% if forloop.first %}checked{% endif %}>
-                                        <label for="payment-{{ payment.id }}" class="ms-2">
-                                            {{ payment.name }}
+                                        <label for="payment-{{ payment.id }}" class="ms-2 d-flex align-items-center">
+                                            {% if payment.image %}
+                                                <img src="{{ payment.image.url }}" alt="{{ payment.name }}" 
+                                                     style="max-width: 40px; max-height: 40px; margin-right: 8px; object-fit: contain;">
+                                            {% endif %}
+                                            <span>{{ payment.name }}</span>
                                         </label>
                                     </div>
                                 </div>
