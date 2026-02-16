@@ -883,3 +883,53 @@ def get_comunas(request):
     
     comunas = get_comunas_choices(region)
     return JsonResponse({'comunas': comunas})
+
+
+def search_order(request):
+    """
+    Vista para buscar pedidos por número de pedido.
+    Accesible para usuarios anónimos.
+    """
+    order = None
+    order_number = request.GET.get('order_number', '').strip()
+    error = None
+    
+    if order_number:
+        # Limpiar el número de pedido (eliminar espacios y caracteres especiales comunes)
+        order_number_clean = order_number.upper().strip().replace('#', '').replace(' ', '')
+        
+        # Buscar por número de pedido completo
+        # El número de pedido tiene formato: {ID}{InicialNombre}{InicialEmail}{Año-Día-Mes}
+        # Extraer el ID del inicio para buscar el pedido
+        try:
+            # Extraer todos los dígitos consecutivos del inicio (el ID)
+            order_id_str = ''
+            for char in order_number_clean:
+                if char.isdigit():
+                    order_id_str += char
+                else:
+                    break
+            
+            if order_id_str:
+                # Buscar el pedido por ID
+                try:
+                    order = Order.objects.get(id=int(order_id_str))
+                    # Verificar que el número generado coincida exactamente con el ingresado
+                    generated_number = order.order_number.upper()
+                    if generated_number != order_number_clean:
+                        order = None
+                        error = "No se encontró ningún pedido con ese número. Verifica que hayas ingresado el número completo correctamente."
+                except Order.DoesNotExist:
+                    error = "No se encontró ningún pedido con ese número."
+            else:
+                error = "El número de pedido no es válido. Debe contener al menos un número al inicio."
+        except ValueError:
+            error = "El número de pedido no es válido."
+    
+    context = {
+        'order': order,
+        'order_number': order_number,
+        'error': error,
+    }
+    
+    return render(request, 'shop/search_order.html', context)

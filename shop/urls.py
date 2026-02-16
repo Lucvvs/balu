@@ -21,6 +21,7 @@ urlpatterns = [
     
     # Pedidos
     path('pedido/<int:order_id>/', views.order_confirmation, name='order_confirmation'),
+    path('buscar-pedido/', views.search_order, name='search_order'),
 
     # Mercado Pago (Checkout Pro)
     path('mercadopago/return/<str:status>/<int:order_id>/', views.mp_return, name='mp_return'),
