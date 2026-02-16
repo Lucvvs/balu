@@ -1,4 +1,5 @@
 from django import template
+from django.templatetags.static import static
 
 register = template.Library()
 
@@ -21,4 +22,17 @@ def currency_clp(value):
         return formatted
     except (ValueError, TypeError):
         return '$0'
+
+
+@register.filter(name='brand_image')
+def brand_image(brand_slug):
+    """
+    Construye la URL de la imagen de una marca basada en su slug.
+    Las imágenes están en media/brands/
+    Ejemplo: 'hro' -> '/media/brands/hro.png'
+    """
+    if not brand_slug:
+        return ''
+    from django.conf import settings
+    return f"{settings.MEDIA_URL}brands/{brand_slug}.png"
 

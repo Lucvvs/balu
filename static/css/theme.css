@@ -459,7 +459,7 @@ body.navbar-scrolled {
 /* Brands Banner */
 .brands-banner {
     background-color: var(--white);
-    padding: 1.6rem 0;
+    padding: 0.8rem 0; /* Reducido de 1.6rem a 0.8rem para menos espacio vertical */
     margin: 2rem 0;
     overflow: hidden;
     position: relative;
@@ -480,7 +480,7 @@ body.navbar-scrolled {
 .brands-scroll {
     display: inline-flex;
     animation: scrollInfinite 50s linear infinite;
-    gap: 3.2rem;
+    gap: 2rem; /* Reducido de 3.2rem a 2rem para juntar más las marcas */
     will-change: transform;
     width: max-content;
 }
@@ -490,24 +490,42 @@ body.navbar-scrolled {
 }
 
 .brand-logo {
-    height: 94px; /* Aumentado otro 25% (de 75px a 94px) */
+    max-height: 96px; /* Altura máxima estandarizada (80px + 20%) */
+    max-width: 180px; /* Ancho máximo estandarizado (150px + 20%) */
     width: auto;
+    height: auto;
     object-fit: contain;
     filter: grayscale(100%);
     transition: filter 0.3s, transform 0.3s;
     cursor: pointer;
     flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
 }
 
-/* Mantener 4RS en tamaño original */
+/* HRO: 15% más grande */
+.brand-logo-hro {
+    max-height: 110px; /* 96px + 15% = 110.4px */
+    max-width: 207px; /* 180px + 15% = 207px */
+}
+
+/* motocentric y KOVIX: 20% más grandes */
+.brand-logo-motocentric {
+    max-height: 115px; /* 96px + 20% = 115.2px */
+    max-width: 216px; /* 180px + 20% = 216px */
+}
+
+.brand-logo-kovix {
+    max-height: 115px; /* 96px + 20% = 115.2px */
+    max-width: 216px; /* 180px + 20% = 216px */
+}
+
+/* 4RS mantiene tamaño estándar */
 .brand-logo-4rs {
-    height: 60px; /* Tamaño original */
+    max-height: 96px; /* Mismo tamaño estándar */
+    max-width: 180px;
 }
 
-/* Motocentric ya está centrado por .brand-logo-link */
+/* SHAFT mantiene tamaño estándar (sin clase especial) */
 
 .brand-logo:hover {
     filter: grayscale(0%);
@@ -520,7 +538,10 @@ body.navbar-scrolled {
     justify-content: center;
     text-decoration: none;
     color: var(--text-color);
-    height: 94px; /* Altura fija para alinear verticalmente */
+    height: 110px; /* Altura ajustada para reducir espacio vertical */
+    width: 216px; /* Ancho fijo del contenedor (180px + 20%) */
+    min-width: 216px; /* Asegurar ancho mínimo */
+    flex-shrink: 0;
 }
 
 .brand-logo-text {

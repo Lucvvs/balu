@@ -75,54 +75,27 @@
 <section class="brands-banner">
     <div class="brands-scroll-wrapper">
         <div class="brands-scroll">
-            <!-- Primera copia -->
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr1.png' %}" alt="Carr 1" class="brand-logo" onerror="this.style.display='none'">
-            </div>
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr2.png' %}" alt="Carr 2" class="brand-logo" onerror="this.style.display='none'">
-            </div>
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr3.png' %}" alt="Carr 3" class="brand-logo brand-logo-motocentric" onerror="this.style.display='none'">
-            </div>
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr4.png' %}" alt="Carr 4" class="brand-logo brand-logo-4rs" onerror="this.style.display='none'">
-            </div>
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr5.png' %}" alt="Carr 5" class="brand-logo" onerror="this.style.display='none'">
-            </div>
-            <!-- Segunda copia para loop infinito -->
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr1.png' %}" alt="Carr 1" class="brand-logo" onerror="this.style.display='none'">
-            </div>
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr2.png' %}" alt="Carr 2" class="brand-logo" onerror="this.style.display='none'">
-            </div>
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr3.png' %}" alt="Carr 3" class="brand-logo brand-logo-motocentric" onerror="this.style.display='none'">
-            </div>
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr4.png' %}" alt="Carr 4" class="brand-logo brand-logo-4rs" onerror="this.style.display='none'">
-            </div>
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr5.png' %}" alt="Carr 5" class="brand-logo" onerror="this.style.display='none'">
-            </div>
-            <!-- Tercera copia para transición perfecta sin saltos -->
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr1.png' %}" alt="Carr 1" class="brand-logo" onerror="this.style.display='none'">
-            </div>
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr2.png' %}" alt="Carr 2" class="brand-logo" onerror="this.style.display='none'">
-            </div>
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr3.png' %}" alt="Carr 3" class="brand-logo brand-logo-motocentric" onerror="this.style.display='none'">
-            </div>
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr4.png' %}" alt="Carr 4" class="brand-logo brand-logo-4rs" onerror="this.style.display='none'">
-            </div>
-            <div class="brand-logo-link">
-                <img src="{% static 'img/carr5.png' %}" alt="Carr 5" class="brand-logo" onerror="this.style.display='none'">
-            </div>
+            {% comment %} Iterar sobre las marcas y usar el slug para construir el nombre de la imagen {% endcomment %}
+            {% if brands %}
+                {% for brand in brands %}
+                    <!-- Primera copia -->
+                    <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% endif %}" onerror="this.style.display='none'">
+                    </a>
+                {% endfor %}
+                <!-- Segunda copia para loop infinito -->
+                {% for brand in brands %}
+                    <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% endif %}" onerror="this.style.display='none'">
+                    </a>
+                {% endfor %}
+                <!-- Tercera copia para transición perfecta sin saltos -->
+                {% for brand in brands %}
+                    <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% endif %}" onerror="this.style.display='none'">
+                    </a>
+                {% endfor %}
+            {% endif %}
         </div>
     </div>
 </section>

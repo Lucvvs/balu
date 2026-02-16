@@ -63,8 +63,10 @@ def home(request):
     # Categorías destacadas
     categories = Category.objects.filter(is_active=True, highlight_on_home=True)[:3]
 
-    # Marcas para el banner
-    brands = Brand.objects.filter(is_active=True)[:6]
+    # Marcas para el banner (en orden específico: HRO, SHAFT, motocentric, 4RS, KOVIX)
+    brand_order = ['hro', 'shaft', 'motocentric', '4rs', 'kovix']
+    brands_dict = {brand.slug: brand for brand in Brand.objects.filter(is_active=True)}
+    brands = [brands_dict[slug] for slug in brand_order if slug in brands_dict]
 
     context = {
         'offers': offers,
@@ -88,10 +90,11 @@ def products_list(request):
     if category_slug:
         products = products.filter(category__slug=category_slug)
 
-    # Filtro por marca
+    # Filtro por marca (insensible a mayúsculas/minúsculas)
     brand_slug = request.GET.get('brand')
     if brand_slug:
-        products = products.filter(brand__slug=brand_slug)
+        brand_slug = brand_slug.lower().strip()  # Normalizar a minúsculas
+        products = products.filter(brand__slug__iexact=brand_slug)
 
     # Filtro por ofertas
     if request.GET.get('offers') == 'true':
