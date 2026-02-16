@@ -61,7 +61,7 @@
                                             <p class="mb-1 text-muted">
                                                 <i class="bi bi-calendar"></i> {{ order.created_at|date:"d/m/Y H:i" }}
                                             </p>
-                                            <span class="badge bg-{% if order.status == 'pending' %}warning{% elif order.status == 'confirmed' %}info{% elif order.status == 'preparing' %}primary{% elif order.status == 'shipped' %}info{% elif order.status == 'delivered' %}success{% else %}secondary{% endif %}">
+                                            <span class="badge bg-{% if order.status == 'realized' %}secondary{% elif order.status == 'pending_payment' %}warning{% elif order.status == 'confirmed' %}info{% elif order.status == 'shipped' or order.status == 'ready_for_pickup' %}primary{% elif order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}secondary{% endif %}">
                                                 {{ order.get_status_display }}
                                             </span>
                                         </div>

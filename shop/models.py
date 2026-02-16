@@ -331,11 +331,11 @@ class CartItem(models.Model):
 class Order(models.Model):
     """Modelo para pedidos"""
     STATUS_CHOICES = [
-        ('pending', 'Pendiente'),
+        ('realized', 'Realizado'),
         ('pending_payment', 'Pendiente de pago'),
         ('confirmed', 'Confirmado'),
-        ('preparing', 'Preparando'),
         ('shipped', 'Enviado'),
+        ('ready_for_pickup', 'Listo para Retiro'),
         ('delivered', 'Entregado'),
         ('cancelled', 'Cancelado'),
     ]
@@ -343,13 +343,14 @@ class Order(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders', verbose_name="Usuario")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Fecha de actualización")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Estado")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='realized', verbose_name="Estado")
     
     # Datos de envío
     shipping_method = models.ForeignKey(ShippingMethod, on_delete=models.PROTECT, verbose_name="Método de envío")
     shipping_region = models.CharField(max_length=100, blank=True, null=True, verbose_name="Región")
     shipping_comuna = models.CharField(max_length=100, blank=True, null=True, verbose_name="Comuna")
     shipping_address = models.TextField(blank=True, null=True, verbose_name="Dirección")
+    shipping_notes = models.TextField(blank=True, null=True, verbose_name="Indicaciones adicionales")
     shipping_cost = models.IntegerField(validators=[MinValueValidator(0)], default=0, verbose_name="Costo de envío (CLP)")
     
     # Método de pago
@@ -413,6 +414,67 @@ class Order(models.Model):
     def order_number(self):
         """Retorna el número de pedido formateado"""
         return self.generate_order_number()
+
+    def is_pickup_order(self):
+        """Determina si el pedido es para retiro en bodega"""
+        if not self.shipping_method:
+            return False
+        # Verificar si el método de envío contiene palabras clave de retiro
+        shipping_name = self.shipping_method.name.lower()
+        return 'retiro' in shipping_name or 'bodega' in shipping_name or 'pickup' in shipping_name
+
+    def get_status_progress(self):
+        """
+        Retorna información sobre el progreso del estado del pedido para la barra de progreso
+        Returns: dict con 'current_index', 'statuses', 'current_status_display', 'progress_percentage'
+        """
+        # Si está cancelado, no mostrar progreso
+        if self.status == 'cancelled':
+            return None
+        
+        # Determinar si es retiro o envío
+        is_pickup = self.is_pickup_order()
+        
+        # Estados según el tipo de pedido
+        if is_pickup:
+            # Para retiro en bodega: Realizado, Pendiente de Pago, Confirmado, Listo para Retiro, Entregado
+            status_progress = [
+                ('realized', 'Realizado'),
+                ('pending_payment', 'Pendiente de Pago'),
+                ('confirmed', 'Confirmado'),
+                ('ready_for_pickup', 'Listo para Retiro'),
+                ('delivered', 'Entregado'),
+            ]
+            status_order = ['realized', 'pending_payment', 'confirmed', 'ready_for_pickup', 'delivered']
+        else:
+            # Para envío: Realizado, Pendiente de Pago, Confirmado, Enviado, Entregado
+            status_progress = [
+                ('realized', 'Realizado'),
+                ('pending_payment', 'Pendiente de Pago'),
+                ('confirmed', 'Confirmado'),
+                ('shipped', 'Enviado'),
+                ('delivered', 'Entregado'),
+            ]
+            status_order = ['realized', 'pending_payment', 'confirmed', 'shipped', 'delivered']
+        
+        # Encontrar el índice del estado actual
+        current_index = 0
+        if self.status in status_order:
+            current_index = status_order.index(self.status)
+        
+        # Calcular porcentaje de progreso (0-100%)
+        total_steps = len(status_progress) - 1  # 4 pasos (0-3)
+        if total_steps > 0:
+            progress_percentage = int((current_index / total_steps) * 100)
+        else:
+            progress_percentage = 0
+        
+        return {
+            'current_index': current_index,
+            'statuses': status_progress,
+            'current_status_display': self.get_status_display(),
+            'progress_percentage': progress_percentage,
+        }
 
 
 class OrderItem(models.Model):

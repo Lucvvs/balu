@@ -144,9 +144,26 @@
                                 </label>
                                 {% if shipping.base_price > 0 %}
                                     <div id="shipping-fields-{{ shipping.id }}" style="display: none;" class="mt-3">
-                                        <input type="text" name="shipping_region" class="form-control mb-2" placeholder="Región">
-                                        <input type="text" name="shipping_comuna" class="form-control mb-2" placeholder="Comuna">
-                                        <textarea name="shipping_address" class="form-control" rows="2" placeholder="Dirección"></textarea>
+                                        <div class="row g-2">
+                                            <div class="col-12 col-md-6 mb-2">
+                                                <label class="form-label"><strong>Región</strong></label>
+                                                {{ checkout_form.shipping_region }}
+                                            </div>
+                                            <div class="col-12 col-md-6 mb-2">
+                                                <label class="form-label"><strong>Comuna</strong></label>
+                                                <select name="shipping_comuna" id="shipping-comuna" class="form-control form-select" style="max-height: 200px; overflow-y: auto;">
+                                                    <option value="">Seleccione una comuna</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label"><strong>Dirección</strong></label>
+                                            {{ checkout_form.shipping_address }}
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label"><strong>Indicaciones adicionales</strong> <small class="text-muted">(opcional)</small></label>
+                                            {{ checkout_form.shipping_notes }}
+                                        </div>
                                     </div>
                                 {% endif %}
                             </div>
@@ -176,17 +193,23 @@
                         </div>
                     </div>
                     
-                    <!-- Guest Info (if not logged in) -->
-                    {% if not user.is_authenticated %}
-                        <div class="checkout-section">
-                            <h6>Información de contacto</h6>
-                            <input type="text" name="customer_name" class="form-control mb-2" placeholder="Nombre completo" required>
-                            <input type="email" name="customer_email" class="form-control mb-2" placeholder="Email" required>
-                            <input type="text" name="customer_phone" class="form-control mb-2" placeholder="Teléfono">
-                        </div>
-                    {% endif %}
+                    <!-- Información de contacto (siempre visible, prellenada si está autenticado) -->
+                    <div class="checkout-section">
+                        <h6>Información de contacto</h6>
+                        <input type="text" name="customer_name" id="customer_name" class="form-control mb-2" 
+                               placeholder="Nombre completo" 
+                               value="{% if user.is_authenticated %}{{ user.get_full_name }}{% endif %}" 
+                               required>
+                        <input type="email" name="customer_email" id="customer_email" class="form-control mb-2" 
+                               placeholder="Email" 
+                               value="{% if user.is_authenticated %}{{ user.email }}{% endif %}" 
+                               required>
+                        <input type="text" name="customer_phone" id="customer_phone" class="form-control mb-2" 
+                               placeholder="Teléfono" 
+                               value="{% if user.is_authenticated %}{{ user.phone|default:'' }}{% endif %}">
+                    </div>
                     
-                    <button type="submit" class="btn btn-danger btn-lg w-100 mb-2">
+                    <button type="submit" class="btn btn-danger btn-lg w-100 mb-2" id="checkout-submit-btn">
                         <i class="bi bi-check-circle"></i> Finalizar Compra
                     </button>
                 </form>
@@ -225,11 +248,32 @@
         // Ocultar/mostrar todos los campos de envío primero y quitar required
         document.querySelectorAll('[id^="shipping-fields-"]').forEach(field => {
             field.style.display = 'none';
-            // Quitar required de todos los campos y limpiar valores
-            field.querySelectorAll('input, textarea').forEach(input => {
-                input.removeAttribute('required');
-                input.value = ''; // Limpiar valores cuando se cambia a retiro
-            });
+            // Quitar required de los campos select y textarea, y limpiar valores
+            const regionSelect = field.querySelector('#shipping-region');
+            const comunaSelect = field.querySelector('#shipping-comuna');
+            const addressTextarea = field.querySelector('textarea[name="shipping_address"]');
+            const notesTextarea = field.querySelector('textarea[name="shipping_notes"]');
+            
+            if (regionSelect) {
+                regionSelect.removeAttribute('required');
+                regionSelect.value = '';
+                // Habilitar la opción por defecto cuando se oculta
+                const firstOption = regionSelect.querySelector('option[value=""]');
+                if (firstOption) {
+                    firstOption.disabled = false;
+                }
+            }
+            if (comunaSelect) {
+                comunaSelect.removeAttribute('required');
+                comunaSelect.innerHTML = '<option value="">Seleccione una comuna</option>';
+            }
+            if (addressTextarea) {
+                addressTextarea.removeAttribute('required');
+                addressTextarea.value = '';
+            }
+            if (notesTextarea) {
+                notesTextarea.value = '';
+            }
         });
         
         if (cost > 0) {
@@ -247,9 +291,29 @@
                 const fields = document.getElementById(fieldsId);
                 if (fields) {
                     fields.style.display = 'block';
-                    fields.querySelectorAll('input, textarea').forEach(input => {
-                        input.setAttribute('required', 'required');
-                    });
+                    // Hacer required solo los campos necesarios (región, comuna, dirección)
+                    const regionSelect = fields.querySelector('#shipping-region');
+                    const comunaSelect = fields.querySelector('#shipping-comuna');
+                    const addressTextarea = fields.querySelector('textarea[name="shipping_address"]');
+                    if (regionSelect) {
+                        regionSelect.setAttribute('required', 'required');
+                        // Deshabilitar la opción por defecto para que no sea válida
+                        const firstOption = regionSelect.querySelector('option[value=""]');
+                        if (firstOption) {
+                            firstOption.disabled = true;
+                        }
+                    }
+                    if (comunaSelect) {
+                        comunaSelect.setAttribute('required', 'required');
+                        // Deshabilitar la opción por defecto para que no sea válida
+                        const firstComunaOption = comunaSelect.querySelector('option[value=""]');
+                        if (firstComunaOption) {
+                            firstComunaOption.disabled = true;
+                        }
+                    }
+                    if (addressTextarea) {
+                        addressTextarea.setAttribute('required', 'required');
+                    }
                 }
             }
         } else {
@@ -289,6 +353,102 @@
             updateShippingCost(cost);
         });
     });
+    
+    // Cargar comunas dinámicamente cuando se selecciona una región
+    const regionSelect = document.getElementById('shipping-region');
+    const comunaSelect = document.getElementById('shipping-comuna');
+    
+    if (regionSelect) {
+        regionSelect.addEventListener('change', function() {
+            const region = this.value;
+            comunaSelect.innerHTML = '<option value="">Seleccione una comuna</option>';
+            
+            if (region) {
+                // Hacer petición AJAX para obtener las comunas
+                fetch(`{% url 'shop:get_comunas' %}?region=${encodeURIComponent(region)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.comunas && data.comunas.length > 0) {
+                            data.comunas.forEach(comuna => {
+                                const option = document.createElement('option');
+                                option.value = comuna[0];
+                                option.textContent = comuna[1];
+                                comunaSelect.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al cargar comunas:', error);
+                    });
+            }
+        });
+    }
+    
+    // Validación antes de enviar el formulario
+    const checkoutForm = document.getElementById('checkout-form');
+    const submitBtn = document.getElementById('checkout-submit-btn');
+    
+    if (checkoutForm && submitBtn) {
+        checkoutForm.addEventListener('submit', function(e) {
+            const selectedShipping = document.querySelector('input[name="shipping_method"]:checked');
+            
+            if (selectedShipping) {
+                const shippingId = selectedShipping.value;
+                const shippingFields = document.getElementById('shipping-fields-' + shippingId);
+                
+                // Si el método de envío tiene costo (envío a domicilio)
+                if (shippingFields && shippingFields.style.display !== 'none') {
+                    const regionSelect = shippingFields.querySelector('#shipping-region');
+                    const comunaSelect = shippingFields.querySelector('#shipping-comuna');
+                    const addressTextarea = shippingFields.querySelector('textarea[name="shipping_address"]');
+                    
+                    let errors = [];
+                    
+                    if (!regionSelect || !regionSelect.value || regionSelect.value === '') {
+                        errors.push('• Debe seleccionar una región');
+                    }
+                    if (!comunaSelect || !comunaSelect.value || comunaSelect.value === '') {
+                        errors.push('• Debe seleccionar una comuna');
+                    }
+                    if (!addressTextarea || !addressTextarea.value || addressTextarea.value.trim() === '') {
+                        errors.push('• Debe ingresar la dirección');
+                    }
+                    
+                    if (errors.length > 0) {
+                        e.preventDefault();
+                        alert('❌ Por favor complete los siguientes campos para envío a domicilio:\n\n' + errors.join('\n'));
+                        return false;
+                    }
+                }
+            }
+            
+            // Validar información de contacto
+            const customerName = document.getElementById('customer_name');
+            const customerEmail = document.getElementById('customer_email');
+            
+            if (customerName && (!customerName.value || customerName.value.trim() === '')) {
+                e.preventDefault();
+                alert('❌ Debe ingresar su nombre completo');
+                return false;
+            }
+            
+            if (customerEmail && (!customerEmail.value || customerEmail.value.trim() === '')) {
+                e.preventDefault();
+                alert('❌ Debe ingresar su email');
+                return false;
+            }
+            
+            // Validar email formato
+            if (customerEmail && customerEmail.value) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(customerEmail.value)) {
+                    e.preventDefault();
+                    alert('❌ El email ingresado no es válido');
+                    return false;
+                }
+            }
+        });
+    }
 </script>
 {% endblock %}
 

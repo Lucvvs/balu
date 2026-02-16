@@ -4,6 +4,7 @@ from django.conf import settings
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV3
 from .models import Product, Coupon, ContactMessage, ShippingMethod, PaymentMethod, CustomUser
+from .utils import get_regiones_choices
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -132,22 +133,31 @@ class CheckoutForm(forms.Form):
         label="Método de pago",
         widget=forms.RadioSelect(attrs={'class': 'form-check-input'})
     )
-    shipping_region = forms.CharField(
-        max_length=100,
+    shipping_region = forms.ChoiceField(
+        choices=[('', 'Seleccione una región')] + get_regiones_choices(),
         required=False,
         label="Región",
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.Select(attrs={
+            'class': 'form-control form-select', 
+            'id': 'shipping-region',
+            'style': 'max-height: 200px; overflow-y: auto;'
+        })
     )
     shipping_comuna = forms.CharField(
         max_length=100,
         required=False,
         label="Comuna",
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        # No usar widget aquí, el select se maneja directamente en el template
     )
     shipping_address = forms.CharField(
         required=False,
         label="Dirección",
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3})
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Calle, número, departamento, etc.'})
+    )
+    shipping_notes = forms.CharField(
+        required=False,
+        label="Indicaciones adicionales",
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Ej: Llamar antes de llegar, dejar en recepción, etc.'})
     )
     customer_name = forms.CharField(
         max_length=200,
@@ -177,11 +187,11 @@ class CheckoutForm(forms.Form):
         # Solo validar campos de dirección si el método de envío tiene costo (envío a domicilio)
         # Si base_price es 0, es retiro y no requiere dirección
         if shipping_method and shipping_method.base_price > 0:
-            if not shipping_region:
-                raise forms.ValidationError("Debe ingresar la región para envío a domicilio.")
-            if not shipping_comuna:
-                raise forms.ValidationError("Debe ingresar la comuna para envío a domicilio.")
-            if not shipping_address:
+            if not shipping_region or shipping_region == '':
+                raise forms.ValidationError("Debe seleccionar la región para envío a domicilio.")
+            if not shipping_comuna or shipping_comuna == '':
+                raise forms.ValidationError("Debe seleccionar la comuna para envío a domicilio.")
+            if not shipping_address or shipping_address.strip() == '':
                 raise forms.ValidationError("Debe ingresar la dirección para envío a domicilio.")
 
         return cleaned_data

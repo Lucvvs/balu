@@ -48,15 +48,23 @@ if any(cmd in sys.argv for cmd in local_commands) and not IS_RENDER:
 # Configuración de ALLOWED_HOSTS
 ALLOWED_HOSTS_ENV = os.environ.get('ALLOWED_HOSTS', '').strip()
 
-if ALLOWED_HOSTS_ENV:
-    # Si se especifica en variables de entorno, usar esa configuración
-    ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',') if host.strip()]
-else:
-    # En desarrollo, usar localhost
-    if DEBUG:
-        ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+# En desarrollo, siempre incluir dominios de ngrok para probar webhooks de Mercado Pago
+# TODO: REMOVER dominios de ngrok antes de producción - solo deben estar en desarrollo
+if DEBUG:
+    # Base de hosts permitidos en desarrollo
+    base_hosts = ['localhost', '127.0.0.1', '.ngrok-free.dev', '.ngrok.io', '.ngrok.app']
+    
+    if ALLOWED_HOSTS_ENV:
+        # Si hay variable de entorno, combinar con los hosts base
+        env_hosts = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',') if host.strip()]
+        ALLOWED_HOSTS = list(set(base_hosts + env_hosts))  # set() elimina duplicados
     else:
-        # En producción (Render), aceptar cualquier dominio .onrender.com
+        ALLOWED_HOSTS = base_hosts
+else:
+    # En producción (Render), aceptar cualquier dominio .onrender.com
+    if ALLOWED_HOSTS_ENV:
+        ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_ENV.split(',') if host.strip()]
+    else:
         # El formato .onrender.com acepta cualquier subdominio (ej: balu-c7hx.onrender.com)
         ALLOWED_HOSTS = ['.onrender.com', '*']
 

@@ -184,7 +184,7 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user_display', 'status', 'total_display', 'payment_method', 'shipping_method', 'created_at')
+    list_display = ('order_number_display', 'user_display', 'status', 'total_display', 'payment_method', 'shipping_method', 'created_at')
     list_filter = ('status', 'payment_method', 'shipping_method', 'created_at')
     search_fields = ('id', 'user__email', 'customer_name', 'customer_email', 'customer_phone')
     readonly_fields = ('created_at', 'updated_at', 'total', 'subtotal', 'discount_total', 'shipping_cost')
@@ -206,11 +206,17 @@ class OrderAdmin(admin.ModelAdmin):
             'fields': ('subtotal', 'discount_total', 'total')
         }),
     )
-    actions = ['mark_as_confirmed', 'mark_as_preparing', 'mark_as_shipped', 'mark_as_delivered', 'mark_as_cancelled']
+    actions = ['mark_as_confirmed', 'mark_as_shipped', 'mark_as_ready_for_pickup', 'mark_as_delivered', 'mark_as_cancelled']
+
+    def order_number_display(self, obj):
+        """Muestra el número de pedido personalizado"""
+        return f"#{obj.order_number}"
+    order_number_display.short_description = 'Número de Pedido'
+    order_number_display.admin_order_field = 'id'  # Permite ordenar por ID
 
     def user_display(self, obj):
         if obj.user:
-            return obj.user.username
+            return obj.user.email
         return obj.customer_name or "Anónimo"
     user_display.short_description = 'Cliente'
 
@@ -223,15 +229,33 @@ class OrderAdmin(admin.ModelAdmin):
         queryset.update(status='confirmed')
         self.message_user(request, f'{queryset.count()} pedido(s) marcado(s) como confirmado(s).')
 
-    @admin.action(description='Marcar como preparando')
-    def mark_as_preparing(self, request, queryset):
-        queryset.update(status='preparing')
-        self.message_user(request, f'{queryset.count()} pedido(s) marcado(s) como preparando.')
-
     @admin.action(description='Marcar como enviado')
     def mark_as_shipped(self, request, queryset):
-        queryset.update(status='shipped')
-        self.message_user(request, f'{queryset.count()} pedido(s) marcado(s) como enviado(s).')
+        """Marca como enviado (solo para pedidos con envío)"""
+        updated = 0
+        for order in queryset:
+            if not order.is_pickup_order():
+                order.status = 'shipped'
+                order.save()
+                updated += 1
+        if updated > 0:
+            self.message_user(request, f'{updated} pedido(s) marcado(s) como enviado(s).')
+        else:
+            self.message_user(request, 'No se actualizó ningún pedido. Esta acción solo aplica a pedidos con envío.', level='warning')
+
+    @admin.action(description='Marcar como listo para retiro')
+    def mark_as_ready_for_pickup(self, request, queryset):
+        """Marca como listo para retiro (solo para pedidos de retiro en bodega)"""
+        updated = 0
+        for order in queryset:
+            if order.is_pickup_order():
+                order.status = 'ready_for_pickup'
+                order.save()
+                updated += 1
+        if updated > 0:
+            self.message_user(request, f'{updated} pedido(s) marcado(s) como listo(s) para retiro.')
+        else:
+            self.message_user(request, 'No se actualizó ningún pedido. Esta acción solo aplica a pedidos de retiro en bodega.', level='warning')
 
     @admin.action(description='Marcar como entregado')
     def mark_as_delivered(self, request, queryset):

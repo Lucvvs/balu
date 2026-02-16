@@ -183,10 +183,84 @@
                             <i class="bi bi-box-seam"></i> Seguir Comprando
                         </a>
                     </div>
+                    
+                    {% comment %} Barra de Progreso de Estados del Pedido {% endcomment %}
+                    {% with progress=order.get_status_progress %}
+                        {% if progress %}
+                            <div class="mt-5 mb-4">
+                                <h5 class="text-center mb-4">
+                                    <i class="bi bi-truck"></i> Estado de tu Pedido
+                                </h5>
+                                <div class="order-progress-container" style="position: relative; padding: 20px 0;">
+                                    <div class="progress-track" style="position: relative; height: 80px; margin: 0 40px;">
+                                        <!-- Línea de progreso -->
+                                        <div class="progress-line" style="position: absolute; top: 50%; left: 0; right: 0; height: 4px; background: linear-gradient(to right, #28a745 0%, #28a745 {{ progress.progress_percentage }}%, #e0e0e0 {{ progress.progress_percentage }}%, #e0e0e0 100%); transform: translateY(-50%); border-radius: 2px;"></div>
+                                        
+                                        <!-- Estados -->
+                                        {% for status_code, status_name in progress.statuses %}
+                                            <div class="status-point" style="position: absolute; top: 50%; left: calc({{ forloop.counter0 }} * (100% / {{ progress.statuses|length|add:-1 }})); transform: translate(-50%, -50%); text-align: center; width: 100px;">
+                                                <!-- Círculo del estado -->
+                                                <div class="status-circle" style="width: 50px; height: 50px; border-radius: 50%; background: {% if forloop.counter0 <= progress.current_index %}#28a745{% else %}#e0e0e0{% endif %}; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; border: 3px solid {% if forloop.counter0 <= progress.current_index %}#28a745{% else %}#e0e0e0{% endif %}; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                                    {% if forloop.counter0 < progress.current_index %}
+                                                        <i class="bi bi-check-circle-fill" style="color: white; font-size: 24px;"></i>
+                                                    {% elif forloop.counter0 == progress.current_index %}
+                                                        <!-- Imagen de moto en el estado actual -->
+                                                        <img src="{% static 'img/motoestado.png' %}" alt="Estado actual" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%; padding: 5px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                        <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center;">
+                                                            <i class="bi bi-bicycle" style="color: white; font-size: 28px;"></i>
+                                                        </div>
+                                                    {% else %}
+                                                        <i class="bi bi-circle" style="color: #999; font-size: 24px;"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <!-- Nombre del estado -->
+                                                <div class="status-label" style="font-size: 11px; color: {% if forloop.counter0 <= progress.current_index %}#28a745{% else %}#999{% endif %}; font-weight: {% if forloop.counter0 == progress.current_index %}bold{% else %}normal{% endif %};">
+                                                    {{ status_name }}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Estado actual destacado -->
+                                <div class="text-center mt-3">
+                                    <p class="mb-0">
+                                        <strong style="color: #28a745; font-size: 1.1rem;">
+                                            Estado Actual: {{ progress.current_status_display }}
+                                        </strong>
+                                    </p>
+                                </div>
+                            </div>
+                        {% elif order.status == 'cancelled' %}
+                            <div class="mt-5 mb-4">
+                                <div class="alert alert-danger text-center">
+                                    <i class="bi bi-x-circle"></i> <strong>Pedido Cancelado</strong>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    @media (max-width: 768px) {
+        .order-progress-container .progress-track {
+            margin: 0 20px !important;
+        }
+        .order-progress-container .status-point {
+            width: 70px !important;
+        }
+        .order-progress-container .status-circle {
+            width: 40px !important;
+            height: 40px !important;
+        }
+        .order-progress-container .status-label {
+            font-size: 9px !important;
+        }
+    }
+</style>
 {% endblock %}
 

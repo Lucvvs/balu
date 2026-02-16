@@ -18,6 +18,7 @@ from .models import (
     Product, Category, Brand, ProductImage, Cart, CartItem, Order, OrderItem,
     Coupon, ShippingMethod, PaymentMethod, ContactMessage, MetricEvent
 )
+from .utils import get_comunas_choices
 from .forms import (
     UserRegistrationForm, AddToCartForm, UpdateCartItemForm, CouponForm,
     CheckoutForm, ContactForm
@@ -445,7 +446,14 @@ def checkout(request):
 
     form = CheckoutForm(request.POST)
     if not form.is_valid():
-        messages.error(request, 'Por favor completa todos los campos requeridos.')
+        # Mostrar errores específicos del formulario
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, f'{field}: {error}')
+        # Si hay errores de validación personalizados (clean method)
+        if form.non_field_errors():
+            for error in form.non_field_errors():
+                messages.error(request, str(error))
         return redirect('shop:cart')
 
     # Verificar stock antes de procesar
@@ -467,6 +475,22 @@ def checkout(request):
     subtotal = cart.get_subtotal()
     shipping_method = form.cleaned_data['shipping_method']
     shipping_cost = shipping_method.base_price
+    
+    # Validación adicional para envío a domicilio
+    if shipping_method.base_price > 0:
+        shipping_region = form.cleaned_data.get('shipping_region', '').strip()
+        shipping_comuna = form.cleaned_data.get('shipping_comuna', '').strip()
+        shipping_address = form.cleaned_data.get('shipping_address', '').strip()
+        
+        if not shipping_region:
+            messages.error(request, '❌ Error: Debe seleccionar una región para envío a domicilio.')
+            return redirect('shop:cart')
+        if not shipping_comuna:
+            messages.error(request, '❌ Error: Debe seleccionar una comuna para envío a domicilio.')
+            return redirect('shop:cart')
+        if not shipping_address:
+            messages.error(request, '❌ Error: Debe ingresar la dirección para envío a domicilio.')
+            return redirect('shop:cart')
 
     # Aplicar descuento del cupón
     discount_total = 0
@@ -512,6 +536,7 @@ def checkout(request):
         shipping_region=form.cleaned_data.get('shipping_region'),
         shipping_comuna=form.cleaned_data.get('shipping_comuna'),
         shipping_address=form.cleaned_data.get('shipping_address'),
+        shipping_notes=form.cleaned_data.get('shipping_notes'),
         shipping_cost=shipping_cost,
         payment_method=payment_method,
         coupon=coupon,
@@ -521,7 +546,7 @@ def checkout(request):
         customer_name=form.cleaned_data.get('customer_name') or (request.user.get_full_name() if request.user.is_authenticated else None),
         customer_email=form.cleaned_data.get('customer_email') or (request.user.email if request.user.is_authenticated else None),
         customer_phone=form.cleaned_data.get('customer_phone'),
-        status='pending_payment' if is_mp else 'pending',
+        status='pending_payment' if is_mp else 'realized',
     )
 
     # Crear items del pedido y (si NO es Mercado Pago) actualizar stock inmediatamente
@@ -719,7 +744,7 @@ def mp_webhook(request: HttpRequest):
             order.status = 'cancelled'
         else:
             # in_process / pending / etc.
-            if order.status == 'pending':
+            if order.status == 'realized':
                 order.status = 'pending_payment'
 
         order.save(update_fields=[
@@ -846,3 +871,15 @@ def update_profile(request):
     
     messages.success(request, 'Perfil actualizado correctamente.')
     return redirect('shop:profile')
+
+
+def get_comunas(request):
+    """
+    Vista AJAX para obtener las comunas de una región específica
+    """
+    region = request.GET.get('region', '')
+    if not region:
+        return JsonResponse({'comunas': []})
+    
+    comunas = get_comunas_choices(region)
+    return JsonResponse({'comunas': comunas})

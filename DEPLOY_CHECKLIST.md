@@ -7,6 +7,9 @@
 - [ ] `build.sh` creado y verificado
 - [ ] `render.yaml` configurado (si usas despliegue automático)
 - [ ] Variables de entorno identificadas
+- [ ] **⚠️ IMPORTANTE: Verificar que `ALLOWED_HOSTS` en `settings.py` NO incluya dominios de ngrok (`.ngrok-free.dev`, `.ngrok.io`, `.ngrok.app`) en producción**
+  - Estos dominios solo deben estar en desarrollo (cuando `DEBUG=True`)
+  - En producción deben estar solo los dominios de producción (`.onrender.com` o tu dominio personalizado)
 
 ## Configuración en Render Dashboard
 

@@ -1,6 +1,8 @@
 """
-Utilidades para el envío de correos electrónicos
+Utilidades para el envío de correos electrónicos y carga de datos
 """
+import json
+from pathlib import Path
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
@@ -84,4 +86,116 @@ def send_order_notification_to_admin(order):
         # Log del error
         print(f'Error al enviar notificación al admin: {str(e)}')
         return False
+
+
+# =========================
+# Utilidades para Regiones y Comunas de Chile
+# =========================
+
+def get_regiones_comunas_data():
+    """
+    Carga los datos de regiones y comunas desde el archivo JSON
+    
+    Returns:
+        dict: Diccionario con la estructura de regiones y comunas
+        None: Si hay error al cargar el archivo
+    """
+    try:
+        # Obtener la ruta del archivo JSON
+        base_dir = Path(__file__).resolve().parent
+        json_path = base_dir / 'data' / 'regiones_comunas.json'
+        
+        if not json_path.exists():
+            print(f'Advertencia: No se encontró el archivo {json_path}')
+            return None
+        
+        with open(json_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        print(f'Error al cargar regiones y comunas: {str(e)}')
+        return None
+
+
+def get_regiones_choices():
+    """
+    Obtiene las opciones de regiones para usar en formularios
+    
+    Returns:
+        list: Lista de tuplas (valor, etiqueta) para ChoiceField
+    """
+    data = get_regiones_comunas_data()
+    if not data:
+        return []
+    
+    choices = []
+    
+    # Estructura del JSON: {"name": "Chile", "regions": [{"name": "...", "communes": [...]}, ...]}
+    if isinstance(data, dict):
+        if 'regions' in data:
+            for region in data['regions']:
+                if isinstance(region, dict):
+                    nombre = region.get('name')
+                    if nombre:
+                        choices.append((nombre, nombre))
+        # Estructura alternativa: {"regiones": [...]}
+        elif 'regiones' in data:
+            for region in data['regiones']:
+                if isinstance(region, dict):
+                    nombre = region.get('nombre') or region.get('name')
+                    if nombre:
+                        choices.append((nombre, nombre))
+    
+    return sorted(choices, key=lambda x: x[1])
+
+
+def get_comunas_choices(region=None):
+    """
+    Obtiene las opciones de comunas para una región específica
+    
+    Args:
+        region: Nombre de la región (opcional)
+    
+    Returns:
+        list: Lista de tuplas (valor, etiqueta) para ChoiceField
+    """
+    data = get_regiones_comunas_data()
+    if not data or not region:
+        return []
+    
+    choices = []
+    
+    # Estructura del JSON: {"name": "Chile", "regions": [{"name": "...", "communes": [...]}, ...]}
+    if isinstance(data, dict):
+        if 'regions' in data:
+            for reg in data['regions']:
+                if isinstance(reg, dict):
+                    region_name = reg.get('name')
+                    if region_name == region and 'communes' in reg:
+                        comunas = reg['communes']
+                        if isinstance(comunas, list):
+                            for comuna in comunas:
+                                if isinstance(comuna, dict):
+                                    comuna_name = comuna.get('name')
+                                    if comuna_name:
+                                        choices.append((comuna_name, comuna_name))
+                                elif isinstance(comuna, str):
+                                    choices.append((comuna, comuna))
+        # Estructura alternativa: {"regiones": [...]}
+        elif 'regiones' in data:
+            for reg in data['regiones']:
+                if isinstance(reg, dict):
+                    region_name = reg.get('nombre') or reg.get('name')
+                    if region_name == region and 'comunas' in reg:
+                        comunas = reg['comunas']
+                        if isinstance(comunas, list):
+                            for comuna in comunas:
+                                if isinstance(comuna, dict):
+                                    comuna_name = comuna.get('nombre') or comuna.get('name')
+                                    if comuna_name:
+                                        choices.append((comuna_name, comuna_name))
+                                elif isinstance(comuna, str):
+                                    choices.append((comuna, comuna))
+    
+    return sorted(choices, key=lambda x: x[1])
 
