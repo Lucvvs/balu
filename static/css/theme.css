@@ -586,21 +586,21 @@ body.navbar-scrolled {
 
 .product-card-image-container {
     width: 100%;
-    height: 250px;
+    height: 253px; /* Aumentado 15% (de 220px) */
     position: relative;
     overflow: hidden;
     background-color: #f8f9fa;
-    perspective: 1200px;
+    perspective: 1214px; /* Aumentado 15% (de 1056px) */
     transform-style: preserve-3d;
 }
 
 .product-card-img {
     width: 100%;
-    height: 250px;
+    height: 253px; /* Aumentado 15% (de 220px) */
     object-fit: contain;
     cursor: pointer;
     background-color: #f8f9fa;
-    padding: 0.75rem;
+    padding: 0.759rem; /* Aumentado 15% (de 0.66rem) */
     position: absolute;
     top: 0;
     left: 0;
@@ -630,13 +630,14 @@ body.navbar-scrolled {
 }
 
 .product-card-body {
-    padding: 0.2rem 0.5rem;
-    flex-grow: 0;
+    padding: 0.16rem 0.4rem; /* Reducido 20% */
+    flex-grow: 1; /* Permite que el body crezca para llenar el espacio */
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: space-between; /* Distribuye el contenido uniformemente */
     align-items: stretch;
+    min-height: 0; /* Permite que el contenido se ajuste */
 }
 
 /* Enlace que envuelve texto, descripción y precio en tarjetas de productos */
@@ -656,25 +657,33 @@ body.navbar-scrolled {
 }
 
 .product-card-title {
-    font-size: 0.95rem;
+    font-size: 0.836rem; /* Aumentado 10% (de 0.76rem) */
     font-weight: bold;
-    margin-bottom: 0.05rem;
+    margin-bottom: 0.044rem; /* Aumentado proporcionalmente */
     color: var(--text-color);
     cursor: pointer;
     flex-shrink: 0;
-    line-height: 1.1;
-}
-
-.product-card-description {
-    color: #495057;
-    font-size: 0.75rem;
-    margin-bottom: 0;
-    margin-top: 0;
-    line-height: 1.1;
+    line-height: 1.2;
+    height: 2.112rem; /* Aumentado 10% (de 1.92rem) */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.product-card-description {
+    color: #495057;
+    font-size: 0.66rem; /* Aumentado 10% (de 0.6rem) */
+    margin-bottom: 0;
+    margin-top: 0;
+    line-height: 1.2;
+    height: 1.584rem; /* Aumentado 10% (de 1.44rem) */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
     cursor: pointer;
     flex-shrink: 0;
 }
@@ -698,7 +707,7 @@ body.navbar-scrolled {
 .product-card-price {
     order: 30;
     flex-shrink: 0;
-    margin-top: 0.15rem; /* Margen por defecto cuando no hay alerta (reserva espacio) */
+    margin-top: 0.12rem; /* Reducido 20% (de 0.15rem) */
     margin-bottom: 0;
     cursor: pointer;
 }
@@ -711,18 +720,18 @@ body.navbar-scrolled {
 .price-original {
     text-decoration: line-through;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.792rem; /* Aumentado 10% (de 0.72rem) */
 }
 
 .price-offer {
     color: var(--primary-color);
-    font-size: 1.1rem;
+    font-size: 0.968rem; /* Aumentado 10% (de 0.88rem) */
     font-weight: bold;
     line-height: 1.1;
 }
 
 .price-normal {
-    font-size: 1.1rem;
+    font-size: 0.968rem; /* Aumentado 10% (de 0.88rem) */
     font-weight: bold;
     color: var(--text-color);
     line-height: 1.1;
@@ -730,9 +739,9 @@ body.navbar-scrolled {
 
 .product-card-actions {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 0.1rem;
-    padding-top: 0.05rem;
+    gap: 0.4rem; /* Reducido 20% (de 0.5rem) */
+    margin-top: 0.08rem; /* Reducido 20% (de 0.1rem) */
+    padding-top: 0.04rem; /* Reducido 20% (de 0.05rem) */
     flex-shrink: 0;
 }
 
@@ -740,8 +749,9 @@ body.navbar-scrolled {
     background-color: var(--primary-color);
     color: var(--white);
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    padding: 0.4rem 0.8rem; /* Reducido 20% (de 0.5rem 1rem) */
+    border-radius: 3px; /* Reducido proporcionalmente */
+    font-size: 0.8rem; /* Reducido 20% (asumiendo tamaño base de 1rem) */
     flex: 1;
     transition: background-color 0.3s;
 }
@@ -755,9 +765,10 @@ body.navbar-scrolled {
     background-color: var(--success-color);
     color: var(--white);
     border: none;
-    padding: 0.5rem;
-    border-radius: 4px;
-    width: 40px;
+    padding: 0.4rem; /* Reducido 20% (de 0.5rem) */
+    border-radius: 3px; /* Reducido proporcionalmente */
+    width: 32px; /* Reducido 20% (de 40px) */
+    font-size: 0.8rem; /* Reducido 20% */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -809,12 +820,15 @@ body.navbar-scrolled {
 .product-card {
     position: relative;
     background: var(--white);
-    border-radius: 20px;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
     border: 2px solid transparent;
-    height: auto;
+    height: 100%; /* Altura completa del contenedor */
+    min-height: 422px; /* Aumentado 10% (de 384px) */
+    max-width: 85%; /* Aumentado 5% (de 80%) */
+    margin: 0 auto; /* Centrar la tarjeta */
     display: flex;
     flex-direction: column;
 }
@@ -831,15 +845,15 @@ body.navbar-scrolled {
     left: 15px;
     background: linear-gradient(135deg, var(--primary-color), #ff6b35);
     color: var(--white);
-    padding: 0.75rem 1.5rem;
-    border-radius: 25px;
-    font-size: 1rem;
+    padding: 0.525rem 1.05rem; /* Reducido 30% (de 0.75rem 1.5rem) */
+    border-radius: 18px; /* Reducido proporcionalmente */
+    font-size: 0.7rem; /* Reducido 30% (de 1rem) */
     font-weight: 900;
     z-index: 100;
     pointer-events: none;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    letter-spacing: 0.7px; /* Reducido proporcionalmente */
+    box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4); /* Reducido proporcionalmente */
     animation: badgePulse 2s ease-in-out infinite;
 }
 
@@ -1688,7 +1702,11 @@ body.navbar-scrolled {
     }
     
     .product-card-img {
-        height: 200px;
+        height: 230px; /* Aumentado 15% (de 200px) */
+    }
+    
+    .product-card-image-container {
+        height: 230px; /* Aumentado 15% (de 200px) */
     }
     
     .product-card-title {
@@ -1849,7 +1867,33 @@ body.navbar-scrolled {
     }
     
     .brand-logo {
-        height: 42px;
+        max-height: 60px; /* Aumentado para estandarizar en móvil */
+        max-width: 120px; /* Añadido max-width para consistencia */
+        height: auto;
+        width: auto;
+    }
+    
+    /* Ajustar tamaños específicos en móvil manteniendo proporciones */
+    .brand-logo-hro {
+        max-height: 69px; /* 60px + 15% */
+        max-width: 138px; /* 120px + 15% */
+    }
+    
+    .brand-logo-motocentric,
+    .brand-logo-kovix {
+        max-height: 72px; /* 60px + 20% */
+        max-width: 144px; /* 120px + 20% */
+    }
+    
+    .brand-logo-4rs {
+        max-height: 60px; /* Mantiene tamaño estándar */
+        max-width: 120px;
+    }
+    
+    .brand-logo-link {
+        height: 75px; /* Ajustado para móvil */
+        width: 144px; /* Ajustado para móvil */
+        min-width: 144px;
     }
     
     .brands-scroll {
@@ -1870,20 +1914,28 @@ body.navbar-scrolled {
     }
 
     .product-card-actions {
-        flex-direction: column;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.4rem;
+        flex-wrap: nowrap;
     }
 
     .btn-view-detail {
-        width: 100%;
-        margin-bottom: 0.5rem;
+        flex: 1;
+        min-width: 0;
+        margin-bottom: 0;
+    }
+    
+    .btn-add-cart {
+        flex-shrink: 0;
     }
     
     .product-card-image-container {
-        height: 380px;
+        height: 437px; /* Aumentado 15% (de 380px) */
     }
     
     .product-card-img {
-        height: 380px;
+        height: 437px; /* Aumentado 15% (de 380px) */
     }
     
     .cart-item {
