@@ -27,13 +27,13 @@ body {
     color: var(--text-color);
     background-color: var(--light-bg);
     line-height: 1.6;
-    padding-top: 80px; /* Espacio para el navbar fijo inicial */
+    padding-top: 110px; /* Espacio para el navbar fijo inicial */
     transition: padding-top 0.3s ease;
 }
 
 /* Ajustar padding cuando el navbar está scrolled */
 body.navbar-scrolled {
-    padding-top: 60px;
+    padding-top: 90px;
 }
 
 /* Navbar */
