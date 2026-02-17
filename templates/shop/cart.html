@@ -18,7 +18,7 @@
     {% if cart and cart.items.count > 0 %}
         <div class="row">
             <!-- Left Column: Cart Items -->
-            <div class="col-lg-{% if cart.items.count <= 2 %}6{% else %}8{% endif %} col-md-12 mb-4">
+            <div class="col-lg-6 col-md-12 mb-4">
                 <div class="cart-items-container">
                     {% for item in cart.items.all %}
                         <div class="cart-item">
@@ -52,16 +52,29 @@
                                 </div>
                             </div>
                                 <div class="cart-item-actions">
-                                    <form method="post" action="{% url 'shop:update_cart_item' item_id=item.id %}" class="d-flex align-items-center gap-2">
+                                    <form method="post" action="{% url 'shop:update_cart_item' item_id=item.id %}" class="quantity-form" id="quantity-form-{{ item.id }}">
                                         {% csrf_token %}
-                                        <label for="quantity-{{ item.id }}" class="mb-0">Cantidad:</label>
-                                        <input type="number" name="quantity" id="quantity-{{ item.id }}" 
-                                               value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" 
-                                               class="form-control" style="width: 80px;" required>
-                                        <button type="submit" class="btn btn-sm btn-primary">Actualizar</button>
+                                        <label for="quantity-{{ item.id }}" class="mb-0 me-2">Cantidad:</label>
+                                        <div class="quantity-controls">
+                                            <button type="button" class="quantity-btn quantity-decrease" 
+                                                    data-item-id="{{ item.id }}" 
+                                                    data-current-quantity="{{ item.quantity }}"
+                                                    data-max-quantity="{{ item.product.stock }}">
+                                                <i class="bi bi-dash-lg"></i>
+                                            </button>
+                                            <input type="number" name="quantity" id="quantity-{{ item.id }}" 
+                                                   value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" 
+                                                   class="quantity-input" readonly>
+                                            <button type="button" class="quantity-btn quantity-increase" 
+                                                    data-item-id="{{ item.id }}" 
+                                                    data-current-quantity="{{ item.quantity }}"
+                                                    data-max-quantity="{{ item.product.stock }}">
+                                                <i class="bi bi-plus-lg"></i>
+                                            </button>
+                                        </div>
                                     </form>
                                     <div class="ms-auto">
-                                        <strong class="fs-5">Total: {{ item.get_line_total|currency_clp }}</strong>
+                                        <strong class="fs-5">Total: <span class="item-total" id="item-total-{{ item.id }}">{{ item.get_line_total|currency_clp }}</span></strong>
                                     </div>
                                     <form method="post" action="{% url 'shop:remove_cart_item' item_id=item.id %}" class="d-inline">
                                         {% csrf_token %}
@@ -77,7 +90,7 @@
             </div>
             
             <!-- Right Column: Order Summary -->
-            <div class="col-lg-{% if cart.items.count <= 2 %}6{% else %}4{% endif %} col-md-12">
+            <div class="col-lg-6 col-md-12">
                 <div class="cart-summary-container">
                 <div class="cart-summary">
                     <h4 class="mb-3">Resumen</h4>
@@ -240,6 +253,165 @@
 
 {% block extra_js %}
 <script>
+    // Funcionalidad de botones de cantidad + y -
+    document.addEventListener('DOMContentLoaded', function() {
+        // Botón de aumentar cantidad
+        document.querySelectorAll('.quantity-increase').forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-item-id');
+                const input = document.getElementById('quantity-' + itemId);
+                const currentValue = parseInt(input.value);
+                const maxValue = parseInt(this.getAttribute('data-max-quantity'));
+                
+                if (currentValue < maxValue) {
+                    input.value = currentValue + 1;
+                    updateCartItem(itemId, input.value);
+                } else {
+                    // Mostrar toast de error
+                    if (typeof showToast === 'function') {
+                        showToast('No hay suficiente stock disponible.', 'warning');
+                    } else {
+                        alert('No hay suficiente stock disponible.');
+                    }
+                }
+            });
+        });
+        
+        // Botón de disminuir cantidad
+        document.querySelectorAll('.quantity-decrease').forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-item-id');
+                const input = document.getElementById('quantity-' + itemId);
+                const currentValue = parseInt(input.value);
+                
+                if (currentValue > 1) {
+                    input.value = currentValue - 1;
+                    updateCartItem(itemId, input.value);
+                }
+            });
+        });
+    });
+    
+    // Función para actualizar el carrito mediante AJAX
+    function updateCartItem(itemId, quantity) {
+        const form = document.getElementById('quantity-form-' + itemId);
+        const formData = new FormData(form);
+        const itemTotalElement = document.getElementById('item-total-' + itemId);
+        
+        // Mostrar indicador de carga
+        if (itemTotalElement) {
+            const originalText = itemTotalElement.textContent;
+            itemTotalElement.innerHTML = '<span class="spinner-border spinner-border-sm" style="width: 1rem; height: 1rem;"></span>';
+        }
+        
+        // Deshabilitar botones temporalmente
+        const quantityButtons = form.querySelectorAll('.quantity-btn');
+        quantityButtons.forEach(btn => btn.disabled = true);
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+        .then(response => {
+            // Si hay redirección, recargar la página
+            if (response.redirected) {
+                window.location.href = response.url;
+                return null;
+            }
+            
+            // Verificar si la respuesta es JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json().then(data => {
+                    if (data.error) {
+                        // Mostrar error con toast
+                        if (typeof showToast === 'function') {
+                            showToast(data.error, 'warning');
+                        }
+                        throw new Error(data.error);
+                    }
+                    return data;
+                });
+            } else {
+                // Si no es JSON, recargar la página
+                window.location.reload();
+                return null;
+            }
+        })
+        .then(data => {
+            if (data) {
+                // Si el item fue eliminado, recargar la página
+                if (data.deleted) {
+                    window.location.reload();
+                    return;
+                }
+                
+                // Actualizar total del item
+                if (data.item_total && itemTotalElement) {
+                    itemTotalElement.textContent = data.item_total;
+                }
+                
+                // Actualizar subtotal y total en el resumen
+                if (data.cart_subtotal) {
+                    const subtotalElement = document.querySelector('.summary-row:first-of-type span:last-child');
+                    const totalAmount = document.getElementById('total-amount');
+                    
+                    if (subtotalElement) {
+                        subtotalElement.textContent = data.cart_subtotal;
+                    }
+                    if (totalAmount) {
+                        // Obtener el costo de envío actual
+                        const shippingRow = document.getElementById('shipping-row');
+                        let shippingCost = 0;
+                        if (shippingRow && shippingRow.style.display !== 'none') {
+                            const shippingCostText = document.getElementById('shipping-cost').textContent;
+                            shippingCost = parseInt(shippingCostText.replace(/[$.]/g, '')) || 0;
+                        }
+                        
+                        // Calcular nuevo total (subtotal + envío - descuento)
+                        const subtotalValue = parseInt(data.cart_subtotal.replace(/[$.]/g, '')) || 0;
+                        const discountRow = document.getElementById('discount-row');
+                        let discount = 0;
+                        if (discountRow && discountRow.style.display !== 'none') {
+                            const discountText = document.getElementById('discount-amount').textContent;
+                            discount = parseInt(discountText.replace(/[$.]/g, '')) || 0;
+                        }
+                        
+                        const newTotal = subtotalValue + shippingCost - discount;
+                        totalAmount.textContent = new Intl.NumberFormat('es-CL', {
+                            style: 'currency',
+                            currency: 'CLP',
+                            minimumFractionDigits: 0
+                        }).format(newTotal).replace('CLP', '$');
+                    }
+                }
+            }
+            
+            // Rehabilitar botones
+            quantityButtons.forEach(btn => btn.disabled = false);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Rehabilitar botones
+            quantityButtons.forEach(btn => btn.disabled = false);
+            
+            // Mostrar mensaje de error con toast
+            if (error.message) {
+                if (typeof showToast === 'function') {
+                    showToast('Error: ' + error.message, 'error');
+                } else {
+                    alert('Error: ' + error.message);
+                }
+            }
+            
+            // Recargar página en caso de error
+            window.location.reload();
+        });
+    }
+    
     function updateShippingCost(cost) {
         const shippingRow = document.getElementById('shipping-row');
         const shippingCost = document.getElementById('shipping-cost');

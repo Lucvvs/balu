@@ -27,6 +27,18 @@ from .utils import send_order_confirmation_email, send_order_notification_to_adm
 from .mercadopago_client import create_checkout_pro_preference, get_payment
 
 
+def format_currency_clp(value):
+    """Formatea un valor numérico como moneda chilena (CLP)"""
+    if value is None:
+        return '$0'
+    try:
+        amount = int(value)
+        formatted = f"${amount:,}".replace(',', '.')
+        return formatted
+    except (ValueError, TypeError):
+        return '$0'
+
+
 def get_or_create_cart(request):
     """Helper para obtener o crear carrito basado en usuario o sesión"""
     if request.user.is_authenticated:
@@ -314,30 +326,48 @@ def update_cart_item(request, item_id):
     cart = cart_item.cart
     if request.user.is_authenticated:
         if cart.user != request.user:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'error': 'No tienes permiso para modificar este carrito.'}, status=403)
             messages.error(request, 'No tienes permiso para modificar este carrito.')
             return redirect('shop:cart')
     else:
         if cart.session_key != request.session.session_key:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'error': 'No tienes permiso para modificar este carrito.'}, status=403)
             messages.error(request, 'No tienes permiso para modificar este carrito.')
             return redirect('shop:cart')
 
     form = UpdateCartItemForm(request.POST)
     if not form.is_valid():
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'error': 'Cantidad inválida.'}, status=400)
         messages.error(request, 'Cantidad inválida.')
         return redirect('shop:cart')
 
     quantity = form.cleaned_data['quantity']
     
     if quantity > cart_item.product.stock:
-        messages.error(request, f'No hay suficiente stock. Stock disponible: {cart_item.product.stock}')
+        error_msg = f'No hay suficiente stock. Stock disponible: {cart_item.product.stock}'
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'error': error_msg}, status=400)
+        messages.error(request, error_msg)
         return redirect('shop:cart')
 
     if quantity <= 0:
         cart_item.delete()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'deleted': True, 'cart_subtotal': format_currency_clp(cart.get_subtotal())})
         messages.success(request, 'Item eliminado del carrito.')
     else:
         cart_item.quantity = quantity
         cart_item.save()
+        # Si es petición AJAX, devolver JSON con los datos actualizados
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'item_total': format_currency_clp(cart_item.get_line_total()),
+                'cart_subtotal': format_currency_clp(cart.get_subtotal())
+            })
         messages.success(request, 'Carrito actualizado.')
 
     return redirect('shop:cart')
