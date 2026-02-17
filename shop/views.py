@@ -96,9 +96,13 @@ def products_list(request):
         brand_slug = brand_slug.lower().strip()  # Normalizar a minúsculas
         products = products.filter(brand__slug__iexact=brand_slug)
 
-    # Filtro por ofertas
+    # Filtro por ofertas - solo productos que realmente tienen oferta válida
     if request.GET.get('offers') == 'true':
-        products = products.filter(is_offer=True)
+        from django.db.models import F
+        products = products.filter(
+            offer_price__isnull=False,
+            offer_price__lt=F('price')
+        )
 
     # Búsqueda
     search_query = request.GET.get('search')
@@ -125,6 +129,9 @@ def products_list(request):
 
     # Categorías para el filtro
     categories = Category.objects.filter(is_active=True)
+    
+    # Estado de filtro de ofertas
+    current_offers = request.GET.get('offers') == 'true'
 
     context = {
         'products': page_obj,
@@ -133,6 +140,7 @@ def products_list(request):
         'current_brand': brand_slug,
         'current_search': search_query,
         'current_sort': sort_by,
+        'current_offers': current_offers,
     }
     return render(request, 'shop/products_list.html', context)
 
