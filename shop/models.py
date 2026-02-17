@@ -52,6 +52,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
+    @property
+    def username(self):
+        """Propiedad username que devuelve el email para compatibilidad con django-allauth"""
+        return self.email
+
     def get_full_name(self):
         """Retorna el nombre completo"""
         return f"{self.first_name} {self.last_name}".strip()

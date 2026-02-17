@@ -216,6 +216,13 @@ MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 # Convertir a string para compatibilidad con django.views.static.serve
 MEDIA_ROOT = str(MEDIA_ROOT)
 
+# Configuración de CSRF
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'https://motomotocr.onrender.com',
+]
+
 # Configuración de seguridad para producción
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
@@ -224,6 +231,10 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
+else:
+    # En desarrollo, asegurar que las cookies CSRF funcionen
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

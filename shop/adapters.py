@@ -43,6 +43,16 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         """Sobrescribir para no generar username, usar email en su lugar"""
         # No generar username, retornar None o email
         return None
+    
+    def get_user_display(self, user):
+        """Retornar el display name del usuario para compatibilidad con django-allauth"""
+        # Usar get_full_name si está disponible, sino email
+        if hasattr(user, 'get_full_name'):
+            name = user.get_full_name()
+            if name:
+                return name
+        # Si no hay nombre completo, usar email
+        return user.email if hasattr(user, 'email') else str(user)
 
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):

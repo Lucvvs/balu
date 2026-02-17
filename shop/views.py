@@ -796,7 +796,9 @@ def register_view(request):
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            # Especificar el backend de autenticación
+            from django.contrib.auth.backends import ModelBackend
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, f'¡Cuenta creada exitosamente, {user.first_name}!')
             return redirect('shop:home')
     else:
@@ -819,7 +821,8 @@ def login_view(request):
         if email and password:
             user = authenticate(request, username=email, password=password)
             if user is not None:
-                login(request, user)
+                # Especificar el backend de autenticación
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 messages.success(request, f'¡Bienvenido, {user.first_name or user.email}!')
                 next_url = request.GET.get('next', 'shop:home')
                 return redirect(next_url)
