@@ -540,3 +540,21 @@ class MetricEvent(models.Model):
 
     def __str__(self):
         return f"{self.get_event_type_display()} - {self.created_at.strftime('%d/%m/%Y %H:%M')}"
+
+
+class PromotionalBanner(models.Model):
+    """Modelo para las franjas promocionales rotativas"""
+    text = models.CharField(max_length=200, verbose_name="Texto promocional")
+    is_active = models.BooleanField(default=True, verbose_name="Activo")
+    order = models.IntegerField(default=0, verbose_name="Orden", 
+                                help_text="Número menor = aparece primero. Usar 0 para no mostrar.")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Fecha de actualización")
+
+    class Meta:
+        verbose_name = "Franja Promocional"
+        verbose_name_plural = "Franjas Promocionales"
+        ordering = ['order', 'created_at']
+
+    def __str__(self):
+        return self.text

@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from .models import (
     CustomUser, Brand, Category, Product, ProductImage, Coupon, ShippingMethod, PaymentMethod,
-    Cart, CartItem, Order, OrderItem, ContactMessage, MetricEvent
+    Cart, CartItem, Order, OrderItem, ContactMessage, MetricEvent, PromotionalBanner
 )
 
 
@@ -309,6 +309,24 @@ class MetricEventAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False  # Los eventos solo se crean automáticamente
+
+
+@admin.register(PromotionalBanner)
+class PromotionalBannerAdmin(admin.ModelAdmin):
+    list_display = ('text', 'order', 'is_active', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('text',)
+    ordering = ('order', 'created_at')
+    fieldsets = (
+        ('Información', {
+            'fields': ('text', 'is_active', 'order')
+        }),
+        ('Fechas', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    readonly_fields = ('created_at', 'updated_at')
 
 
 # Configurar el sitio de admin

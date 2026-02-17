@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 from .models import (
     Product, Category, Brand, ProductImage, Cart, CartItem, Order, OrderItem,
-    Coupon, ShippingMethod, PaymentMethod, ContactMessage, MetricEvent
+    Coupon, ShippingMethod, PaymentMethod, ContactMessage, MetricEvent, PromotionalBanner
 )
 from .utils import get_comunas_choices
 from .forms import (
@@ -68,11 +68,17 @@ def home(request):
     brands_dict = {brand.slug: brand for brand in Brand.objects.filter(is_active=True)}
     brands = [brands_dict[slug] for slug in brand_order if slug in brands_dict]
 
+    # Franjas promocionales (máximo 3, ordenadas por order)
+    promotional_banners = PromotionalBanner.objects.filter(
+        is_active=True
+    ).order_by('order', 'created_at')[:3]
+
     context = {
         'offers': offers,
         'best_sellers': best_sellers,
         'categories': categories,
         'brands': brands,
+        'promotional_banners': promotional_banners,
     }
     return render(request, 'shop/home.html', context)
 

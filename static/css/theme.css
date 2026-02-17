@@ -917,6 +917,121 @@ body.navbar-scrolled {
     }
 }
 
+/* Promotional Banner Rotativo */
+.promotional-banner-section {
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.15) 0%, rgba(255, 107, 53, 0.25) 100%);
+    padding: 0.5rem 0;
+    margin: 2rem 0;
+    position: relative;
+    overflow: hidden;
+    border-top: 1px solid rgba(255, 107, 53, 0.2);
+    border-bottom: 1px solid rgba(255, 107, 53, 0.2);
+}
+
+.promotional-banner-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    position: relative;
+}
+
+.promotional-banner-slider {
+    position: relative;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.promotional-banner-item {
+    position: absolute;
+    width: 100%;
+    left: 0;
+    top: 0;
+    height: 100%;
+    text-align: center;
+    transform: translateX(100%);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+    box-sizing: border-box;
+}
+
+.promotional-banner-item.active {
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+.promotional-banner-item.slide-out {
+    transform: translateX(-100%);
+}
+
+.promotional-banner-item.slide-in {
+    transform: translateX(100%);
+}
+
+.promotional-banner-text {
+    color: var(--primary-color);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    line-height: 1.4;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .promotional-banner-text {
+        font-size: 0.85rem;
+        line-height: 1.3;
+    }
+    
+    .promotional-banner-slider {
+        height: 36px;
+    }
+    
+    .promotional-banner-section {
+        padding: 0.4rem 0;
+    }
+    
+    .promotional-banner-item {
+        padding: 0 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .promotional-banner-text {
+        font-size: 0.75rem;
+        letter-spacing: 0.3px;
+        line-height: 1.3;
+    }
+    
+    .promotional-banner-slider {
+        height: 34px;
+    }
+    
+    .promotional-banner-section {
+        padding: 0.35rem 0;
+    }
+    
+    .promotional-banner-item {
+        padding: 0 0.5rem;
+    }
+    
+    .promotional-banner-container {
+        padding: 0 0.75rem;
+    }
+}
+
 /* Service Banner */
 .service-banner {
     display: grid;
@@ -2734,4 +2849,3 @@ body.navbar-scrolled {
         transform: rotate(360deg);
     }
 }
-
