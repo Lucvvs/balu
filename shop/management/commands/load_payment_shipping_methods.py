@@ -9,6 +9,7 @@ Uso:
 import os
 import shutil
 from pathlib import Path
+from io import BytesIO
 from django.core.management.base import BaseCommand
 from django.core.files import File
 from django.conf import settings
@@ -40,10 +41,12 @@ class Command(BaseCommand):
         
         if source_file.exists():
             try:
-                # Abrir el archivo y crear un objeto File de Django
+                # Leer el contenido del archivo en memoria
                 with open(source_file, 'rb') as f:
-                    django_file = File(f, name=filename)
-                    return django_file
+                    file_content = f.read()
+                # Crear un objeto File de Django desde el contenido en memoria
+                django_file = File(BytesIO(file_content), name=filename)
+                return django_file
             except Exception as e:
                 self.stdout.write(self.style.WARNING(f'   [ADVERTENCIA] No se pudo leer {source_path}: {str(e)}'))
                 return None

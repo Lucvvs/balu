@@ -185,24 +185,36 @@
                     
                     <!-- Payment Method -->
                     <div class="checkout-section">
-                        <h5>Método de pago</h5>
-                        <div class="row g-2">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h5 class="mb-0">Método de pago</h5>
+                            <div class="payment-secure-image-container">
+                                <img src="{% static 'img/pago_seguro.png' %}" alt="Pago Seguro" class="payment-secure-image">
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
                             {% for payment in payment_methods %}
-                                <div class="col-6">
-                                    <div class="checkout-option">
+                                <div class="col-12 col-md-6">
+                                    <label for="payment-{{ payment.id }}" class="checkout-option checkout-option-payment">
                                         <input type="radio" name="payment_method" id="payment-{{ payment.id }}" 
                                                value="{{ payment.id }}" required
                                                {% if forloop.first %}checked{% endif %}>
-                                        <label for="payment-{{ payment.id }}" class="ms-2 d-flex align-items-center">
-                                            {% if payment.image %}
-                                                <img src="{{ payment.image.url }}" alt="{{ payment.name }}" 
-                                                     style="max-width: 40px; max-height: 40px; margin-right: 8px; object-fit: contain;">
-                                            {% endif %}
-                                            <span>{{ payment.name }}</span>
-                                        </label>
-                                    </div>
+                                        <span class="checkout-payment-label">
+                                            <span class="payment-name">{{ payment.name }}</span>
+                                            <span class="payment-image-container">
+                                                {% if payment.image %}
+                                                    <img src="{{ payment.image.url }}" alt="{{ payment.name }}" class="payment-image">
+                                                {% else %}
+                                                    <span class="payment-image-placeholder"></span>
+                                                {% endif %}
+                                            </span>
+                                        </span>
+                                    </label>
                                 </div>
                             {% endfor %}
+                        </div>
+                        <div id="mercado-pago-message" class="mercado-pago-message" style="display: none;">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Al finalizar la compra serás redireccionado a MercadoPago para realizar tu pago seguro</span>
                         </div>
                     </div>
                     
@@ -270,8 +282,6 @@
                     // Mostrar toast de error
                     if (typeof showToast === 'function') {
                         showToast('No hay suficiente stock disponible.', 'warning');
-                    } else {
-                        alert('No hay suficiente stock disponible.');
                     }
                 }
             });
@@ -394,16 +404,14 @@
             quantityButtons.forEach(btn => btn.disabled = false);
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error al actualizar item del carrito:', error);
             // Rehabilitar botones
             quantityButtons.forEach(btn => btn.disabled = false);
             
             // Mostrar mensaje de error con toast
             if (error.message) {
                 if (typeof showToast === 'function') {
-                    showToast('Error: ' + error.message, 'error');
-                } else {
-                    alert('Error: ' + error.message);
+                    showToast(error.message, 'error');
                 }
             }
             
@@ -551,6 +559,9 @@
                     })
                     .catch(error => {
                         console.error('Error al cargar comunas:', error);
+                        if (typeof showToast === 'function') {
+                            showToast('Error al cargar las comunas. Por favor, intente nuevamente.', 'error');
+                        }
                     });
             }
         });
@@ -588,7 +599,9 @@
                     
                     if (errors.length > 0) {
                         e.preventDefault();
-                        alert('❌ Por favor complete los siguientes campos para envío a domicilio:\n\n' + errors.join('\n'));
+                        if (typeof showToast === 'function') {
+                            showToast('Por favor complete los siguientes campos para envío a domicilio:\n\n' + errors.join('\n'), 'warning');
+                        }
                         return false;
                     }
                 }
@@ -600,13 +613,17 @@
             
             if (customerName && (!customerName.value || customerName.value.trim() === '')) {
                 e.preventDefault();
-                alert('❌ Debe ingresar su nombre completo');
+                if (typeof showToast === 'function') {
+                    showToast('Debe ingresar su nombre completo', 'warning');
+                }
                 return false;
             }
             
             if (customerEmail && (!customerEmail.value || customerEmail.value.trim() === '')) {
                 e.preventDefault();
-                alert('❌ Debe ingresar su email');
+                if (typeof showToast === 'function') {
+                    showToast('Debe ingresar su email', 'warning');
+                }
                 return false;
             }
             
@@ -615,12 +632,81 @@
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(customerEmail.value)) {
                     e.preventDefault();
-                    alert('❌ El email ingresado no es válido');
+                    if (typeof showToast === 'function') {
+                        showToast('El email ingresado no es válido', 'warning');
+                    }
                     return false;
                 }
             }
         });
     }
+    
+    // Hacer que toda la tarjeta de método de pago sea clickeable
+    document.addEventListener('DOMContentLoaded', function() {
+        // Agregar clase 'selected' cuando un método de pago está seleccionado
+        function updatePaymentMethodStyles() {
+            document.querySelectorAll('.checkout-option-payment input[type="radio"]').forEach(radio => {
+                const label = radio.closest('.checkout-option-payment');
+                if (radio.checked) {
+                    label.classList.add('selected');
+                } else {
+                    label.classList.remove('selected');
+                }
+            });
+        }
+        
+        // Actualizar estilos al cargar la página
+        updatePaymentMethodStyles();
+        
+        // Actualizar estilos cuando cambia la selección
+        document.querySelectorAll('.checkout-option-payment input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', updatePaymentMethodStyles);
+        });
+        
+        // Asegurar que hacer click en cualquier parte de la tarjeta seleccione el radio
+        document.querySelectorAll('.checkout-option-payment').forEach(label => {
+            label.addEventListener('click', function(e) {
+                // Si el click no fue directamente en el input, activarlo
+                if (e.target !== label.querySelector('input[type="radio"]')) {
+                    const radio = label.querySelector('input[type="radio"]');
+                    if (radio) {
+                        radio.checked = true;
+                        updatePaymentMethodStyles();
+                        updateMercadoPagoMessage();
+                    }
+                }
+            });
+        });
+        
+        // Función para mostrar/ocultar mensaje de MercadoPago
+        function updateMercadoPagoMessage() {
+            const mercadoPagoMessage = document.getElementById('mercado-pago-message');
+            if (!mercadoPagoMessage) return;
+            
+            const selectedRadio = document.querySelector('input[name="payment_method"]:checked');
+            if (selectedRadio) {
+                const label = selectedRadio.closest('.checkout-option-payment');
+                const paymentName = label.querySelector('.payment-name').textContent.trim();
+                
+                // Mostrar mensaje solo para Tarjeta de Crédito o Tarjeta de Débito
+                if (paymentName === 'Tarjeta de Crédito' || paymentName === 'Tarjeta de Débito') {
+                    mercadoPagoMessage.style.display = 'inline';
+                } else {
+                    mercadoPagoMessage.style.display = 'none';
+                }
+            } else {
+                mercadoPagoMessage.style.display = 'none';
+            }
+        }
+        
+        // Actualizar mensaje cuando cambia la selección
+        document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+            radio.addEventListener('change', updateMercadoPagoMessage);
+        });
+        
+        // Actualizar mensaje al cargar la página
+        updateMercadoPagoMessage();
+    });
 </script>
 {% endblock %}
 
