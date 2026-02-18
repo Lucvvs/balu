@@ -347,18 +347,29 @@ En el panel de Render, ve a tu servicio web → "Environment" y configura todas 
 
 #### Paso 4: Cargar Datos Iniciales
 
-Una vez desplegado, usa el Shell de Render:
+Una vez desplegado, usa el Shell de Render y ejecuta en este orden:
 
 ```bash
-# Ejecutar migraciones
+# 1. Ejecutar migraciones (crear tablas)
 python manage.py migrate
 
-# Crear superusuario
+# 2. Crear superusuario (para acceder al admin)
 python manage.py createsuperuser
 
-# Cargar datos iniciales
+# 3. Cargar métodos de envío y pago
+python manage.py load_payment_shipping_methods
+
+# 4. Cargar datos iniciales (categorías, marcas y productos)
 python manage.py load_initial_data
+
+# 5. Copiar imágenes de marcas a media/brands/
+python manage.py copy_brand_images
 ```
+
+**Nota:** El comando `load_initial_data` carga automáticamente:
+- ✅ Categorías (desde `shop/fixtures/initial_categories.json`)
+- ✅ Marcas (desde `shop/fixtures/initial_brands.json`)
+- ✅ Productos (desde `shop/fixtures/initial_products.json` o detección automática)
 
 ### Comandos Útiles en Render Shell
 
@@ -372,8 +383,14 @@ python manage.py migrate
 # Crear superusuario
 python manage.py createsuperuser
 
-# Cargar datos iniciales
+# Cargar métodos de envío y pago
+python manage.py load_payment_shipping_methods
+
+# Cargar datos iniciales (categorías, marcas y productos)
 python manage.py load_initial_data
+
+# Copiar imágenes de marcas
+python manage.py copy_brand_images
 
 # Verificar configuración
 python manage.py check --deploy
