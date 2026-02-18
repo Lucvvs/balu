@@ -2,6 +2,29 @@
 
 Aplicación web Django para tienda de accesorios y equipamiento para motocicletas, desarrollada con Django 5.2+, Bootstrap 5 y diseño responsive.
 
+---
+
+## 📋 Tabla de Contenidos
+
+1. [Descripción del Proyecto](#-descripción-del-proyecto)
+2. [Características Principales](#-características-principales)
+3. [Requisitos e Instalación](#-requisitos-e-instalación)
+4. [Estructura del Proyecto](#-estructura-del-proyecto)
+5. [Comandos para Poblar Datos](#-comandos-para-poblar-datos)
+6. [Configuración](#-configuración)
+7. [Despliegue en Render](#-despliegue-en-render)
+8. [Configuración de Servicios](#-configuración-de-servicios)
+9. [Solución de Problemas](#-solución-de-problemas)
+10. [Changelog](#-changelog)
+
+---
+
+## 🎯 Descripción del Proyecto
+
+MotoMoto es una plataforma de e-commerce completa para la venta de accesorios y equipamiento para motocicletas. Incluye sistema de productos, carrito de compras, gestión de pedidos, cupones de descuento, integración con Mercado Pago, y sistema de notificaciones por email.
+
+---
+
 ## 🚀 Características Principales
 
 - **Catálogo de Productos**: Sistema completo de productos con categorías, marcas, imágenes y gestión de stock
@@ -9,18 +32,26 @@ Aplicación web Django para tienda de accesorios y equipamiento para motocicleta
 - **Sistema de Pedidos**: Gestión completa de pedidos con múltiples estados
 - **Cupones de Descuento**: Sistema de cupones con validación y límites
 - **Métodos de Envío y Pago**: Configuración flexible de métodos de entrega y pago
-- **Autenticación de Usuarios**: Registro, login y logout con Django Auth
+- **Integración Mercado Pago**: Checkout Pro con webhooks para confirmación de pagos
+- **Autenticación de Usuarios**: Registro, login y logout con Django Auth + Google OAuth
+- **reCAPTCHA v3**: Protección contra spam en formularios
 - **Panel de Administración**: Admin completo con todas las funcionalidades de gestión
+- **Sistema de Email**: Notificaciones automáticas al cliente y administrador
 - **Responsive Design**: Diseño mobile-first completamente responsive
 - **Formato de Moneda CLP**: Formateo personalizado para pesos chilenos
 
-## 📋 Requisitos
+---
+
+## 📋 Requisitos e Instalación
+
+### Requisitos
 
 - Python 3.11+
 - Django 5.0+
 - Pillow (para manejo de imágenes)
+- PostgreSQL (para producción) o SQLite (para desarrollo)
 
-## 🛠️ Instalación
+### Instalación Local
 
 1. **Clonar el repositorio** (o descargar el proyecto)
 
@@ -58,6 +89,8 @@ python manage.py runserver
    - Frontend: http://127.0.0.1:8000/
    - Admin: http://127.0.0.1:8000/admin/
 
+---
+
 ## 📁 Estructura del Proyecto
 
 ```
@@ -73,264 +106,68 @@ MotoMotoCR/
 │   ├── admin.py           # Configuración del admin
 │   ├── urls.py            # URLs de la app
 │   ├── templatetags/      # Filtros personalizados (currency_clp)
-│   └── context_processors.py  # Context processors (carrito)
+│   ├── context_processors.py  # Context processors (carrito)
+│   ├── fixtures/          # Datos iniciales (categorías, marcas)
+│   ├── management/commands/  # Comandos personalizados
+│   └── data/              # Datos JSON (regiones y comunas)
 ├── templates/             # Plantillas HTML
 │   ├── base.html          # Template base
 │   ├── partials/          # Componentes reutilizables
-│   │   ├── _navbar.html
-│   │   ├── _footer.html
-│   │   └── _como_comprar_y_canales.html
 │   └── shop/              # Templates de la app
-│       ├── home.html
-│       ├── products_list.html
-│       ├── product_detail.html
-│       ├── cart.html
-│       ├── register.html
-│       └── ...
 ├── static/                # Archivos estáticos
-│   └── css/
-│       └── theme.css      # Tema CSS personalizado
+│   ├── css/
+│   │   └── theme.css      # Tema CSS personalizado
+│   └── img/               # Imágenes estáticas
+│       └── productos/     # Imágenes de productos (fuente)
 └── media/                 # Archivos de medios (imágenes subidas)
-
+    └── products/          # Imágenes de productos (copiadas)
 ```
 
-## 🗄️ Modelos de Datos
+---
 
-### Principales
+## 🗄️ Comandos para Poblar Datos
 
-- **Product**: Productos con precios, stock, ofertas, categorías y marcas
-- **Category**: Categorías de productos (Cascos, Maletas, Seguridad, Accesorios)
-- **Brand**: Marcas de productos
-- **ProductImage**: Imágenes de productos con soporte para imagen principal y galería
-- **Cart / CartItem**: Carrito de compras (soporta usuarios y sesiones anónimas)
-- **Order / OrderItem**: Pedidos con estados (pending, confirmed, preparing, shipped, delivered, cancelled)
-- **Coupon**: Cupones de descuento con validación de fechas y límites
-- **ShippingMethod**: Métodos de envío (retiro en tienda, envío a domicilio)
-- **PaymentMethod**: Métodos de pago (tarjeta, transferencia, efectivo)
-- **ContactMessage**: Mensajes de contacto
-- **MetricEvent**: Eventos de analytics básico
+### Carga Completa Automática (Recomendado)
 
-## 🎨 Características de Diseño
-
-- **Bootstrap 5** via CDN para componentes base
-- **CSS Personalizado** (`static/css/theme.css`) con:
-  - Variables CSS para colores y estilos
-  - Animaciones suaves
-  - Banner de marcas con scroll infinito
-  - Cards de productos responsivos
-  - Carousel de productos destacados
-  - Diseño mobile-first
-
-## 🔧 Funcionalidades Implementadas
-
-### Páginas
-
-1. **Home (`/`)**: 
-   - Hero section
-   - Banner de categorías
-   - Banner de seguridad y certificaciones
-   - Banner de marcas con scroll infinito
-   - Sección de ofertas (con imágenes automáticas)
-   - Banner de servicios (envío, retiro, pago)
-   - Productos más vendidos con carousel
-   - Sección "Cómo comprar" y canales oficiales
-   - Navbar sticky que se achica al hacer scroll
-
-2. **Lista de Productos (`/productos/`)**: 
-   - Filtros por categoría
-   - Búsqueda por nombre/marca
-   - Ordenamiento (precio, nombre, fecha)
-   - Paginación
-   - Grid responsive
-   - Efecto hover: cambio automático de imágenes cada 2.5s (simula pasar página)
-   - Alertas de stock bajo ("Pocas unidades disponibles")
-
-3. **Detalle de Producto (`/productos/<slug>/`)**: 
-   - Galería de imágenes con navegación
-   - Información completa del producto
-   - Agregar al carrito
-   - Productos relacionados (con imágenes automáticas)
-   - Selección de colores/tallas cuando aplica
-
-4. **Carrito (`/carrito/`)**: 
-   - Lista de productos
-   - Actualizar cantidades
-   - Eliminar productos
-   - Aplicar cupones
-   - Selección de método de envío (validación condicional)
-   - Selección de método de pago
-   - Formulario para usuarios anónimos
-   - Botón "Continuar comprando" prominente
-
-5. **Checkout**: 
-   - Creación de pedido
-   - Actualización de stock
-   - Aplicación de cupones
-   - Cálculo de totales
-   - Validación inteligente: campos de envío solo si es necesario
-   - Números de pedido personalizados (ID + iniciales + año-día-mes)
-
-6. **Autenticación**: 
-   - Registro (`/registro/`)
-   - Login (`/iniciar-sesion/`)
-   - Logout (`/cerrar-sesion/`)
-
-7. **Perfil de Usuario (`/perfil/`)**: 
-   - Edición de información básica (con confirmación)
-   - Visualización de pedidos pasados con estado
-   - Historial completo de compras
-
-8. **Confirmación de Pedido**: 
-   - Resumen del pedido con número personalizado
-   - Detalles de productos
-   - Información de envío y pago
-   - Mensaje de éxito mejorado con instrucciones de contacto
-   - Email de confirmación automático
-
-9. **Contacto**: 
-   - Formulario de contacto
-
-## 🔐 Seguridad
-
-- CSRF protection habilitado en todos los formularios
-- Autenticación de usuarios con Django Auth
-- Validación de permisos en carritos y pedidos
-- Sanitización de inputs en formularios
-
-## 📱 Responsive Design
-
-El diseño es completamente responsive con:
-- Breakpoints de Bootstrap 5
-- Mobile-first approach
-- Navegación hamburger en móviles
-- Grid adaptativo para productos
-- Cards y formularios optimizados para móviles
-
-## 🌍 Internacionalización
-
-- Idioma configurado: Español Chile (`es-cl`)
-- Zona horaria: `America/Santiago`
-- Formato de moneda: CLP con separador de miles (punto)
-- Todos los textos en español
-
-## 🔄 Próximos Pasos / Integraciones Pendientes
-
-### Prioridad Alta
-
-1. **Integración de Gateway de Pago**:
-   - Integrar Webpay Plus de Transbank (Chile)
-   - O integración con Mercado Pago u otro gateway
-   - Crear modelo `Payment` para rastrear transacciones
-   - Implementar callbacks de confirmación de pago
-   - Actualizar estado de pedido según resultado del pago
-
-2. **ReCAPTCHA en Registro**:
-   - Integrar Google reCAPTCHA v3 o v2
-   - Validación en el formulario de registro
-   - Ya existe placeholder en el template
-
-3. **Gestión de Imágenes**:
-   - Crear imágenes placeholder para categorías
-   - Optimización de imágenes subidas
-   - Soporte para múltiples formatos
-
-### Prioridad Media
-
-4. **Notificaciones por Email**: ✅ **IMPLEMENTADO**
-   - ✅ Envío de confirmación de pedido al cliente
-   - ✅ Notificación al administrador de nuevos pedidos
-   - ✅ Integración con Gmail SMTP
-   - ⏳ Notificación de cambio de estado (pendiente)
-   - ⏳ Recuperación de contraseña (pendiente)
-
-5. **Dashboard de Usuario**: ✅ **PARCIALMENTE IMPLEMENTADO**
-   - ✅ Historial de pedidos
-   - ✅ Edición de perfil
-   - ⏳ Direcciones guardadas (pendiente)
-
-6. **Búsqueda Avanzada**:
-   - Filtros múltiples (precio, marca, categoría)
-   - Búsqueda con autocompletado
-
-7. **Wishlist/Favoritos**:
-   - Guardar productos favoritos
-   - Comparación de productos
-
-### Prioridad Baja
-
-8. **Sistema de Reviews**:
-   - Comentarios y calificaciones de productos
-
-9. **Programa de Afiliados**:
-   - Cupones de referencia
-   - Códigos de descuento personalizados
-
-10. **Analytics Mejorado**:
-    - Integración con Google Analytics
-    - Dashboard de métricas
-
-## 🗃️ Base de Datos
-
-- **Desarrollo**: SQLite (automático cuando `DEBUG=True`)
-- **Producción (Render)**: PostgreSQL (automático cuando `DEBUG=False` o `RENDER=True`)
-
-El sistema detecta automáticamente el entorno y configura la base de datos apropiada.
-
-### Configuración Automática
-
-- **Local**: Usa SQLite en `db.sqlite3`
-- **Render**: Usa PostgreSQL desde `DATABASE_URL` (variable de entorno)
-- **Comandos locales**: Fuerzan SQLite para desarrollo (`runserver`, `load_initial_data`, etc.)
-
-### Persistencia de Archivos
-
-- **Local**: `media/` en el proyecto
-- **Render**: `/opt/render/project/src/media` (disco persistente)
-- Las imágenes subidas desde el admin persisten entre despliegues
-
-## 📝 Notas de Desarrollo
-
-### Formato de Precios
-
-Los precios se almacenan como enteros (sin decimales) representando CLP.
-El filtro `currency_clp` formatea correctamente:
-- `66990` → `$66.990`
-- `10000000` → `$10.000.000`
-
-### Carrito Anónimo
-
-Los carritos de usuarios no registrados se almacenan usando `session_key`.
-Al iniciar sesión, se puede migrar el carrito de la sesión al usuario.
-
-### Stock Management
-
-El stock se actualiza automáticamente al crear un pedido.
-Se valida el stock disponible antes de agregar al carrito y antes de crear el pedido.
-- Los usuarios no ven el stock exacto, solo alertas cuando hay pocas unidades (< 3)
-- Mensaje: "¡Pocas unidades disponibles!" cuando `stock <= 2`
-
-### Gestión de Imágenes
-
-- **Detección automática**: El comando `load_initial_products` detecta automáticamente productos, marcas y categorías desde nombres de archivos
-- **Imágenes globales**: Soporte para imágenes compartidas (ej: `AccesoriosShaftGLOB.png` para todos los cascos SHAFT)
-- **Imágenes principales**: Primera imagen se marca automáticamente como `is_primary=True`
-- **Efecto hover**: En lista de productos, las imágenes cambian automáticamente cada 2.5s al pasar el mouse
-- **Persistencia**: En Render, las imágenes se guardan en disco persistente (`/opt/render/project/src/media`)
-
-### Números de Pedido Personalizados
-
-Formato: `{ID}{InicialUsuario}{InicialEmail}{Año-Día-Mes}`
-
-Ejemplo: `15LM2025` (ID=15, Usuario="Lucas", Email="lucas@mail.com", Año=2025, Día+Mes=23+11=34, 2025-34=1991)
-
-### Comandos de Gestión
+Ejecuta un solo comando que carga todo automáticamente:
 
 ```bash
-# Carga completa de datos iniciales
 python manage.py load_initial_data
+```
+
+Este comando carga en orden:
+1. ✅ Categorías (Maletas, Cascos, Seguridad, Accesorios)
+2. ✅ Marcas (HRO, SHAFT, 4RS, motocentric, KOVIX)
+3. ✅ Productos con imágenes (detección automática desde `static/img/productos/`)
+4. ✅ Asignación de precios y stock (automático)
+5. ✅ Corrección de imágenes principales
+6. ✅ Configuración de ofertas y más vendidos (3 de cada uno)
+
+### Carga con Forzado de Productos
+
+Si necesitas recargar productos desde cero:
+
+```bash
+python manage.py load_initial_data --force-products
+```
+
+### Comandos Individuales
+
+```bash
+# Cargar solo categorías
+python manage.py loaddata shop/fixtures/initial_categories.json
+
+# Cargar solo marcas
+python manage.py loaddata shop/fixtures/initial_brands.json
 
 # Cargar solo productos (con detección automática)
 python manage.py load_initial_products --data-dir static/img/productos
+
+# Actualizar productos existentes
+python manage.py load_initial_products --force
+
+# Limpiar todos los productos y cargar desde cero
+python manage.py load_initial_products --clean
 
 # Asignar precios y stock automáticamente
 python manage.py set_product_prices
@@ -348,16 +185,451 @@ python manage.py verify_images
 python manage.py clean_duplicate_images
 ```
 
-## 🧪 Testing
+### Preparación de Imágenes
 
-Para ejecutar tests (cuando se implementen):
-```bash
-python manage.py test
+Coloca todas las imágenes de productos en:
 ```
+static/img/productos/
+```
+
+**Formato de nombres (Detección Automática):**
+- `Hro514Negro-Rojo1.png` → Producto: "Casco HRO 514 Negro-Rojo", Marca: "HRO", Categoría: "Cascos"
+- `kovixKT6negro.png` → Producto: "Candado KOVIX KT6 Negro", Marca: "KOVIX", Categoría: "Seguridad"
+- `maletaE7601.png` → Producto: "Maleta 4RS E760", Marca: "4RS", Categoría: "Maletas"
+
+**Imágenes globales:**
+- `AccesoriosShaftGLOB.png` → Se asigna a todos los cascos SHAFT
+- `soportemaletaGLOB.png` → Se asigna a todas las maletas 4RS
+
+### Carga desde JSON (Alternativa)
+
+Si prefieres usar archivos JSON para productos:
+
+```bash
+# Cargar productos desde JSON
+python manage.py load_products_from_json
+
+# Forzar actualización
+python manage.py load_products_from_json --force
+
+# Limpiar y cargar desde cero
+python manage.py load_products_from_json --clean
+```
+
+El archivo JSON debe estar en `shop/fixtures/initial_products.json` con la siguiente estructura:
+
+```json
+{
+  "name": "Casco HRO 514 Negro-Rojo",
+  "short_description": "Casco HRO 514 en color Negro-Rojo, certificado DOT y ECE",
+  "description": "Descripción completa del producto...",
+  "category": "Cascos",
+  "brand": "HRO",
+  "price": 55000,
+  "offer_price": null,
+  "stock": 6,
+  "available_sizes": "S,M,L,XL",
+  "is_active": true,
+  "is_offer": false,
+  "is_best_seller": true,
+  "images": [
+    {
+      "file": "Hro514Negro-Rojo1.png",
+      "is_primary": true,
+      "order": 0
+    }
+  ]
+}
+```
+
+---
+
+## ⚙️ Configuración
+
+### Variables de Entorno
+
+Crea un archivo `.env` en la raíz del proyecto o configura variables de entorno en Render:
+
+#### Variables Requeridas
+
+```env
+# Django
+SECRET_KEY=tu-secret-key-generada
+DEBUG=True  # False en producción
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Base de Datos (se configura automáticamente en Render)
+DATABASE_URL=postgresql://...  # Solo en producción
+
+# Email (Gmail)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=tu-email@gmail.com
+EMAIL_HOST_PASSWORD=contraseña-de-aplicacion-16-caracteres
+DEFAULT_FROM_EMAIL=tu-email@gmail.com
+ADMIN_EMAIL=admin@motomoto.cl
+
+# Mercado Pago
+MP_ACCESS_TOKEN=TEST-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+MP_PUBLIC_KEY=TEST-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+MP_BASE_URL=https://tu-dominio.com
+MP_PAYMENT_METHOD_NAME=Mercado Pago
+
+# reCAPTCHA (Opcional)
+RECAPTCHA_PUBLIC_KEY=tu_site_key
+RECAPTCHA_PRIVATE_KEY=tu_secret_key
+
+# Google OAuth (Opcional)
+GOOGLE_OAUTH2_CLIENT_ID=tu_client_id
+GOOGLE_OAUTH2_CLIENT_SECRET=tu_client_secret
+```
+
+### Generar SECRET_KEY
+
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+---
+
+## 🚀 Despliegue en Render
+
+### Checklist Pre-Despliegue
+
+- [ ] Código subido a Git (GitHub, GitLab o Bitbucket)
+- [ ] `requirements.txt` actualizado con todas las dependencias
+- [ ] `build.sh` creado y verificado
+- [ ] `render.yaml` configurado (si usas despliegue automático)
+- [ ] Variables de entorno identificadas
+- [ ] **⚠️ IMPORTANTE: Verificar que `ALLOWED_HOSTS` NO incluya dominios de ngrok en producción**
+
+### Opción 1: Despliegue Automático con render.yaml (Recomendado)
+
+1. **Conecta tu repositorio a Render:**
+   - Ve a [Render Dashboard](https://dashboard.render.com/)
+   - Haz clic en "New +" → "Blueprint"
+   - Conecta tu repositorio Git
+   - Render detectará automáticamente el archivo `render.yaml`
+
+2. **Render creará automáticamente:**
+   - Servicio Web (Django)
+   - Base de datos PostgreSQL
+   - Conectará ambos servicios
+
+### Opción 2: Despliegue Manual
+
+#### Paso 1: Crear Base de Datos PostgreSQL
+
+1. En Render Dashboard, haz clic en "New +" → "PostgreSQL"
+2. Configura:
+   - **Name**: `motomoto-db`
+   - **Database**: `motomoto`
+   - **User**: `motomoto_user`
+   - **Plan**: `Free` (para empezar)
+3. Guarda las credenciales (aparecerán en "Internal Database URL")
+
+#### Paso 2: Crear Servicio Web
+
+1. En Render Dashboard, haz clic en "New +" → "Web Service"
+2. Conecta tu repositorio Git
+3. Configura:
+   - **Name**: `motomoto-web`
+   - **Region**: Elige el más cercano a tus usuarios
+   - **Branch**: `main` o `master`
+   - **Runtime**: `Python 3`
+   - **Build Command**: `./build.sh`
+   - **Start Command**: `gunicorn motomoto.wsgi:application`
+
+#### Paso 3: Configurar Variables de Entorno
+
+En el panel de Render, ve a tu servicio web → "Environment" y configura todas las variables de entorno necesarias (ver sección de Configuración).
+
+#### Paso 4: Cargar Datos Iniciales
+
+Una vez desplegado, usa el Shell de Render:
+
+```bash
+# Ejecutar migraciones
+python manage.py migrate
+
+# Crear superusuario
+python manage.py createsuperuser
+
+# Cargar datos iniciales
+python manage.py load_initial_data
+```
+
+### Comandos Útiles en Render Shell
+
+```bash
+# Verificar variables de entorno
+env | grep DJANGO
+
+# Ejecutar migraciones
+python manage.py migrate
+
+# Crear superusuario
+python manage.py createsuperuser
+
+# Cargar datos iniciales
+python manage.py load_initial_data
+
+# Verificar configuración
+python manage.py check --deploy
+```
+
+---
+
+## 🔧 Configuración de Servicios
+
+### 📧 Configuración de Email con Gmail
+
+#### 1. Habilitar "Contraseña de aplicación" en Gmail
+
+1. Ve a tu cuenta de Google: https://myaccount.google.com/
+2. Ve a **Seguridad**
+3. Activa la **Verificación en 2 pasos** (si no la tienes activada)
+4. Busca **Contraseñas de aplicaciones** (o "App passwords")
+5. Selecciona **Correo** y **Otro (nombre personalizado)**
+6. Escribe "MotoMoto Django" y haz clic en **Generar**
+7. **Copia la contraseña de 16 caracteres** que te muestra
+
+#### 2. Configurar variables de entorno en Render
+
+```
+EMAIL_HOST = smtp.gmail.com
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = tu-email@gmail.com
+EMAIL_HOST_PASSWORD = [La contraseña de 16 caracteres]
+DEFAULT_FROM_EMAIL = tu-email@gmail.com
+ADMIN_EMAIL = admin@motomoto.cl
+```
+
+**Importante:**
+- `EMAIL_HOST_PASSWORD`: La contraseña de aplicación de 16 caracteres (NO tu contraseña normal de Gmail)
+- `ADMIN_EMAIL`: El email donde quieres recibir notificaciones de nuevos pedidos
+
+#### 3. Límites de Gmail
+
+- **Gratis**: 500 emails por día
+- Si necesitas más, considera usar SendGrid o Mailgun (planes gratuitos disponibles)
+
+### 💳 Integración Mercado Pago (Checkout Pro)
+
+#### 1. Crear credenciales en Mercado Pago
+
+En tu cuenta de Mercado Pago:
+- Obtén **Access Token** (privado) y **Public Key** (pública)
+- Usa credenciales de **test** para desarrollo y **producción** para go-live
+
+#### 2. Configurar variables de entorno
+
+```env
+MP_ACCESS_TOKEN=TEST-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+MP_PUBLIC_KEY=TEST-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+MP_BASE_URL=https://tu-dominio.com
+MP_PAYMENT_METHOD_NAME=Mercado Pago
+```
+
+#### 3. Crear el método de pago "Mercado Pago" en Admin
+
+En Django Admin:
+- Tabla `PaymentMethod`
+  - `name`: **Mercado Pago** (debe coincidir con `MP_PAYMENT_METHOD_NAME`)
+  - `is_active`: true
+
+#### 4. Configurar Webhook en Mercado Pago
+
+En Mercado Pago (panel / webhooks):
+- URL: `https://tu-dominio.com/mercadopago/webhook/`
+- Eventos: **Pagos**
+
+#### 5. Flujo de Pago
+
+- **Checkout**: Si el usuario elige "Mercado Pago", se crea `Order` con estado `pending_payment` y se redirige al `init_point`
+- **Return URL**: Solo muestra mensaje al usuario (NO confirma pago)
+- **Webhook**: Recibe notificación, consulta el pago por API y:
+  - Si `approved`: marca el pedido `confirmed` y descuenta stock
+  - Si `rejected/cancelled`: marca el pedido `cancelled`
+
+### 🔐 Configuración de reCAPTCHA y Google OAuth
+
+#### 1. Configurar reCAPTCHA
+
+1. Ve a [Google reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin)
+2. Crea un nuevo sitio:
+   - **Etiqueta**: MotoMoto
+   - **Tipo de reCAPTCHA**: reCAPTCHA v3
+   - **Dominios**: Agrega tu dominio
+3. Copia las claves y agrega a variables de entorno:
+   ```
+   RECAPTCHA_PUBLIC_KEY=tu_site_key
+   RECAPTCHA_PRIVATE_KEY=tu_secret_key
+   ```
+
+#### 2. Configurar Google OAuth
+
+1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
+2. Crea un nuevo proyecto o selecciona uno existente
+3. Habilita la API de Google+
+4. Crea credenciales OAuth 2.0:
+   - Tipo: "Web application"
+   - **Authorized JavaScript origins**: `http://localhost:8000` (desarrollo), `https://tu-dominio.com` (producción)
+   - **Authorized redirect URIs**: `http://localhost:8000/accounts/google/login/callback/` (desarrollo), `https://tu-dominio.com/accounts/google/login/callback/` (producción)
+5. Agrega a variables de entorno:
+   ```
+   GOOGLE_OAUTH2_CLIENT_ID=tu_client_id
+   GOOGLE_OAUTH2_CLIENT_SECRET=tu_client_secret
+   ```
+
+#### 3. Configurar Social Account en Admin
+
+1. Ve al admin de Django: `/admin/`
+2. Ve a "Social applications" > "Social applications"
+3. Agrega una nueva aplicación:
+   - **Provider**: Google
+   - **Name**: Google
+   - **Client id**: Tu Client ID de Google
+   - **Secret key**: Tu Client Secret de Google
+   - **Sites**: Selecciona tu sitio
+
+---
+
+## 🐛 Solución de Problemas
+
+### Error: "No module named 'psycopg2'"
+**Solución**: Verifica que `psycopg2-binary` esté en `requirements.txt`
+
+### Error: "Static files not found"
+**Solución**: 
+1. Verifica que `build.sh` ejecute `collectstatic`
+2. Verifica que `STATIC_ROOT` esté configurado en `settings.py`
+3. Verifica que WhiteNoise esté en `MIDDLEWARE`
+
+### Error: "DisallowedHost"
+**Solución**: 
+- En desarrollo: El código acepta automáticamente `localhost` y `.ngrok-free.dev`
+- En producción: El código acepta automáticamente `.onrender.com`
+- Si necesitas un dominio específico, configura `ALLOWED_HOSTS` en variables de entorno
+
+### Error: "Database connection failed"
+**Solución**: 
+1. Verifica que la base de datos PostgreSQL esté creada
+2. Verifica que `DATABASE_URL` esté configurada correctamente
+3. En Render, conecta la base de datos al servicio web desde la configuración
+
+### Error: "SMTPAuthenticationError" (Email)
+**Solución**:
+- Verifica que la contraseña de aplicación sea correcta (16 caracteres, sin espacios)
+- Asegúrate de que la verificación en 2 pasos esté activada
+
+### Error: "redirect_uri_mismatch" (Google OAuth)
+**Solución**:
+- Verifica que las URLs de redirección en Google Cloud Console coincidan exactamente con las de tu aplicación
+- Asegúrate de incluir tanto `http://` como `https://` según corresponda
+
+### Archivos de Media no persisten
+**Solución**: En Render, los archivos en `media/` se eliminan en cada deploy. Para producción:
+1. Usa Render Disk (volúmenes persistentes) - ya configurado en `/opt/render/project/src/media`
+2. O mejor: usa un servicio de almacenamiento externo (S3, Cloudinary)
+
+### Las imágenes no aparecen
+**Solución**:
+- Verifica que las imágenes estén en `static/img/productos/` en Git
+- Ejecuta `python manage.py load_initial_products --clean` para recargar
+- Verifica que las imágenes se copiaron a `media/products/`
+
+### Productos sin Precios/Stock
+**Solución**:
+```bash
+python manage.py set_product_prices --force
+```
+
+### Sin Ofertas o Más Vendidos
+**Solución**:
+```bash
+python manage.py set_featured_products
+```
+
+---
+
+## 📝 Changelog
+
+### [Última Actualización] - 2025-11-23
+
+#### ✨ Nuevas Funcionalidades
+
+- **Sistema de Imágenes Mejorado**: Detección automática de productos, marcas y categorías desde nombres de archivos
+- **Imágenes globales**: Soporte para imágenes compartidas
+- **Efecto hover en tarjetas**: Las imágenes cambian automáticamente cada 2.5s
+- **Perfil de Usuario**: Nueva sección de perfil con edición de información e historial de pedidos
+- **Sistema de Email**: Confirmación de pedido al cliente y notificación al administrador
+- **Integración Mercado Pago**: Checkout Pro con webhooks para confirmación de pagos
+- **Google OAuth**: Login con Google
+- **reCAPTCHA v3**: Protección contra spam
+
+#### 🔧 Mejoras Técnicas
+
+- Detección automática de entorno (SQLite en desarrollo, PostgreSQL en producción)
+- Comandos de gestión automatizados para carga de datos
+- Sistema de logging configurado
+- Persistencia de archivos en Render con disco persistente
+
+#### 🐛 Correcciones
+
+- 404 en placeholder.jpg
+- Imágenes no persistentes en Render
+- Validación de checkout mejorada
+- Prevención de duplicación de imágenes
+- Manejo de errores mejorado
+
+---
+
+## 🗄️ Modelos de Datos
+
+### Principales
+
+- **Product**: Productos con precios, stock, ofertas, categorías y marcas
+- **Category**: Categorías de productos (Cascos, Maletas, Seguridad, Accesorios)
+- **Brand**: Marcas de productos
+- **ProductImage**: Imágenes de productos con soporte para imagen principal y galería
+- **Cart / CartItem**: Carrito de compras (soporta usuarios y sesiones anónimas)
+- **Order / OrderItem**: Pedidos con estados (pending, confirmed, preparing, shipped, delivered, cancelled)
+- **Coupon**: Cupones de descuento con validación de fechas y límites
+- **ShippingMethod**: Métodos de envío (retiro en tienda, envío a domicilio)
+- **PaymentMethod**: Métodos de pago (tarjeta, transferencia, efectivo)
+- **ContactMessage**: Mensajes de contacto
+- **CustomUser**: Usuario personalizado que usa email como username
+
+---
+
+## 📱 Responsive Design
+
+El diseño es completamente responsive con:
+- Breakpoints de Bootstrap 5
+- Mobile-first approach
+- Navegación hamburger en móviles
+- Grid adaptativo para productos
+- Cards y formularios optimizados para móviles
+
+---
+
+## 🌍 Internacionalización
+
+- Idioma configurado: Español Chile (`es-cl`)
+- Zona horaria: `America/Santiago`
+- Formato de moneda: CLP con separador de miles (punto)
+- Todos los textos en español
+
+---
 
 ## 📄 Licencia
 
 Todos los derechos reservados MotoMoto 2025
+
+---
 
 ## 👥 Contacto
 
@@ -368,4 +640,3 @@ Todos los derechos reservados MotoMoto 2025
 ---
 
 **Desarrollado con Django 5.2+ | Bootstrap 5 | Python 3.11+**
-
