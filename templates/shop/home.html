@@ -7,9 +7,11 @@
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-section"
-    style="background-image: url('{% static 'img/bienvenida.png' %}'); filter: brightness(0.8);">
+    style="background-image: url('{% static 'img/bienvenida.png' %}'); filter: brightness(1.0);">
     <div class="container">
-        <h1>¿Qué productos MotoMoto buscas hoy?</h1>
+        <div class="masking-container">
+            <h1 class="masked-text">¿Qué productos MotoMoto buscas hoy?</h1>
+        </div>
         <a href="{% url 'shop:products_list' %}" class="btn btn-hero">
             <img src="{% static 'img/vercatalogo.png' %}" alt="Ver Catálogo" onerror="this.style.display='none'">
         </a>

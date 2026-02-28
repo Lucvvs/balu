@@ -257,7 +257,7 @@ body.navbar-scrolled .hero-section {
 
 /* Hero Section */
 .hero-section {
-    background-size: cover;
+    background-size: 120%;
     background-position: center;
     background-repeat: no-repeat;
     color: var(--white);
@@ -277,7 +277,7 @@ body.navbar-scrolled .hero-section {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.15);
     z-index: 1;
 }
 
@@ -286,12 +286,46 @@ body.navbar-scrolled .hero-section {
     z-index: 2;
 }
 
-.hero-section h1 {
-    font-size: 2.5rem;
+/* Masking Container para el efecto de texto animado */
+.masking-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     margin-bottom: 2rem;
+}
+
+.hero-section h1,
+.masked-text {
+    font-size: 2.5rem;
+    margin-bottom: 0;
     font-weight: bold;
-    color: var(--white);
     display: block;
+    text-align: center;
+}
+
+/* Efecto de texto con máscara animada */
+.masked-text {
+    color: transparent;
+    background-image: url('https://images.unsplash.com/photo-1732535725600-f805d8b33c9c?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+    background-size: 200%;
+    background-position: 0 50%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: animate-background 20s infinite alternate linear;
+    text-shadow: 0.5px 0.5px 2px rgba(0, 0, 0, 0.2), 
+                 0 0 5px rgba(0, 0, 0, 0.1);
+    letter-spacing: 0.5px;
+    filter: brightness(1.8) contrast(1.2);
+}
+
+@keyframes animate-background {
+    0% {
+        background-position: 0 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
 }
 
 .hero-section .btn-hero {
@@ -2506,21 +2540,31 @@ input.quantity-input,
 
 @media (max-width: 768px) {
     .hero-section {
-        padding: 2rem 0;
-        margin-top: 0; /* Sin margen negativo - el hero comienza justo después del navbar */
+        padding: 3rem 0;
+        margin-top: -50px; /* Empujar la imagen hacia arriba para eliminar espacio en blanco */
+        background-size: 140%; /* Alejar más el zoom para mostrar más de la imagen */
     }
     
-    .hero-section h1 {
-        font-size: 1.5rem;
+    .hero-section h1,
+    .masked-text {
+        font-size: 2.2rem;
+        font-weight: 800;
+        text-shadow: 0.5px 0.5px 2px rgba(0, 0, 0, 0.2), 
+                     0 0 5px rgba(0, 0, 0, 0.1);
+        letter-spacing: 0.5px;
     }
     
     .hero-section .btn-hero {
-        padding: 0.75rem 2rem;
-        font-size: 1rem;
+        padding: 0;
+        margin-top: 1.5rem;
+    }
+    
+    .hero-section .btn-hero img {
+        max-width: 280px;
     }
     
     body.navbar-scrolled .hero-section {
-        margin-top: 0; /* Sin margen negativo cuando navbar está scrolled */
+        margin-top: -40px; /* Mantener empujado cuando navbar está scrolled */
     }
 
     .category-banner {
@@ -2678,28 +2722,38 @@ input.quantity-input,
 @media (max-width: 576px) {
     .hero-section {
         padding: 2rem 0;
-        min-height: 250px;
-        margin-top: 0; /* Sin margen negativo - el hero comienza justo después del navbar */
+        min-height: auto;
+        height: auto;
+        margin-top: -40px; /* Empujar la imagen hacia arriba para eliminar espacio en blanco */
+        background-size: 300%; /* Zoom adecuado para mostrar más de la imagen sin que se vea muy pequeña */
+        background-position: calc(50% - 80px) calc(50% - 20px); /* Desplazar 80px a la izquierda y subir 20px */
     }
 
-    .hero-section h1 {
-        font-size: 1.2rem;
-        margin-bottom: 1rem;
+    .hero-section h1,
+    .masked-text {
+        font-size: 1.6rem;
+        margin-bottom: 1.5rem;
+        margin-top: 50px; /* Bajar el texto 30px en móvil */
         padding: 0.75rem 1rem;
+        font-weight: 800;
+        text-shadow: 0.5px 0.5px 2px rgba(0, 0, 0, 0.2), 
+                     0 0 5px rgba(0, 0, 0, 0.1);
+        letter-spacing: 0.5px;
+        line-height: 1.3;
     }
     
     
     .hero-section::after {
-        background: rgba(0, 0, 0, 0.6);
+        background: rgba(0, 0, 0, 0.25); /* Mismo overlay que desktop para mantener consistencia */
     }
     
     body.navbar-scrolled .hero-section {
-        margin-top: 0; /* Sin margen negativo cuando navbar está scrolled */
+        margin-top: -50px; /* Mantener empujado cuando navbar está scrolled */
     }
 
     .hero-section .btn-hero {
-        padding: 0.6rem 1.5rem;
-        font-size: 0.9rem;
+        padding: 0;
+        margin-top: 1.5rem;
     }
     
     .category-item {
@@ -2721,7 +2775,8 @@ input.quantity-input,
     }
     
     .hero-section .btn-hero img {
-        max-width: 180px;
+        max-width: 280px;
+        width: 100%;
     }
     
     .navbar-motomoto .navbar-brand {
