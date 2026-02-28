@@ -2863,23 +2863,124 @@ input.quantity-input,
         width: 100%;
     }
     
-    .navbar-motomoto .navbar-brand {
-        font-size: 1.1rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 50%;
-    }
-    
-    .navbar-motomoto .nav-link {
-        font-size: 0.9rem;
-        margin: 0 0.25rem;
-        padding: 0.5rem !important;
-    }
-    
-    .cart-mobile {
-        font-size: 1.2rem;
-        padding: 0.35rem 0.4rem !important;
+    /* NAVBAR MÓVIL - SIMPLE Y FUNCIONAL */
+    @media (max-width: 991.98px) {
+        /* Header fijo: Logo | Carrito (centro) | Hamburger */
+        .navbar-motomoto .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+        
+        .navbar-motomoto .navbar-brand {
+            order: 1;
+            flex: 0 0 auto;
+            margin-right: auto;
+        }
+        
+        .navbar-motomoto .cart-mobile {
+            order: 2;
+            flex: 0 0 auto;
+            margin: 0 auto;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .navbar-motomoto .navbar-toggler {
+            order: 3;
+            flex: 0 0 auto;
+            margin-left: auto;
+        }
+        
+        /* Menú colapsable - solo se despliega hacia abajo */
+        .navbar-motomoto .navbar-collapse {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--dark-bg);
+            z-index: 1000;
+            margin-top: 0;
+            padding: 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Listas de navegación */
+        .navbar-motomoto .navbar-collapse .navbar-nav {
+            width: 100%;
+            margin: 0 !important;
+            flex-direction: column;
+        }
+        
+        /* Items del menú */
+        .navbar-motomoto .navbar-collapse .nav-item {
+            width: 100%;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Links del menú */
+        .navbar-motomoto .navbar-collapse .nav-link {
+            padding: 1rem 1.5rem !important;
+            color: var(--white) !important;
+            font-size: 1rem !important;
+            display: block;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .navbar-motomoto .navbar-collapse .nav-link:hover {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--primary-color) !important;
+        }
+        
+        .navbar-motomoto .navbar-collapse .nav-link.active {
+            color: var(--primary-color) !important;
+            background: rgba(220, 53, 69, 0.15);
+            font-weight: 600;
+        }
+        
+        /* Botón Registro */
+        .navbar-motomoto .navbar-collapse .nav-link.btn {
+            background: var(--primary-color) !important;
+            color: var(--white) !important;
+            margin: 0.5rem 1.5rem !important;
+            padding: 0.75rem 1.5rem !important;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            width: calc(100% - 3rem);
+            display: block;
+        }
+        
+        .navbar-motomoto .navbar-collapse .nav-link.btn:hover {
+            background: #c82333 !important;
+        }
+        
+        /* Ocultar carrito del menú (ya está en header) */
+        .navbar-motomoto .navbar-collapse .nav-link[href*="cart"] {
+            display: none !important;
+        }
+        
+        /* Dropdown */
+        .navbar-motomoto .navbar-collapse .dropdown-menu {
+            background: rgba(33, 37, 41, 0.98);
+            border: none;
+            margin-top: 0;
+            border-radius: 0;
+        }
+        
+        .navbar-motomoto .navbar-collapse .dropdown-item {
+            color: var(--white) !important;
+            padding: 0.75rem 1.5rem;
+        }
+        
+        .navbar-motomoto .navbar-collapse .dropdown-item:hover {
+            background: rgba(220, 53, 69, 0.2);
+            color: var(--primary-color) !important;
+        }
     }
     
     .brand-logo {

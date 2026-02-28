@@ -32,11 +32,16 @@
                         Productos
                     </a>
                 </li>
+                <li class="nav-item d-lg-none">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'search_order' %}active{% endif %}" href="{% url 'shop:search_order' %}">
+                        <i class="bi bi-search"></i> Buscar Pedido
+                    </a>
+                </li>
             </ul>
             
             <!-- Right side items -->
             <ul class="navbar-nav ms-auto">
-                <!-- Carrito (solo visible en pantallas grandes) -->
+                <!-- Carrito (solo visible en desktop) -->
                 <li class="nav-item d-none d-lg-block">
                     <a class="nav-link" href="{% url 'shop:cart' %}">
                         <i class="bi bi-cart3"></i>
@@ -51,7 +56,7 @@
                 {% if user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle"></i> {{ user.first_name|default:user.email }}
+                            <i class="bi bi-person-circle"></i> <span class="d-lg-inline d-none">{{ user.first_name|default:user.email }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li><a class="dropdown-item" href="{% url 'shop:profile' %}"><i class="bi bi-person"></i> Perfil</a></li>
