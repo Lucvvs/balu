@@ -3068,6 +3068,16 @@ input.quantity-input,
     
     .security-banner h3 {
         font-size: 1.2rem;
+        flex-wrap: nowrap !important; /* Evitar que las imágenes se envuelvan en móvil */
+        gap: 0.5rem !important; /* Reducir espacio entre elementos */
+    }
+    
+    .security-title-image-left,
+    .security-title-image-right {
+        max-height: 42px !important; /* Aumentado 20% (de 35px a 42px) */
+        width: auto;
+        flex-shrink: 0; /* Evitar que las imágenes se reduzcan */
+        display: inline-block !important;
     }
     
     .security-images-container {
@@ -3081,13 +3091,38 @@ input.quantity-input,
     }
     
     .service-main-image {
-        max-width: 80px;
-        max-height: 60px;
+        max-width: 200px; /* Aumentado 150% (de 80px a 200px = 80px * 2.5) */
+        max-height: 150px; /* Aumentado 150% (de 60px a 150px = 60px * 2.5) */
+        margin-bottom: 0.5rem !important; /* Reducir espacio debajo de la imagen */
+        margin-top: 0 !important; /* Eliminar espacio arriba */
+    }
+    
+    /* Reducir margen superior de la primera imagen (Envíos) a la mitad */
+    .service-item:first-child .service-main-image {
+        margin-top: -0.75rem !important; /* Reducir margen superior a la mitad */
     }
     
     .service-small-image {
-        max-width: 100px;
-        max-height: 30px;
+        max-width: 115px; /* Aumentado 15% (de 100px a 115px) */
+        max-height: 34.5px; /* Aumentado 15% (de 30px a 34.5px) */
+        margin: 0.25rem auto !important; /* Reducir espacio arriba y abajo */
+    }
+    
+    .service-title {
+        font-size: 1.05em !important; /* Aumentado 5% */
+    }
+    
+    .service-text {
+        font-size: 0.945rem !important; /* Aumentado 5% (de 0.9rem a 0.945rem) */
+    }
+    
+    .service-item {
+        padding: 1.5rem 2rem !important; /* Reducir padding vertical para menos espacio en blanco */
+    }
+    
+    /* Reducir padding superior del primer contenedor (Envíos) a la mitad */
+    .service-item:first-child {
+        padding-top: 0.75rem !important; /* Reducir padding superior a la mitad (de 1.5rem a 0.75rem) */
     }
     
     .btn-offers-action {
