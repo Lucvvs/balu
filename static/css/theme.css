@@ -2572,8 +2572,16 @@ input.quantity-input,
     }
 
     .category-item {
-        clip-path: none;
+        clip-path: none !important;
         height: 200px;
+    }
+    
+    .category-item:nth-child(2) {
+        clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%) !important; /* Mantener bordes diagonales para "Para la Moto" */
+    }
+    
+    .category-item:nth-child(3) {
+        clip-path: none !important; /* Solo Accesorios sin clip-path */
     }
     
     .category-item .overlay span {
@@ -2758,10 +2766,86 @@ input.quantity-input,
     
     .category-item {
         height: 150px;
+        clip-path: none !important;
+    }
+    
+    .category-item:nth-child(2) {
+        clip-path: polygon(5% 0, 95% 0, 100% 100%, 0 100%) !important; /* Mantener bordes diagonales para "Para la Moto" */
+    }
+    
+    .category-item:nth-child(3) {
+        clip-path: none !important; /* Solo Accesorios sin clip-path */
     }
     
     .category-item .overlay span {
-        font-size: 1.2rem !important;
+        font-size: 1.8rem !important; /* Aumentado 150% (de 1.2rem a 1.8rem) */
+        position: relative;
+        display: inline-block;
+    }
+    
+    /* Animación de subrayado secuencial para los textos */
+    .category-item .overlay span::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        height: 3px;
+        background: var(--primary-color);
+    }
+    
+    /* Primera (Equipamiento): subrayado de IZQ a DER */
+    .category-item:nth-child(1) .overlay span::after {
+        left: 0;
+        width: 0;
+        animation: underline-left-to-right 4.5s infinite;
+        animation-delay: 0s;
+    }
+    
+    /* Segunda (Para la Moto): subrayado de DER a IZQ */
+    .category-item:nth-child(2) .overlay span::after {
+        right: 0;
+        width: 0;
+        animation: underline-right-to-left 4.5s infinite;
+        animation-delay: 1.5s;
+    }
+    
+    /* Tercera (Accesorios): subrayado de IZQ a DER */
+    .category-item:nth-child(3) .overlay span::after {
+        left: 0;
+        width: 0;
+        animation: underline-left-to-right 4.5s infinite;
+        animation-delay: 3s;
+    }
+    
+    /* Animación de izquierda a derecha */
+    @keyframes underline-left-to-right {
+        0%, 18% {
+            width: 0;
+            left: 0;
+        }
+        25%, 35% {
+            width: 100%;
+            left: 0;
+        }
+        42%, 100% {
+            width: 0;
+            left: 0;
+        }
+    }
+    
+    /* Animación de derecha a izquierda */
+    @keyframes underline-right-to-left {
+        0%, 18% {
+            width: 0;
+            right: 0;
+        }
+        25%, 35% {
+            width: 100%;
+            right: 0;
+        }
+        42%, 100% {
+            width: 0;
+            right: 0;
+        }
     }
 
     .section-title {
