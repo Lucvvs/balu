@@ -170,21 +170,6 @@
     </div>
 </section>
 
-<!-- Promotional Banner Rotativo -->
-{% if promotional_banners %}
-<section class="promotional-banner-section">
-    <div class="promotional-banner-container">
-        <div class="promotional-banner-slider" id="promotionalBannerSlider">
-            {% for banner in promotional_banners %}
-            <div class="promotional-banner-item {% if forloop.first %}active{% endif %}" data-banner-index="{{ forloop.counter0 }}">
-                <span class="promotional-banner-text">{{ banner.text }}</span>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
 <!-- Separator -->
 <div class="separator"></div>
 
@@ -455,75 +440,6 @@
     // Add transition effect to main images
     document.querySelectorAll('.carousel-main').forEach(img => {
         img.style.transition = 'opacity 0.3s ease-in-out';
-    });
-
-    // Promotional Banner Rotativo
-    document.addEventListener('DOMContentLoaded', function() {
-        const slider = document.getElementById('promotionalBannerSlider');
-        if (!slider) return;
-
-        const banners = slider.querySelectorAll('.promotional-banner-item');
-        
-        if (banners.length <= 1) {
-            // Si solo hay un banner, mostrarlo directamente
-            if (banners.length === 1) {
-                banners[0].classList.add('active');
-            }
-            return;
-        }
-
-        let currentIndex = 0;
-        const totalBanners = banners.length;
-        const rotationInterval = 3000; // 3 segundos
-
-        function showBanner(index) {
-            // Si es el mismo banner, no hacer nada
-            if (currentIndex === index) return;
-
-            // Animar el banner actual saliendo hacia la izquierda
-            if (banners[currentIndex]) {
-                banners[currentIndex].classList.remove('active');
-                banners[currentIndex].classList.add('slide-out');
-            }
-
-            // Preparar el nuevo banner entrando desde la derecha
-            if (banners[index]) {
-                // Primero ponerlo en posición inicial (fuera por la derecha)
-                banners[index].classList.remove('active', 'slide-out');
-                banners[index].classList.add('slide-in');
-                
-                // Forzar reflow para que la animación funcione
-                void banners[index].offsetWidth;
-                
-                // Después de un breve delay, activar el nuevo banner (entra desde la derecha)
-                setTimeout(() => {
-                    banners[index].classList.remove('slide-in');
-                    banners[index].classList.add('active');
-                }, 10);
-            }
-
-            currentIndex = index;
-        }
-
-        function nextBanner() {
-            const nextIndex = (currentIndex + 1) % totalBanners;
-            showBanner(nextIndex);
-        }
-
-        // Iniciar rotación automática
-        let rotationTimer = setInterval(nextBanner, rotationInterval);
-
-        // Pausar rotación al hacer hover
-        const bannerSection = document.querySelector('.promotional-banner-section');
-        if (bannerSection) {
-            bannerSection.addEventListener('mouseenter', () => {
-                clearInterval(rotationTimer);
-            });
-
-            bannerSection.addEventListener('mouseleave', () => {
-                rotationTimer = setInterval(nextBanner, rotationInterval);
-            });
-        }
     });
 </script>
 

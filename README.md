@@ -657,3 +657,31 @@ Todos los derechos reservados MotoMoto 2025
 ---
 
 **Desarrollado con Django 5.2+ | Bootstrap 5 | Python 3.11+**
+
+
+# ============================================
+# 1. EJECUTAR MIGRACIONES (crear tablas)
+# ============================================
+python manage.py migrate
+
+# ============================================
+# 2. CREAR SUPERUSUARIO (para acceder al admin)
+# ============================================
+python manage.py createsuperuser
+# Te pedirá: email, password, password (confirmación)
+
+# ============================================
+# 3. CARGAR MÉTODOS DE ENVÍO Y PAGO
+# ============================================
+python manage.py load_payment_shipping_methods
+
+# ============================================
+# 4. CARGAR DATOS INICIALES
+# (Categorías, Marcas y Productos)
+# ============================================
+python manage.py load_initial_data
+
+# ============================================
+# 5. COPIAR IMÁGENES DE MARCAS
+# ============================================
+python manage.py copy_brand_images
