@@ -1,0 +1,737 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load shop_filters %}
+
+{% block title %}Dashboard Administrativo - MotoMoto{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard-container">
+    <!-- Header del Dashboard -->
+    <div class="dashboard-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="dashboard-title">
+                        <i class="bi bi-speedometer2"></i> Dashboard Administrativo
+                    </h1>
+                    <p class="dashboard-subtitle">Panel de control y gestión de MotoMoto</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{% url 'admin:index' %}" class="btn btn-outline-light">
+                        <i class="bi bi-gear"></i> Admin Django
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid mt-4">
+        <!-- Navegación por pestañas -->
+        <ul class="nav nav-pills mb-4 dashboard-tabs" id="dashboardTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="accounting-tab" data-bs-toggle="tab" data-bs-target="#accounting" type="button" role="tab">
+                    <i class="bi bi-cash-coin"></i> Contabilidad
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab">
+                    <i class="bi bi-envelope"></i> Contacto
+                    {% if unresolved_messages > 0 %}
+                        <span class="badge bg-danger ms-1">{{ unresolved_messages }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="metrics-tab" data-bs-toggle="tab" data-bs-target="#metrics" type="button" role="tab">
+                    <i class="bi bi-graph-up"></i> Métricas
+                </button>
+            </li>
+        </ul>
+
+        <!-- Contenido de las pestañas -->
+        <div class="tab-content" id="dashboardTabContent">
+            <!-- ========== CONTABILIDAD ========== -->
+            <div class="tab-pane fade show active" id="accounting" role="tabpanel">
+                <!-- Tarjetas de resumen -->
+                <div class="row mb-4">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="stat-card stat-card-primary">
+                            <div class="stat-icon">
+                                <i class="bi bi-currency-dollar"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 class="stat-value">{{ total_sales|currency_clp }}</h3>
+                                <p class="stat-label">Ventas Totales</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="stat-card stat-card-success">
+                            <div class="stat-icon">
+                                <i class="bi bi-calendar-month"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 class="stat-value">{{ monthly_sales|currency_clp }}</h3>
+                                <p class="stat-label">Ventas del Mes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="stat-card stat-card-info">
+                            <div class="stat-icon">
+                                <i class="bi bi-calendar-week"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 class="stat-value">{{ weekly_sales|currency_clp }}</h3>
+                                <p class="stat-label">Ventas de la Semana</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="stat-card stat-card-warning">
+                            <div class="stat-icon">
+                                <i class="bi bi-cart-check"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 class="stat-value">{{ total_orders_paid }}</h3>
+                                <p class="stat-label">Pedidos Pagados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Últimos Pedidos Realizados -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-cart-plus"></i> Últimos Pedidos Realizados ({{ total_orders_realized }} total)
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Número</th>
+                                        <th>Cliente</th>
+                                        <th>Fecha</th>
+                                        <th>Estado</th>
+                                        <th>Total</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in recent_realized_orders %}
+                                    <tr>
+                                        <td><strong>#{{ order.id }}</strong></td>
+                                        <td><code>{{ order.order_number }}</code></td>
+                                        <td>
+                                            {% if order.user %}
+                                                {{ order.user.get_full_name|default:order.user.email }}
+                                            {% else %}
+                                                {{ order.customer_name|default:"Anónimo" }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            <form method="post" action="{% url 'shop:admin_update_order_status' order.id %}" class="d-inline order-status-form" id="statusFormRealized{{ order.id }}">
+                                                {% csrf_token %}
+                                                <select name="status" class="form-select form-select-sm d-inline-block" style="width: auto; min-width: 150px;" data-current-status="{{ order.get_status_display }}" data-order-id="{{ order.id }}" onchange="handleStatusChange(this);">
+                                                    {% for status_code, status_name in order.STATUS_CHOICES %}
+                                                        <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
+                                                            {{ status_name }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </form>
+                                        </td>
+                                        <td><strong>{{ order.total|currency_clp }}</strong></td>
+                                        <td>
+                                            <a href="{% url 'shop:order_confirmation' order.id %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">
+                                            No hay pedidos realizados
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pedidos Pagados -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-check-circle"></i> Pedidos Pagados (Últimos 10)
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Número</th>
+                                        <th>Cliente</th>
+                                        <th>Fecha</th>
+                                        <th>Estado</th>
+                                        <th>Total</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in recent_paid_orders %}
+                                    <tr>
+                                        <td><strong>#{{ order.id }}</strong></td>
+                                        <td><code>{{ order.order_number }}</code></td>
+                                        <td>
+                                            {% if order.user %}
+                                                {{ order.user.get_full_name|default:order.user.email }}
+                                            {% else %}
+                                                {{ order.customer_name|default:"Anónimo" }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            <form method="post" action="{% url 'shop:admin_update_order_status' order.id %}" class="d-inline order-status-form" id="statusForm{{ order.id }}">
+                                                {% csrf_token %}
+                                                <select name="status" class="form-select form-select-sm d-inline-block" style="width: auto; min-width: 150px;" data-current-status="{{ order.get_status_display }}" data-order-id="{{ order.id }}" onchange="handleStatusChange(this);">
+                                                    {% for status_code, status_name in order.STATUS_CHOICES %}
+                                                        <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
+                                                            {{ status_name }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </form>
+                                        </td>
+                                        <td><strong>{{ order.total|currency_clp }}</strong></td>
+                                        <td>
+                                            <a href="{% url 'shop:order_confirmation' order.id %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-4">
+                                            No hay pedidos pagados
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pedidos Pendientes -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i> Pedidos Pendientes de Pago ({{ total_orders_pending }})
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Número</th>
+                                        <th>Cliente</th>
+                                        <th>Fecha</th>
+                                        <th>Total</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in recent_pending_orders %}
+                                    <tr>
+                                        <td><strong>#{{ order.id }}</strong></td>
+                                        <td><code>{{ order.order_number }}</code></td>
+                                        <td>
+                                            {% if order.user %}
+                                                {{ order.user.get_full_name|default:order.user.email }}
+                                            {% else %}
+                                                {{ order.customer_name|default:"Anónimo" }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            <form method="post" action="{% url 'shop:admin_update_order_status' order.id %}" class="d-inline order-status-form" id="statusFormPending{{ order.id }}">
+                                                {% csrf_token %}
+                                                <select name="status" class="form-select form-select-sm d-inline-block" style="width: auto; min-width: 150px;" data-current-status="{{ order.get_status_display }}" data-order-id="{{ order.id }}" onchange="handleStatusChange(this);">
+                                                    {% for status_code, status_name in order.STATUS_CHOICES %}
+                                                        <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
+                                                            {{ status_name }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </form>
+                                        </td>
+                                        <td><strong>{{ order.total|currency_clp }}</strong></td>
+                                        <td>
+                                            <a href="{% url 'shop:order_confirmation' order.id %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            No hay pedidos pendientes
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== CONTACTO ========== -->
+            <div class="tab-pane fade" id="contact" role="tabpanel">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="stat-card stat-card-info">
+                            <div class="stat-icon">
+                                <i class="bi bi-envelope-paper"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 class="stat-value">{{ total_contact_messages }}</h3>
+                                <p class="stat-label">Total Mensajes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="stat-card stat-card-warning">
+                            <div class="stat-icon">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 class="stat-value">{{ unresolved_messages }}</h3>
+                                <p class="stat-label">Sin Resolver</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-inbox"></i> Mensajes de Contacto (Últimos 20)
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Nombre</th>
+                                        <th>Email</th>
+                                        <th>Teléfono</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for message in contact_messages %}
+                                    <tr class="{% if not message.resolved %}table-warning{% endif %}">
+                                        <td>{{ message.created_at|date:"d/m/Y H:i" }}</td>
+                                        <td><strong>{{ message.name }}</strong></td>
+                                        <td>{{ message.email }}</td>
+                                        <td>{{ message.phone|default:"-" }}</td>
+                                        <td>
+                                            {% if message.resolved %}
+                                                <span class="badge bg-success">Resuelto</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">Pendiente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'shop:admin_contact_detail' message.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i> Ver
+                                            </a>
+                                            <form method="post" action="{% url 'shop:admin_contact_delete' message.id %}" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este mensaje?');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            No hay mensajes de contacto
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== MÉTRICAS ========== -->
+            <div class="tab-pane fade" id="metrics" role="tabpanel">
+                <div class="row">
+                    <!-- Productos Más Vistos -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-eye"></i> Productos Más Vistos
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group list-group-flush">
+                                    {% for item in most_viewed_products %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ item.product.name }}</h6>
+                                            <small class="text-muted">{{ item.product.category.name }}</small>
+                                        </div>
+                                        <span class="badge bg-info rounded-pill">{{ item.views }} vistas</span>
+                                    </div>
+                                    {% empty %}
+                                    <div class="text-center text-muted py-3">
+                                        No hay datos disponibles
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Productos Más Vendidos -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-trophy"></i> Productos Más Vendidos
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group list-group-flush">
+                                    {% for item in best_selling_products %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ item.product.name }}</h6>
+                                            <small class="text-muted">{{ item.total_sold }} unidades vendidas</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-success rounded-pill">{{ item.total_revenue|currency_clp }}</span>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="text-center text-muted py-3">
+                                        No hay datos disponibles
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Productos Más Agregados al Carrito -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-cart-plus"></i> Más Agregados al Carrito
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group list-group-flush">
+                                    {% for item in most_carted_products %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ item.product.name }}</h6>
+                                            <small class="text-muted">{{ item.product.category.name }}</small>
+                                        </div>
+                                        <span class="badge bg-warning text-dark rounded-pill">{{ item.cart_count }} veces</span>
+                                    </div>
+                                    {% empty %}
+                                    <div class="text-center text-muted py-3">
+                                        No hay datos disponibles
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Productos Menos Vistos -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-eye-slash"></i> Productos Menos Vistos
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group list-group-flush">
+                                    {% for item in least_viewed_products %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ item.product.name }}</h6>
+                                            <small class="text-muted">{{ item.product.category.name }}</small>
+                                        </div>
+                                        <span class="badge bg-secondary rounded-pill">{{ item.views }} vistas</span>
+                                    </div>
+                                    {% empty %}
+                                    <div class="text-center text-muted py-3">
+                                        No hay datos disponibles
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-dashboard-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding-bottom: 3rem;
+}
+
+.dashboard-header {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    padding: 2rem 0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.dashboard-subtitle {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+}
+
+.dashboard-tabs {
+    background: white;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dashboard-tabs .nav-link {
+    color: #495057;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    transition: all 0.3s;
+    margin-right: 0.5rem;
+}
+
+.dashboard-tabs .nav-link:hover {
+    background-color: #f8f9fa;
+    color: #dc3545;
+}
+
+.dashboard-tabs .nav-link.active {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.stat-card-primary .stat-icon {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.stat-card-success .stat-icon {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.stat-card-info .stat-icon {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+}
+
+.stat-card-warning .stat-icon {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex-grow: 1;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin: 0;
+    color: #212529;
+}
+
+.stat-label {
+    margin: 0.25rem 0 0 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.list-group-item {
+    border-left: none;
+    border-right: none;
+    padding: 1rem;
+    transition: background-color 0.2s;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+.list-group-item:first-child {
+    border-top: none;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+@media (max-width: 768px) {
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+    
+    .dashboard-tabs .nav-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .stat-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .table {
+        font-size: 0.85rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    }
+</style>
+
+<script>
+function handleStatusChange(select) {
+    const currentStatus = select.getAttribute('data-current-status');
+    const selectedOption = select.options[select.selectedIndex];
+    const newStatus = selectedOption.text;
+    const orderId = select.getAttribute('data-order-id');
+    const form = select.closest('form');
+    
+    if (currentStatus === newStatus) {
+        // No hacer nada si no cambió
+        return;
+    }
+    
+    if (confirm(`¿Estás seguro de cambiar el estado del pedido #${orderId} de "${currentStatus}" a "${newStatus}"?`)) {
+        form.submit();
+    } else {
+        // Revertir al estado anterior
+        const originalValue = Array.from(select.options).find(opt => opt.text === currentStatus)?.value;
+        if (originalValue) {
+            select.value = originalValue;
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -62,7 +62,8 @@
                             <li><a class="dropdown-item" href="{% url 'shop:profile' %}"><i class="bi bi-person"></i> Perfil</a></li>
                             {% if user.is_staff %}
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="bi bi-gear"></i> Admin</a></li>
+                                <li><a class="dropdown-item" href="{% url 'shop:admin_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                                <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="bi bi-gear"></i> Admin Django</a></li>
                             {% endif %}
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'shop:logout' %}"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>

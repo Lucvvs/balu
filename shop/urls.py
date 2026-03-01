@@ -36,5 +36,15 @@ urlpatterns = [
     
     # Contacto
     path('contacto/', views.contact_view, name='contact'),
+    
+    # Legal
+    path('terminos-y-condiciones/', views.terms_and_conditions, name='terms_and_conditions'),
+    path('politicas-de-privacidad/', views.privacy_policy, name='privacy_policy'),
+    
+    # Admin Dashboard
+    path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('dashboard/contacto/<int:message_id>/', views.contact_message_detail, name='admin_contact_detail'),
+    path('dashboard/contacto/<int:message_id>/eliminar/', views.delete_contact_message, name='admin_contact_delete'),
+    path('dashboard/pedido/<int:order_id>/actualizar-estado/', views.update_order_status, name='admin_update_order_status'),
 ]
 

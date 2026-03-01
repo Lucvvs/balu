@@ -152,6 +152,65 @@
                         </div>
                     </div>
                     
+                    {% with pm=order.payment_method.name|default:'' %}
+                    {% if 'transferencia' in pm|lower %}
+                    <div class="card border-primary mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-bank"></i> Datos para Transferencia Bancaria
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info mb-3">
+                                <i class="bi bi-info-circle"></i> 
+                                <strong>Importante:</strong> Realiza la transferencia por el monto exacto de <strong class="text-danger fs-5">{{ order.total|currency_clp }}</strong> 
+                                e incluye el número de pedido <strong>#{{ order.order_number }}</strong> en el concepto o asunto de la transferencia.
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-primary"><i class="bi bi-building"></i> Banco</h6>
+                                    <p class="mb-0 fs-5"><strong>Banco de Chile</strong></p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-primary"><i class="bi bi-person-badge"></i> Tipo de Cuenta</h6>
+                                    <p class="mb-0 fs-5"><strong>Cuenta Corriente</strong></p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-primary"><i class="bi bi-123"></i> Número de Cuenta</h6>
+                                    <p class="mb-0 fs-4"><strong class="text-danger">12345678-9</strong></p>
+                                    <small class="text-muted">(Actualiza este número con tu cuenta real)</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-primary"><i class="bi bi-person"></i> Titular</h6>
+                                    <p class="mb-0 fs-5"><strong>MotoMoto</strong></p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-primary"><i class="bi bi-envelope"></i> Email para Envío de Comprobante</h6>
+                                    <p class="mb-0">
+                                        <a href="mailto:contacto@motomoto.cl" class="text-decoration-none">
+                                            <strong>contacto@motomoto.cl</strong>
+                                        </a>
+                                    </p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-primary"><i class="bi bi-whatsapp"></i> WhatsApp</h6>
+                                    <p class="mb-0">
+                                        <a href="https://wa.me/56982117748" target="_blank" class="text-decoration-none">
+                                            <strong>+569 8211 7748</strong>
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="alert alert-warning mt-3 mb-0">
+                                <i class="bi bi-exclamation-triangle"></i> 
+                                <strong>Recuerda:</strong> Una vez realizada la transferencia, envía el comprobante por WhatsApp o email 
+                                con el número de pedido <strong>#{{ order.order_number }}</strong> para agilizar la confirmación de tu pago.
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                    
                     <div class="card bg-light mb-3">
                         <div class="card-body">
                             <div class="row">
@@ -174,6 +233,48 @@
                             </div>
                         </div>
                     </div>
+                    
+                    {% if user.is_staff %}
+                    <div class="card border-warning mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="bi bi-gear"></i> Panel de Administración
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <label class="form-label"><strong>Cambiar Estado del Pedido:</strong></label>
+                                    <form method="post" action="{% url 'shop:admin_update_order_status' order.id %}" class="d-inline" id="statusChangeForm" onsubmit="return confirmStatusChangeDetail(this);">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="from_detail" value="1">
+                                        <select name="status" class="form-select" id="orderStatusSelect">
+                                            {% for status_code, status_name in order.STATUS_CHOICES %}
+                                                <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
+                                                    {{ status_name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </form>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <p class="mb-1"><strong>Estado Actual:</strong></p>
+                                    <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% elif order.status == 'pending_payment' %}warning{% else %}info{% endif %} fs-6">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button type="submit" form="statusChangeForm" class="btn btn-warning">
+                                    <i class="bi bi-arrow-repeat"></i> Actualizar Estado
+                                </button>
+                                <a href="{% url 'shop:admin_dashboard' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-speedometer2"></i> Ir al Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                     
                     <div class="text-center">
                         <a href="{% url 'shop:home' %}" class="btn btn-primary me-2">
@@ -261,6 +362,24 @@
             font-size: 9px !important;
         }
     }
+</style>
+
+{% if user.is_staff %}
+<script>
+function confirmStatusChangeDetail(form) {
+    const select = document.getElementById('orderStatusSelect');
+    const currentStatus = '{{ order.get_status_display }}';
+    const newStatus = select.options[select.selectedIndex].text;
+    
+    if (currentStatus === newStatus) {
+        alert('El estado seleccionado es el mismo que el actual.');
+        return false;
+    }
+    
+    return confirm(`¿Estás seguro de cambiar el estado del pedido #{{ order.id }} de "${currentStatus}" a "${newStatus}"?`);
+}
+</script>
+{% endif %}
 </style>
 {% endblock %}
 

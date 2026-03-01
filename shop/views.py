@@ -202,13 +202,22 @@ def product_detail(request, slug):
     if not primary_image and images.exists():
         primary_image = images.first()
 
-    # Registrar vista de producto
-    MetricEvent.objects.create(
+    # Registrar vista de producto (evitar duplicados en la misma sesión)
+    from datetime import timedelta
+    recent_view = MetricEvent.objects.filter(
         event_type='product_view',
-        user=request.user if request.user.is_authenticated else None,
         session_key=request.session.session_key,
-        metadata={'product_id': product.id, 'product_slug': product.slug}
-    )
+        metadata__product_id=product.id,
+        created_at__gte=timezone.now() - timedelta(seconds=5)
+    ).first()
+    
+    if not recent_view:
+        MetricEvent.objects.create(
+            event_type='product_view',
+            user=request.user if request.user.is_authenticated else None,
+            session_key=request.session.session_key,
+            metadata={'product_id': product.id, 'product_slug': product.slug}
+        )
 
     # Formulario con tallas si el producto las tiene
     form = AddToCartForm(product=product)
@@ -983,3 +992,230 @@ def search_order(request):
     }
     
     return render(request, 'shop/search_order.html', context)
+
+
+def terms_and_conditions(request):
+    """Vista para mostrar los Términos y Condiciones"""
+    return render(request, 'shop/terms_and_conditions.html')
+
+
+def privacy_policy(request):
+    """Vista para mostrar las Políticas de Privacidad"""
+    return render(request, 'shop/privacy_policy.html')
+
+
+@login_required
+def admin_dashboard(request):
+    """Dashboard de administración - Solo para usuarios staff"""
+    if not request.user.is_staff:
+        messages.error(request, 'No tienes permisos para acceder a esta sección.')
+        return redirect('shop:home')
+    
+    from django.db.models import Sum, Count, Q, F
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    # ========== CONTABILIDAD ==========
+    # Pedidos pagados (confirmed, shipped, delivered)
+    paid_statuses = ['confirmed', 'shipped', 'delivered']
+    paid_orders = Order.objects.filter(status__in=paid_statuses)
+    
+    # Pedidos pendientes
+    pending_orders = Order.objects.filter(status='pending_payment')
+    
+    # Estadísticas de ventas
+    total_sales = paid_orders.aggregate(total=Sum('total'))['total'] or 0
+    total_orders_paid = paid_orders.count()
+    total_orders_pending = pending_orders.count()
+    
+    # Ventas del mes actual
+    current_month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    monthly_sales = paid_orders.filter(created_at__gte=current_month_start).aggregate(
+        total=Sum('total')
+    )['total'] or 0
+    
+    # Ventas de la semana actual
+    week_start = timezone.now() - timedelta(days=timezone.now().weekday())
+    weekly_sales = paid_orders.filter(created_at__gte=week_start).aggregate(
+        total=Sum('total')
+    )['total'] or 0
+    
+    # Últimos pedidos realizados (limitado a 10)
+    recent_realized_orders = Order.objects.filter(status='realized').select_related('user', 'payment_method', 'shipping_method').prefetch_related('items').order_by('-created_at')[:10]
+    total_orders_realized = Order.objects.filter(status='realized').count()
+    
+    # Últimos pedidos pagados (limitado a 10)
+    recent_paid_orders = paid_orders.select_related('user', 'payment_method', 'shipping_method').prefetch_related('items')[:10]
+    
+    # Últimos pedidos pendientes (limitado a 10)
+    recent_pending_orders = pending_orders.select_related('user', 'payment_method', 'shipping_method').prefetch_related('items')[:10]
+    
+    # ========== CONTACTO ==========
+    # Todos los mensajes de contacto
+    contact_messages = ContactMessage.objects.all().order_by('-created_at')
+    total_contact_messages = contact_messages.count()
+    unresolved_messages = contact_messages.filter(resolved=False).count()
+    
+    # ========== MÉTRICAS ==========
+    # Productos más vistos - obtener todos los eventos y procesar
+    all_product_views = MetricEvent.objects.filter(event_type='product_view')
+    product_view_counts = {}
+    for event in all_product_views:
+        product_id = event.metadata.get('product_id')
+        if product_id:
+            product_view_counts[product_id] = product_view_counts.get(product_id, 0) + 1
+    
+    # Ordenar y obtener top 10
+    sorted_views = sorted(product_view_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    most_viewed_products = []
+    for product_id, view_count in sorted_views:
+        try:
+            product = Product.objects.get(id=product_id)
+            most_viewed_products.append({
+                'product': product,
+                'views': view_count
+            })
+        except (Product.DoesNotExist, ValueError):
+            pass
+    
+    # Productos más vendidos
+    best_sellers = OrderItem.objects.values('product').annotate(
+        total_sold=Sum('quantity'),
+        total_revenue=Sum('line_total')
+    ).order_by('-total_sold')[:10]
+    
+    best_selling_products = []
+    for bs in best_sellers:
+        try:
+            product = Product.objects.get(id=bs['product'])
+            best_selling_products.append({
+                'product': product,
+                'total_sold': bs['total_sold'],
+                'total_revenue': bs['total_revenue']
+            })
+        except Product.DoesNotExist:
+            pass
+    
+    # Productos menos clickeados/vistos
+    all_products_list = Product.objects.all()
+    product_view_map = {}
+    for event in all_product_views:
+        product_id = event.metadata.get('product_id')
+        if product_id:
+            product_view_map[product_id] = product_view_map.get(product_id, 0) + 1
+    
+    least_viewed_products = []
+    for product in all_products_list:
+        view_count = product_view_map.get(product.id, 0)
+        least_viewed_products.append({
+            'product': product,
+            'views': view_count
+        })
+    
+    # Ordenar por menos vistas y tomar los primeros 10
+    least_viewed_products = sorted(least_viewed_products, key=lambda x: x['views'])[:10]
+    
+    # Productos agregados al carrito más veces
+    all_cart_events = MetricEvent.objects.filter(event_type='add_to_cart')
+    product_cart_counts = {}
+    for event in all_cart_events:
+        product_id = event.metadata.get('product_id')
+        if product_id:
+            product_cart_counts[product_id] = product_cart_counts.get(product_id, 0) + 1
+    
+    # Ordenar y obtener top 10
+    sorted_carts = sorted(product_cart_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    most_carted_products = []
+    for product_id, cart_count in sorted_carts:
+        try:
+            product = Product.objects.get(id=product_id)
+            most_carted_products.append({
+                'product': product,
+                'cart_count': cart_count
+            })
+        except (Product.DoesNotExist, ValueError):
+            pass
+    
+    context = {
+        # Contabilidad
+        'total_sales': total_sales,
+        'monthly_sales': monthly_sales,
+        'weekly_sales': weekly_sales,
+        'total_orders_paid': total_orders_paid,
+        'total_orders_pending': total_orders_pending,
+        'total_orders_realized': total_orders_realized,
+        'recent_realized_orders': recent_realized_orders,
+        'recent_paid_orders': recent_paid_orders,
+        'recent_pending_orders': recent_pending_orders,
+        
+        # Contacto
+        'contact_messages': contact_messages[:20],  # Últimos 20
+        'total_contact_messages': total_contact_messages,
+        'unresolved_messages': unresolved_messages,
+        
+        # Métricas
+        'most_viewed_products': most_viewed_products,
+        'best_selling_products': best_selling_products,
+        'least_viewed_products': least_viewed_products,
+        'most_carted_products': most_carted_products,
+    }
+    
+    return render(request, 'shop/admin_dashboard.html', context)
+
+
+@login_required
+@require_POST
+def delete_contact_message(request, message_id):
+    """Eliminar un mensaje de contacto"""
+    if not request.user.is_staff:
+        messages.error(request, 'No tienes permisos para realizar esta acción.')
+        return redirect('shop:home')
+    
+    message = get_object_or_404(ContactMessage, id=message_id)
+    message.delete()
+    messages.success(request, 'Mensaje eliminado correctamente.')
+    return redirect('shop:admin_dashboard')
+
+
+@login_required
+def contact_message_detail(request, message_id):
+    """Ver detalles de un mensaje de contacto"""
+    if not request.user.is_staff:
+        messages.error(request, 'No tienes permisos para acceder a esta sección.')
+        return redirect('shop:home')
+    
+    message = get_object_or_404(ContactMessage, id=message_id)
+    return render(request, 'shop/admin_contact_detail.html', {'message': message})
+
+
+@login_required
+@require_POST
+def update_order_status(request, order_id):
+    """Actualizar el estado de un pedido"""
+    if not request.user.is_staff:
+        messages.error(request, 'No tienes permisos para realizar esta acción.')
+        return redirect('shop:home')
+    
+    order = get_object_or_404(Order, id=order_id)
+    new_status = request.POST.get('status')
+    
+    if not new_status:
+        messages.error(request, 'Debes seleccionar un estado válido.')
+        return redirect('shop:admin_dashboard')
+    
+    # Validar que el estado sea válido
+    valid_statuses = [choice[0] for choice in Order.STATUS_CHOICES]
+    if new_status not in valid_statuses:
+        messages.error(request, 'Estado no válido.')
+        return redirect('shop:admin_dashboard')
+    
+    old_status = order.get_status_display()
+    order.status = new_status
+    order.save()
+    
+    messages.success(request, f'Estado del pedido #{order.id} actualizado de "{old_status}" a "{order.get_status_display()}".')
+    
+    # Redirigir según desde dónde se llamó
+    if request.POST.get('from_detail'):
+        return redirect('shop:order_confirmation', order_id=order.id)
+    return redirect('shop:admin_dashboard')

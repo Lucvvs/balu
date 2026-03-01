@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle de Mensaje - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="bi bi-envelope-paper text-primary"></i> Detalle del Mensaje
+                </h2>
+                <a href="{% url 'shop:admin_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver al Dashboard
+                </a>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Información del Mensaje
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong><i class="bi bi-calendar"></i> Fecha:</strong>
+                            <p class="mb-0">{{ message.created_at|date:"d/m/Y H:i:s" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong><i class="bi bi-check-circle"></i> Estado:</strong>
+                            <p class="mb-0">
+                                {% if message.resolved %}
+                                    <span class="badge bg-success">Resuelto</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Pendiente</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <strong><i class="bi bi-person"></i> Nombre:</strong>
+                        <p class="mb-0 fs-5">{{ message.name }}</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong><i class="bi bi-envelope"></i> Email:</strong>
+                        <p class="mb-0">
+                            <a href="mailto:{{ message.email }}">{{ message.email }}</a>
+                        </p>
+                    </div>
+
+                    {% if message.phone %}
+                    <div class="mb-3">
+                        <strong><i class="bi bi-telephone"></i> Teléfono:</strong>
+                        <p class="mb-0">
+                            <a href="tel:{{ message.phone }}">{{ message.phone }}</a>
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <strong><i class="bi bi-chat-left-text"></i> Mensaje:</strong>
+                        <div class="alert alert-light mt-2" style="white-space: pre-wrap;">{{ message.message }}</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <form method="post" action="{% url 'shop:admin_contact_delete' message.id %}" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este mensaje?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Eliminar Mensaje
+                            </button>
+                        </form>
+                        <a href="mailto:{{ message.email }}?subject=Re: Consulta MotoMoto" class="btn btn-primary">
+                            <i class="bi bi-reply"></i> Responder por Email
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
