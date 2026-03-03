@@ -481,6 +481,24 @@ class Order(models.Model):
             'progress_percentage': progress_percentage,
         }
 
+    def get_total_paid(self):
+        """Retorna el total pagado de todos los pagos aprobados"""
+        from django.db.models import Sum
+        total = self.payments.filter(status='approved').aggregate(total=Sum('amount'))['total'] or 0
+        return total
+
+    def get_pending_amount(self):
+        """Retorna el monto pendiente de pago"""
+        return self.total - self.get_total_paid()
+
+    def has_approved_payment(self):
+        """Retorna True si tiene al menos un pago aprobado"""
+        return self.payments.filter(status='approved').exists()
+
+    def get_latest_payment(self):
+        """Retorna el último pago creado"""
+        return self.payments.order_by('-created_at').first()
+
 
 class OrderItem(models.Model):
     """Modelo para items de pedido"""
@@ -497,6 +515,88 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product_name} x {self.quantity}"
+
+
+class Payment(models.Model):
+    """Modelo para pagos de pedidos"""
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pendiente'),
+        ('in_process', 'En proceso'),
+        ('approved', 'Aprobado'),
+        ('rejected', 'Rechazado'),
+        ('cancelled', 'Cancelado'),
+        ('refunded', 'Reembolsado'),
+        ('charged_back', 'Contracargo'),
+    ]
+
+    PAYMENT_TYPE_CHOICES = [
+        ('transfer', 'Transferencia Bancaria'),
+        ('mercado_pago', 'Mercado Pago'),
+        ('cash', 'Efectivo'),
+        ('other', 'Otro'),
+    ]
+
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='payments', verbose_name="Pedido")
+    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT, verbose_name="Método de pago")
+    amount = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Monto (CLP)")
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending', verbose_name="Estado")
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, default='other', verbose_name="Tipo de pago")
+    
+    # Información de Mercado Pago (si aplica)
+    mp_payment_id = models.CharField(max_length=100, blank=True, null=True, verbose_name="MP Payment ID")
+    mp_preference_id = models.CharField(max_length=100, blank=True, null=True, verbose_name="MP Preference ID")
+    mp_init_point = models.URLField(blank=True, null=True, verbose_name="MP Init Point")
+    mp_status_detail = models.CharField(max_length=100, blank=True, null=True, verbose_name="MP Status Detail")
+    
+    # Información de transferencia bancaria (si aplica)
+    transfer_reference = models.CharField(max_length=200, blank=True, null=True, verbose_name="Referencia/Número de transferencia")
+    transfer_bank = models.CharField(max_length=100, blank=True, null=True, verbose_name="Banco")
+    transfer_account = models.CharField(max_length=100, blank=True, null=True, verbose_name="Número de cuenta")
+    
+    # Información adicional
+    notes = models.TextField(blank=True, null=True, verbose_name="Notas")
+    receipt_image = models.ImageField(upload_to='payment_receipts/', blank=True, null=True, verbose_name="Comprobante")
+    
+    # Fechas
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Fecha de actualización")
+    paid_at = models.DateTimeField(blank=True, null=True, verbose_name="Fecha de pago")
+    
+    # Usuario que procesó el pago (para pagos manuales)
+    processed_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='processed_payments', verbose_name="Procesado por")
+
+    class Meta:
+        verbose_name = "Pago"
+        verbose_name_plural = "Pagos"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Pago #{self.id} - Pedido #{self.order.id} - {self.get_status_display()} - ${self.amount:,}".replace(',', '.')
+
+    @property
+    def is_approved(self):
+        """Retorna True si el pago está aprobado"""
+        return self.status == 'approved'
+
+    @property
+    def is_pending(self):
+        """Retorna True si el pago está pendiente"""
+        return self.status == 'pending'
+
+    def mark_as_approved(self, save=True):
+        """Marca el pago como aprobado"""
+        self.status = 'approved'
+        if not self.paid_at:
+            from django.utils import timezone
+            self.paid_at = timezone.now()
+        if save:
+            self.save()
+
+    def mark_as_rejected(self, save=True):
+        """Marca el pago como rechazado"""
+        self.status = 'rejected'
+        if save:
+            self.save()
 
 
 class ContactMessage(models.Model):

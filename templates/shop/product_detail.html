@@ -52,12 +52,18 @@
         <div class="col-md-6">
             <h1 class="mb-3">{{ product.name }}</h1>
             <p class="text-muted mb-2">{{ product.short_description|linebreaks }}</p>
-            <p class="mb-3">
-                <span class="badge bg-secondary">{{ product.category.name }}</span>
+            <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+                <!-- Categoría animada y destacada -->
+                <a href="{% url 'shop:products_list' %}?category={{ product.category.slug }}" class="category-badge-animated">
+                    <i class="bi bi-tag-fill"></i> {{ product.category.name }}
+                </a>
+                <!-- Marca animada y destacada -->
                 {% if product.brand %}
-                    <span class="badge bg-info">{{ product.brand.name }}</span>
+                    <a href="{% url 'shop:products_list' %}?brand={{ product.brand.slug }}" class="brand-badge-animated">
+                        <i class="bi bi-star-fill"></i> {{ product.brand.name }}
+                    </a>
                 {% endif %}
-            </p>
+            </div>
             
             <!-- Stock Info -->
             {% if product.stock <= 2 and product.stock > 0 %}
@@ -157,12 +163,15 @@
                                 {% endif %}
                                 {% endwith %}
                             </a>
-                            <div class="product-card-body">
-                                <h6 class="product-card-title" style="cursor: pointer;"
+                            <div class="product-card-body related-product-card-body">
+                                <h6 class="related-product-title"
                                     onclick="window.location.href='{% url 'shop:product_detail' slug=related_product.slug %}'">
                                     {{ related_product.name }}
                                 </h6>
-                                <p class="price-offer">{{ related_product.current_price|currency_clp }}</p>
+                                <p class="related-product-price"
+                                   onclick="window.location.href='{% url 'shop:product_detail' slug=related_product.slug %}'">
+                                    {{ related_product.current_price|currency_clp }}
+                                </p>
                             </div>
                         </div>
                     </div>

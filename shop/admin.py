@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from .models import (
     CustomUser, Brand, Category, Product, ProductImage, Coupon, ShippingMethod, PaymentMethod,
-    Cart, CartItem, Order, OrderItem, ContactMessage, MetricEvent, PromotionalBanner
+    Cart, CartItem, Order, OrderItem, Payment, ContactMessage, MetricEvent, PromotionalBanner
 )
 
 
@@ -285,6 +285,74 @@ class ContactMessageAdmin(admin.ModelAdmin):
     def mark_as_unresolved(self, request, queryset):
         queryset.update(resolved=False)
         self.message_user(request, f'{queryset.count()} mensaje(s) marcado(s) como no resuelto(s).')
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    """Admin para el modelo de Pagos"""
+    list_display = ('id', 'order_link', 'payment_method', 'amount_display', 'status', 'payment_type', 'created_at', 'paid_at')
+    list_filter = ('status', 'payment_type', 'payment_method', 'created_at', 'paid_at')
+    search_fields = ('order__id', 'order__order_number', 'mp_payment_id', 'transfer_reference', 'notes')
+    readonly_fields = ('created_at', 'updated_at', 'order_link')
+    date_hierarchy = 'created_at'
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('order', 'payment_method', 'amount', 'status', 'payment_type')
+        }),
+        ('Mercado Pago', {
+            'fields': ('mp_payment_id', 'mp_preference_id', 'mp_init_point', 'mp_status_detail'),
+            'classes': ('collapse',)
+        }),
+        ('Transferencia Bancaria', {
+            'fields': ('transfer_reference', 'transfer_bank', 'transfer_account'),
+            'classes': ('collapse',)
+        }),
+        ('Información Adicional', {
+            'fields': ('notes', 'receipt_image', 'processed_by', 'paid_at')
+        }),
+        ('Fechas', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+    
+    def order_link(self, obj):
+        """Muestra un enlace al pedido"""
+        if obj.order:
+            return format_html(
+                '<a href="/admin/shop/order/{}/change/">Pedido #{} ({})</a>',
+                obj.order.id,
+                obj.order.id,
+                obj.order.order_number
+            )
+        return '-'
+    order_link.short_description = 'Pedido'
+    
+    def amount_display(self, obj):
+        """Muestra el monto formateado"""
+        return f"${obj.amount:,}".replace(',', '.')
+    amount_display.short_description = 'Monto'
+    
+    actions = ['mark_as_approved', 'mark_as_rejected', 'mark_as_cancelled']
+    
+    def mark_as_approved(self, request, queryset):
+        """Marca los pagos seleccionados como aprobados"""
+        from django.utils import timezone
+        updated = queryset.update(status='approved', paid_at=timezone.now())
+        self.message_user(request, f'{updated} pago(s) marcado(s) como aprobado(s).')
+    mark_as_approved.short_description = 'Marcar como aprobado'
+    
+    def mark_as_rejected(self, request, queryset):
+        """Marca los pagos seleccionados como rechazados"""
+        updated = queryset.update(status='rejected')
+        self.message_user(request, f'{updated} pago(s) marcado(s) como rechazado(s).')
+    mark_as_rejected.short_description = 'Marcar como rechazado'
+    
+    def mark_as_cancelled(self, request, queryset):
+        """Marca los pagos seleccionados como cancelados"""
+        updated = queryset.update(status='cancelled')
+        self.message_user(request, f'{updated} pago(s) marcado(s) como cancelado(s).')
+    mark_as_cancelled.short_description = 'Marcar como cancelado'
 
 
 @admin.register(MetricEvent)

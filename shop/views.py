@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 from .models import (
     Product, Category, Brand, ProductImage, Cart, CartItem, Order, OrderItem,
-    Coupon, ShippingMethod, PaymentMethod, ContactMessage, MetricEvent, PromotionalBanner
+    Coupon, ShippingMethod, PaymentMethod, Payment, ContactMessage, MetricEvent, PromotionalBanner
 )
 from .utils import get_comunas_choices
 from .forms import (
@@ -178,23 +178,6 @@ def product_detail(request, slug):
     ).exclude(id=product.id).select_related('category', 'brand').prefetch_related(
         Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id'))
     )[:4]
-    
-    # Logging para productos relacionados
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(f'[PRODUCT_DETAIL] Productos relacionados encontrados: {related_products.count()}')
-    for related_product in related_products:
-        images = related_product.images.all()
-        logger.info(f'[PRODUCT_DETAIL] Relacionado: {related_product.name} - Imágenes en BD: {images.count()}')
-        if images.count() > 0:
-            first_img = images.first()
-            logger.info(f'[PRODUCT_DETAIL]   Primera imagen: {first_img.image.name} -> URL: {first_img.image.url}')
-            try:
-                logger.info(f'[PRODUCT_DETAIL]   Path físico: {first_img.image.path}')
-            except:
-                logger.warning(f'[PRODUCT_DETAIL]   No se pudo obtener path físico')
-        else:
-            logger.warning(f'[PRODUCT_DETAIL]   [ERROR] No hay imágenes para {related_product.name}')
 
     # Obtener imágenes del producto
     images = product.images.all()
@@ -628,6 +611,18 @@ def checkout(request):
     if 'applied_coupon_id' in request.session:
         del request.session['applied_coupon_id']
 
+    # Crear registro de pago
+    payment_type = 'mercado_pago' if is_mp else 'transfer' if 'transferencia' in payment_method.name.lower() else 'other'
+    payment_status = 'pending' if is_mp or payment_type == 'transfer' else 'approved'
+    
+    Payment.objects.create(
+        order=order,
+        payment_method=payment_method,
+        amount=total,
+        status=payment_status,
+        payment_type=payment_type,
+    )
+
     # Registrar evento
     MetricEvent.objects.create(
         event_type='checkout_started',
@@ -691,6 +686,13 @@ def checkout(request):
         order.mp_preference_id = pref.preference_id
         order.mp_init_point = pref.init_point
         order.save(update_fields=['mp_preference_id', 'mp_init_point', 'status', 'stock_committed'])
+        
+        # Actualizar Payment con información de Mercado Pago
+        payment = order.get_latest_payment()
+        if payment:
+            payment.mp_preference_id = pref.preference_id
+            payment.mp_init_point = pref.init_point
+            payment.save(update_fields=['mp_preference_id', 'mp_init_point'])
 
         return redirect(pref.init_point)
 
@@ -749,9 +751,9 @@ def mp_webhook(request: HttpRequest):
         # Aceptar igualmente (evita reintentos infinitos por payloads no-payment)
         return HttpResponse(status=200)
 
-    payment = get_payment(str(payment_id))
-    external_reference = payment.get('external_reference')
-    status = payment.get('status')
+    mp_payment_data = get_payment(str(payment_id))
+    external_reference = mp_payment_data.get('external_reference')
+    status = mp_payment_data.get('status')
 
     if not external_reference:
         return HttpResponse(status=200)
@@ -766,9 +768,47 @@ def mp_webhook(request: HttpRequest):
         if not order:
             return HttpResponse(status=200)
 
+        # Mantener compatibilidad con campos antiguos en Order
         order.mp_payment_id = str(payment_id)
         order.mp_payment_status = str(status) if status else None
         order.mp_last_event_at = timezone.now()
+
+        # Obtener o crear Payment para este pago de Mercado Pago
+        payment_obj, created = Payment.objects.get_or_create(
+            order=order,
+            mp_payment_id=str(payment_id),
+            defaults={
+                'payment_method': order.payment_method,
+                'amount': order.total,
+                'status': 'pending',
+                'payment_type': 'mercado_pago',
+                'mp_preference_id': order.mp_preference_id,
+                'mp_init_point': order.mp_init_point,
+            }
+        )
+        
+        # Actualizar Payment con el estado actual
+        mp_status_map = {
+            'approved': 'approved',
+            'rejected': 'rejected',
+            'cancelled': 'cancelled',
+            'refunded': 'refunded',
+            'charged_back': 'charged_back',
+            'in_process': 'in_process',
+            'pending': 'pending',
+        }
+        payment_status = mp_status_map.get(status, 'pending')
+        payment_obj.status = payment_status
+        # Obtener status_detail del diccionario de MP
+        mp_status_detail = mp_payment_data.get('status_detail', '')
+        payment_obj.mp_status_detail = mp_status_detail
+        
+        if status == 'approved':
+            payment_obj.mark_as_approved(save=False)
+        elif status in ('rejected', 'cancelled', 'charged_back', 'refunded'):
+            payment_obj.mark_as_rejected(save=False)
+        
+        payment_obj.save()
 
         # Si se aprobó, confirmar y descontar stock una sola vez
         if status == 'approved':
@@ -780,6 +820,8 @@ def mp_webhook(request: HttpRequest):
                     if item.quantity > product.stock:
                         # Si no hay stock, cancelar pedido (edge-case por carreras)
                         order.status = 'cancelled'
+                        payment_obj.status = 'cancelled'
+                        payment_obj.save()
                         order.save(update_fields=['mp_payment_id', 'mp_payment_status', 'mp_last_event_at', 'status'])
                         return HttpResponse(status=200)
                     product.stock -= item.quantity
