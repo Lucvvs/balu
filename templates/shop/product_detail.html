@@ -12,16 +12,18 @@
             <div class="product-image-gallery">
                 <!-- Main Image -->
                 <div class="main-image-container text-center mb-3">
-                    {% if images %}
-                        <img src="{{ primary_image.image.url|default:images.0.image.url }}" alt="{{ product.name }}" 
-                             class="img-fluid main-product-image" id="main-product-image" 
-                             style="max-height: 500px; object-fit: contain;"
-                             onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
-                    {% else %}
-                        <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" 
-                             class="img-fluid main-product-image" style="max-height: 500px; object-fit: contain;"
-                             onerror="this.style.display='none';">
-                    {% endif %}
+                    <div class="product-image-zoom-wrapper">
+                        {% if images %}
+                            <img src="{{ primary_image.image.url|default:images.0.image.url }}" alt="{{ product.name }}" 
+                                 class="img-fluid main-product-image" id="main-product-image" 
+                                 style="max-height: 405px; object-fit: contain;"
+                                 onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
+                        {% else %}
+                            <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" 
+                                 class="img-fluid main-product-image" id="main-product-image" style="max-height: 405px; object-fit: contain;"
+                                 onerror="this.style.display='none';">
+                        {% endif %}
+                    </div>
                 </div>
                 
                 <!-- Navigation Arrows -->
@@ -236,6 +238,65 @@
         } else if (e.key === 'ArrowRight') {
             nextImage();
         }
+    });
+    
+    // Image zoom effect (desktop only)
+    function initImageZoom() {
+        // Only enable on desktop (screen width > 768px)
+        if (window.innerWidth <= 768) {
+            return;
+        }
+        
+        const zoomWrapper = document.querySelector('.product-image-zoom-wrapper');
+        const mainImage = document.getElementById('main-product-image');
+        
+        if (!zoomWrapper || !mainImage) {
+            return;
+        }
+        
+        let isZooming = false;
+        
+        zoomWrapper.addEventListener('mouseenter', function() {
+            isZooming = true;
+            zoomWrapper.classList.add('zoom-active');
+        });
+        
+        zoomWrapper.addEventListener('mouseleave', function() {
+            isZooming = false;
+            zoomWrapper.classList.remove('zoom-active');
+            mainImage.style.transform = 'scale(1)';
+            mainImage.style.transformOrigin = 'center center';
+        });
+        
+        zoomWrapper.addEventListener('mousemove', function(e) {
+            if (!isZooming) return;
+            
+            const rect = zoomWrapper.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Calculate percentage position
+            const xPercent = (x / rect.width) * 100;
+            const yPercent = (y / rect.height) * 100;
+            
+            // Set transform origin based on mouse position
+            mainImage.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+            mainImage.style.transform = 'scale(2)';
+        });
+    }
+    
+    // Initialize zoom on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        initImageZoom();
+    });
+    
+    // Re-initialize on window resize (in case user resizes window)
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            initImageZoom();
+        }, 250);
     });
 </script>
 {% endblock %}

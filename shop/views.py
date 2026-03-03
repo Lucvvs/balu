@@ -299,12 +299,42 @@ def cart_view(request):
         except Cart.DoesNotExist:
             cart = None
 
+    # Obtener cupón aplicado y calcular descuento
+    applied_coupon = None
+    discount_amount = 0
+    total_with_discount = 0
+    
+    if cart:
+        subtotal = cart.get_subtotal()
+        applied_coupon_id = request.session.get('applied_coupon_id')
+        
+        if applied_coupon_id:
+            try:
+                applied_coupon = Coupon.objects.get(id=applied_coupon_id)
+                if applied_coupon.is_valid(subtotal):
+                    discount_amount = applied_coupon.calculate_discount(subtotal)
+                    total_with_discount = subtotal - discount_amount
+                else:
+                    # Cupón inválido, limpiar de sesión
+                    del request.session['applied_coupon_id']
+                    applied_coupon = None
+            except Coupon.DoesNotExist:
+                # Cupón no existe, limpiar de sesión
+                if 'applied_coupon_id' in request.session:
+                    del request.session['applied_coupon_id']
+        
+        if not applied_coupon:
+            total_with_discount = subtotal
+
     context = {
         'cart': cart,
         'coupon_form': CouponForm(),
         'checkout_form': CheckoutForm(),
         'shipping_methods': ShippingMethod.objects.filter(is_active=True),
         'payment_methods': PaymentMethod.objects.filter(is_active=True),
+        'applied_coupon': applied_coupon,
+        'discount_amount': discount_amount,
+        'total_with_discount': total_with_discount,
     }
     return render(request, 'shop/cart.html', context)
 
@@ -458,6 +488,15 @@ def apply_coupon(request):
         if 'applied_coupon_id' in request.session:
             del request.session['applied_coupon_id']
 
+    return redirect('shop:cart')
+
+
+@require_POST
+def remove_coupon(request):
+    """Eliminar cupón aplicado"""
+    if 'applied_coupon_id' in request.session:
+        del request.session['applied_coupon_id']
+        messages.info(request, 'Cupón eliminado.')
     return redirect('shop:cart')
 
 

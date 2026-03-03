@@ -34,58 +34,70 @@
                                         {% endif %}
                                     {% endwith %}
                                 </a>
-                                <form method="post" action="{% url 'shop:remove_cart_item' item_id=item.id %}" class="d-inline">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este producto del carrito?')">
-                                        <i class="bi bi-trash"></i> Eliminar
-                                    </button>
-                                </form>
                             </div>
-                        <div class="cart-item-details">
-                            <div>
-                                <h5><a href="{% url 'shop:product_detail' slug=item.product.slug %}" style="text-decoration: none; color: inherit;">{{ item.product.name }}</a></h5>
-                                {% if item.size %}
-                                    <p class="text-muted mb-1"><strong>Talla:</strong> {{ item.size }}</p>
-                                {% endif %}
-                                <p class="text-muted mb-2">{{ item.product.short_description|linebreaks }}</p>
-                                <div class="mb-3">
-                                    {% if item.product.has_offer %}
-                                        <span class="price-original">{{ item.product.price|currency_clp }}</span>
-                                        <span class="price-offer fs-5">{{ item.unit_price|currency_clp }}</span>
-                                    {% else %}
-                                        <span class="price-normal fs-5">{{ item.unit_price|currency_clp }}</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                                <div class="cart-item-actions">
-                                    <form method="post" action="{% url 'shop:update_cart_item' item_id=item.id %}" class="quantity-form" id="quantity-form-{{ item.id }}">
+                            <div class="cart-item-details">
+                                <div class="cart-item-header">
+                                    <div class="cart-item-title-section">
+                                        <h5 class="cart-item-title"><a href="{% url 'shop:product_detail' slug=item.product.slug %}" style="text-decoration: none; color: inherit;">{{ item.product.name }}</a></h5>
+                                        {% if item.size %}
+                                            <p class="cart-item-size text-muted mb-0"><strong>Talla:</strong> {{ item.size }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <form method="post" action="{% url 'shop:remove_cart_item' item_id=item.id %}" class="cart-item-delete-form">
                                         {% csrf_token %}
-                                        <label for="quantity-{{ item.id }}" class="mb-0 me-2">Cantidad:</label>
-                                        <div class="quantity-controls">
-                                            <button type="button" class="quantity-btn quantity-decrease" 
-                                                    data-item-id="{{ item.id }}" 
-                                                    data-current-quantity="{{ item.quantity }}"
-                                                    data-max-quantity="{{ item.product.stock }}">
-                                                <i class="bi bi-dash-lg"></i>
-                                            </button>
-                                            <input type="number" name="quantity" id="quantity-{{ item.id }}" 
-                                                   value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" 
-                                                   class="quantity-input" readonly>
-                                            <button type="button" class="quantity-btn quantity-increase" 
-                                                    data-item-id="{{ item.id }}" 
-                                                    data-current-quantity="{{ item.quantity }}"
-                                                    data-max-quantity="{{ item.product.stock }}">
-                                                <i class="bi bi-plus-lg"></i>
-                                            </button>
-                                        </div>
+                                        <button type="submit" class="btn btn-sm btn-danger cart-item-delete-btn" onclick="return confirm('¿Eliminar este producto del carrito?')" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </form>
-                                    <div class="ms-auto">
-                                        <strong class="fs-5">Total: <span class="item-total" id="item-total-{{ item.id }}">{{ item.get_line_total|currency_clp }}</span></strong>
+                                </div>
+                                <div class="cart-item-info">
+                                    <div class="cart-item-price-section">
+                                        {% if item.product.has_offer %}
+                                            <span class="price-original">{{ item.product.price|currency_clp }}</span>
+                                            <span class="price-offer">{{ item.unit_price|currency_clp }}</span>
+                                        {% else %}
+                                            <span class="price-normal">{{ item.unit_price|currency_clp }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="cart-item-actions">
+                                        <form method="post" action="{% url 'shop:update_cart_item' item_id=item.id %}" class="quantity-form" id="quantity-form-{{ item.id }}">
+                                            {% csrf_token %}
+                                            <label for="quantity-{{ item.id }}" class="quantity-label">Cantidad:</label>
+                                            <div class="quantity-controls">
+                                                <button type="button" class="quantity-btn quantity-decrease" 
+                                                        data-item-id="{{ item.id }}" 
+                                                        data-current-quantity="{{ item.quantity }}"
+                                                        data-max-quantity="{{ item.product.stock }}">
+                                                    <i class="bi bi-dash-lg"></i>
+                                                </button>
+                                                <input type="number" name="quantity" id="quantity-{{ item.id }}" 
+                                                       value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" 
+                                                       class="quantity-input" readonly>
+                                                <button type="button" class="quantity-btn quantity-increase" 
+                                                        data-item-id="{{ item.id }}" 
+                                                        data-current-quantity="{{ item.quantity }}"
+                                                        data-max-quantity="{{ item.product.stock }}">
+                                                    <i class="bi bi-plus-lg"></i>
+                                                </button>
+                                            </div>
+                                        </form>
+                                        <div class="cart-item-total">
+                                            <strong>Total: <span class="item-total" id="item-total-{{ item.id }}">{{ item.get_line_total|currency_clp }}</span></strong>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     {% endfor %}
+                </div>
+                
+                <!-- Animated Separator -->
+                <div class="cart-separator">
+                    <div class="separator-line"></div>
+                    <div class="separator-icon">
+                        <i class="bi bi-arrow-down"></i>
+                    </div>
+                    <div class="separator-line"></div>
                 </div>
             </div>
             
@@ -107,27 +119,57 @@
                     </div>
                     
                     <!-- Discount from coupon -->
+                    {% if applied_coupon and discount_amount > 0 %}
+                    <div class="summary-row" id="discount-row">
+                        <span>Descuento ({{ applied_coupon.code }}):</span>
+                        <span id="discount-amount" class="text-success">-{{ discount_amount|currency_clp }}</span>
+                    </div>
+                    {% else %}
                     <div class="summary-row" id="discount-row" style="display: none;">
                         <span>Descuento:</span>
                         <span id="discount-amount" class="text-success">-$0</span>
                     </div>
+                    {% endif %}
                     
                     <div class="summary-row summary-total">
                         <span>Total:</span>
-                        <span id="total-amount">{{ cart.get_subtotal|currency_clp }}</span>
+                        <span id="total-amount">
+                            {% if applied_coupon and discount_amount > 0 %}
+                                {{ total_with_discount|currency_clp }}
+                            {% else %}
+                                {{ cart.get_subtotal|currency_clp }}
+                            {% endif %}
+                        </span>
                     </div>
                     
                     <!-- Coupon Section -->
                     <div class="card mt-3 mb-3">
                         <div class="card-body">
-                            <h6 class="mb-2">¿Tienes un cupón de descuento?</h6>
-                            <form method="post" action="{% url 'shop:apply_coupon' %}" class="d-flex gap-2">
-                                {% csrf_token %}
-                                <input type="text" name="code" class="form-control form-control-sm" 
-                                       placeholder="Ej: CUPON2025" style="text-transform: uppercase;" 
-                                       value="{% if request.session.applied_coupon_id %}{{ request.session.applied_coupon_code }}{% endif %}">
-                                <button type="submit" class="btn btn-danger btn-sm">Aplicar</button>
-                            </form>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <h6 class="mb-0">¿Tienes un cupón de descuento?</h6>
+                                {% if applied_coupon %}
+                                    <span class="badge bg-success" style="font-size: 0.7rem;">
+                                        <i class="bi bi-check-circle"></i> {{ applied_coupon.code }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            {% if applied_coupon %}
+                                <div class="d-flex gap-2">
+                                    <input type="text" class="form-control form-control-sm" 
+                                           value="{{ applied_coupon.code }}" readonly>
+                                    <form method="post" action="{% url 'shop:remove_coupon' %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm">Eliminar</button>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <form method="post" action="{% url 'shop:apply_coupon' %}" class="d-flex gap-2">
+                                    {% csrf_token %}
+                                    <input type="text" name="code" class="form-control form-control-sm" 
+                                           placeholder="Ej: CUPON2025" style="text-transform: uppercase;">
+                                    <button type="submit" class="btn btn-danger btn-sm">Aplicar</button>
+                                </form>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -508,7 +550,7 @@
         
         // Update total
         const subtotal = {{ cart.get_subtotal|default:0 }};
-        const discount = 0;
+        const discount = {{ discount_amount|default:0 }};
         const newTotal = subtotal + cost - discount;
         totalAmount.textContent = new Intl.NumberFormat('es-CL', {
             style: 'currency',
