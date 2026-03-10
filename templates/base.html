@@ -272,6 +272,94 @@
         
     </script>
     
+    <!-- Dropdown Auto-Open/Close with Delay and Animations -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userDropdown = document.getElementById('userDropdown');
+            if (!userDropdown) return;
+            
+            const dropdownMenu = userDropdown.nextElementSibling;
+            if (!dropdownMenu || !dropdownMenu.classList.contains('dropdown-menu')) return;
+            
+            let openTimeout = null;
+            let closeTimeout = null;
+            const openDelay = 500; // 0.5 segundos para abrir
+            const closeDelay = 1000; // 1 segundo para cerrar
+            
+            // Función para abrir el dropdown
+            function openDropdown() {
+                const dropdownInstance = bootstrap.Dropdown.getInstance(userDropdown);
+                if (!dropdownInstance) {
+                    const newInstance = new bootstrap.Dropdown(userDropdown);
+                    newInstance.show();
+                } else {
+                    dropdownInstance.show();
+                }
+            }
+            
+            // Función para cerrar el dropdown
+            function closeDropdown() {
+                const dropdownInstance = bootstrap.Dropdown.getInstance(userDropdown);
+                if (dropdownInstance) {
+                    dropdownInstance.hide();
+                }
+            }
+            
+            // Función para limpiar los timeouts
+            function clearTimeouts() {
+                if (openTimeout) {
+                    clearTimeout(openTimeout);
+                    openTimeout = null;
+                }
+                if (closeTimeout) {
+                    clearTimeout(closeTimeout);
+                    closeTimeout = null;
+                }
+            }
+            
+            // Cuando el mouse entra en el botón, iniciar timer para abrir
+            userDropdown.addEventListener('mouseenter', function() {
+                clearTimeouts();
+                // Solo abrir si no está ya abierto
+                if (!dropdownMenu.classList.contains('show')) {
+                    openTimeout = setTimeout(openDropdown, openDelay);
+                }
+            });
+            
+            // Cuando el mouse sale del botón, cancelar apertura y cerrar si está abierto
+            userDropdown.addEventListener('mouseleave', function() {
+                clearTimeouts();
+                if (dropdownMenu.classList.contains('show')) {
+                    closeTimeout = setTimeout(closeDropdown, closeDelay);
+                }
+            });
+            
+            // Cuando el mouse entra en el menú, cancelar cierre
+            dropdownMenu.addEventListener('mouseenter', function() {
+                clearTimeouts();
+            });
+            
+            // Cuando el mouse sale del menú, iniciar timer para cerrar
+            dropdownMenu.addEventListener('mouseleave', function() {
+                clearTimeouts();
+                closeTimeout = setTimeout(closeDropdown, closeDelay);
+            });
+            
+            // Cancelar timeouts cuando el dropdown se cierra por cualquier razón
+            userDropdown.addEventListener('hidden.bs.dropdown', function() {
+                clearTimeouts();
+            });
+            
+            // Cancelar timeouts cuando el dropdown se abre
+            userDropdown.addEventListener('shown.bs.dropdown', function() {
+                if (openTimeout) {
+                    clearTimeout(openTimeout);
+                    openTimeout = null;
+                }
+            });
+        });
+    </script>
+    
     <!-- Toast Notification System -->
     <script>
         // Función para mostrar toast

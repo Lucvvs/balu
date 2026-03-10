@@ -57,7 +57,10 @@ body.navbar-scrolled .hero-section {
     transition: all 0.3s ease;
     width: 100%;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow-x: hidden !important;
+    overflow-y: visible !important; /* Allow dropdown to show below navbar */
+    max-height: none !important; /* No height restriction */
+    height: auto !important; /* Auto height */
 }
 
 /* Navbar cuando se hace scroll */
@@ -85,6 +88,10 @@ body.navbar-scrolled .hero-section {
     margin-left: 1.5rem !important;
 }
 
+.navbar-motomoto .navbar-nav {
+    overflow: visible; /* Allow dropdown to show outside nav */
+}
+
 .navbar-motomoto .nav-link {
     color: var(--white) !important;
     margin: 0 0.75rem;
@@ -102,6 +109,21 @@ body.navbar-scrolled .hero-section {
 
 .navbar-motomoto .nav-link:hover {
     color: var(--primary-color) !important;
+}
+
+/* Eliminar outline azul del botón dropdown */
+.navbar-motomoto .nav-link.dropdown-toggle,
+.navbar-motomoto .nav-link.dropdown-toggle:hover,
+.navbar-motomoto .nav-link.dropdown-toggle:focus,
+.navbar-motomoto .nav-link.dropdown-toggle:active {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.navbar-motomoto .nav-link.dropdown-toggle:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .navbar-motomoto .nav-link.active {
@@ -214,8 +236,11 @@ body.navbar-scrolled .hero-section {
     justify-content: space-between;
     gap: 0.5rem;
     max-width: 100%;
-    overflow-x: hidden;
+    overflow-x: hidden !important;
+    overflow-y: visible !important; /* Allow dropdown to show below navbar */
     position: relative;
+    max-height: none !important; /* No height restriction */
+    height: auto !important; /* Auto height */
 }
 
 /* Ajustar orden de elementos en móvil */
@@ -235,6 +260,139 @@ body.navbar-scrolled .hero-section {
     order: 4;
     width: 100%;
     flex-basis: 100%;
+    overflow: visible !important; /* Allow dropdown to show outside collapse */
+    max-height: none !important; /* No height restriction */
+    height: auto !important; /* Auto height */
+}
+
+/* Dropdown Menu - Desktop (Large Screens) */
+@media (min-width: 992px) {
+    /* Prevent navbar from creating scroll */
+    .navbar-motomoto {
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+
+    .navbar-motomoto .container {
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+
+    .navbar-motomoto .navbar-collapse {
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+
+    .navbar-motomoto .navbar-nav {
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+
+    .navbar-motomoto .nav-item {
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+
+    .navbar-motomoto .nav-item.dropdown {
+        position: relative !important;
+        overflow: visible !important;
+    }
+
+    /* Eliminar outline azul del botón dropdown en desktop */
+    .navbar-motomoto .nav-link.dropdown-toggle,
+    .navbar-motomoto .nav-link.dropdown-toggle:hover,
+    .navbar-motomoto .nav-link.dropdown-toggle:focus,
+    .navbar-motomoto .nav-link.dropdown-toggle:active,
+    .navbar-motomoto .nav-link.dropdown-toggle:focus-visible {
+        outline: none !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    .navbar-motomoto .dropdown-menu {
+        position: absolute !important;
+        top: 100% !important;
+        right: 0 !important;
+        left: auto !important;
+        z-index: 1050 !important;
+        min-width: 200px;
+        margin-top: 0.125rem;
+        background-color: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+        transform-origin: top right;
+        transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+        display: block !important;
+        visibility: hidden;
+    }
+
+    .navbar-motomoto .dropdown-menu.show {
+        opacity: 1 !important;
+        transform: translateY(0) scale(1) !important;
+        pointer-events: auto !important;
+        visibility: visible !important;
+    }
+
+    /* Animación de entrada más fluida */
+    @keyframes dropdownFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* Animación de salida más fluida */
+    @keyframes dropdownFadeOut {
+        from {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+        }
+    }
+
+    /* Aplicar animación cuando se muestra */
+    .navbar-motomoto .dropdown-menu.show {
+        animation: dropdownFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    /* Ocultar cuando no está mostrado, con animación de salida */
+    .navbar-motomoto .dropdown-menu:not(.show) {
+        animation: dropdownFadeOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+}
+
+.navbar-motomoto .dropdown-item {
+    color: var(--text-color) !important;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.navbar-motomoto .dropdown-item:hover,
+.navbar-motomoto .dropdown-item:focus {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: var(--primary-color) !important;
+}
+
+.navbar-motomoto .dropdown-divider {
+    border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+    margin: 0.5rem 0;
 }
 
 
@@ -3349,12 +3507,14 @@ input.quantity-input,
             display: none !important;
         }
         
-        /* Dropdown */
+        /* Dropdown - Mobile only */
         .navbar-motomoto .navbar-collapse .dropdown-menu {
             background: rgba(33, 37, 41, 0.98);
             border: none;
             margin-top: 0;
             border-radius: 0;
+            position: static !important; /* Static in mobile collapse */
+            display: block !important;
         }
         
         .navbar-motomoto .navbar-collapse .dropdown-item {
