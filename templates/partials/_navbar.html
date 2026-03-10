@@ -37,6 +37,43 @@
                         <i class="bi bi-search"></i> Buscar Pedido
                     </a>
                 </li>
+                
+                <!-- Menú de usuario en móvil (debajo de Buscar Pedido) -->
+                {% if user.is_authenticated %}
+                    <li class="nav-item d-lg-none">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'shop:profile' %}">
+                            <i class="bi bi-person"></i> Perfil
+                        </a>
+                    </li>
+                    {% if user.is_staff %}
+                        <li class="nav-item d-lg-none">
+                            <a class="nav-link" href="{% url 'shop:admin_dashboard' %}">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item d-lg-none">
+                            <a class="nav-link" href="{% url 'admin:index' %}">
+                                <i class="bi bi-gear"></i> Admin Django
+                            </a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item d-lg-none">
+                        <a class="nav-link" href="{% url 'shop:logout' %}">
+                            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="nav-item d-lg-none">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'shop:login' %}">
+                            Iniciar sesión
+                        </a>
+                    </li>
+                    <li class="nav-item d-lg-none">
+                        <a class="nav-link btn btn-danger text-white {% if request.resolver_match.url_name == 'register' %}active{% endif %}" href="{% url 'shop:register' %}">
+                            Registro
+                        </a>
+                    </li>
+                {% endif %}
             </ul>
             
             <!-- Right side items -->
@@ -52,11 +89,11 @@
                     </a>
                 </li>
                 
-                <!-- Auth buttons -->
+                <!-- Auth buttons (solo visible en desktop) -->
                 {% if user.is_authenticated %}
-                    <li class="nav-item dropdown">
+                    <li class="nav-item dropdown d-none d-lg-block">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-circle"></i> <span class="d-lg-inline d-none">{{ user.first_name|default:user.email }}</span>
+                            <i class="bi bi-person-circle"></i> {{ user.first_name|default:user.email }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li><a class="dropdown-item" href="{% url 'shop:profile' %}"><i class="bi bi-person"></i> Perfil</a></li>
@@ -70,12 +107,12 @@
                         </ul>
                     </li>
                 {% else %}
-                    <li class="nav-item">
+                    <li class="nav-item d-none d-lg-block">
                         <a class="nav-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}" href="{% url 'shop:login' %}">
                             Iniciar sesión
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item d-none d-lg-block">
                         <a class="nav-link btn btn-danger text-white ms-2 {% if request.resolver_match.url_name == 'register' %}active{% endif %}" href="{% url 'shop:register' %}">
                             Registro
                         </a>
