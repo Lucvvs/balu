@@ -12,17 +12,19 @@
     <div class="filter-bar-compact mb-4">
         <div class="filter-row">
             <div class="filter-categories">
-                <a href="{% url 'shop:products_list' %}{% if current_sort %}?sort={{ current_sort }}{% endif %}" class="filter-btn {% if not current_category and not current_offers %}active{% endif %}">
+                <a href="{% url 'shop:products_list' %}{% if current_sort %}?sort={{ current_sort }}{% endif %}{% if current_offers %}{% if current_sort %}&{% else %}?{% endif %}offers=true{% endif %}" class="filter-btn {% if not current_categories_param and not current_offers %}active{% endif %}">
                     <i class="bi bi-grid"></i>
                     <span>Todos</span>
                 </a>
-                <a href="{% if current_offers %}{% url 'shop:products_list' %}{% if current_category %}?category={{ current_category }}{% endif %}{% if current_sort %}{% if current_category %}&{% else %}?{% endif %}sort={{ current_sort }}{% endif %}{% else %}{% url 'shop:products_list' %}?offers=true{% if current_category %}&category={{ current_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% endif %}" class="filter-btn filter-offer {% if current_offers %}active{% endif %}">
+                <a href="{% if current_offers %}{% url 'shop:products_list' %}{% if current_categories_param %}?categories={{ current_categories_param }}{% endif %}{% if current_sort %}{% if current_categories_param %}&{% else %}?{% endif %}sort={{ current_sort }}{% endif %}{% else %}{% url 'shop:products_list' %}?offers=true{% if current_categories_param %}&categories={{ current_categories_param }}{% endif %}{% if current_sort %}{% if current_categories_param %}&{% else %}?{% endif %}sort={{ current_sort }}{% endif %}{% endif %}" class="filter-btn filter-offer {% if current_offers %}active{% endif %}">
                     <i class="bi bi-lightning-fill"></i>
                     <span>Ofertas</span>
                 </a>
                 {% for category in categories %}
-                    <a href="{% if current_category == category.slug %}{% url 'shop:products_list' %}{% if current_offers %}?offers=true{% endif %}{% if current_sort %}{% if current_offers %}&{% else %}?{% endif %}sort={{ current_sort }}{% endif %}{% else %}{% url 'shop:products_list' %}?category={{ category.slug }}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% endif %}" 
-                       class="filter-btn {% if current_category == category.slug %}active{% endif %}">
+                    <a href="#" 
+                       data-category-slug="{{ category.slug }}"
+                       onclick="toggleCategory('{{ category.slug }}'); return false;"
+                       class="filter-btn {% if category.slug in current_categories %}active{% endif %}">
                         <i class="bi bi-circle-fill"></i>
                         <span>{{ category.name }}</span>
                     </a>
@@ -30,12 +32,12 @@
             </div>
             
             <div class="filter-sort">
-                <i class="bi bi-arrow-down-up sort-icon"></i>
+                <i class="bi bi-arrow-down-up sort-icon" onclick="resetAllFilters()" style="cursor: pointer;" title="Reiniciar todos los filtros"></i>
                 <select name="sort" class="sort-select" onchange="updateSort(this.value)">
-                    <option value="{% url 'shop:products_list' %}{% if current_category %}?category={{ current_category }}{% endif %}{% if current_offers %}{% if current_category %}&{% else %}?{% endif %}offers=true{% endif %}">Ordenar por...</option>
-                    <option value="{% url 'shop:products_list' %}?sort=name{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'name' %}selected{% endif %}>Nombre A-Z</option>
-                    <option value="{% url 'shop:products_list' %}?sort=price_asc{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'price_asc' %}selected{% endif %}>Precio: Menor a Mayor</option>
-                    <option value="{% url 'shop:products_list' %}?sort=price_desc{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'price_desc' %}selected{% endif %}>Precio: Mayor a Menor</option>
+                    <option value="{% url 'shop:products_list' %}{% if current_categories_param %}?categories={{ current_categories_param }}{% elif current_category %}?category={{ current_category }}{% endif %}{% if current_offers %}{% if current_categories_param or current_category %}&{% else %}?{% endif %}offers=true{% endif %}">Ordenar por...</option>
+                    <option value="{% url 'shop:products_list' %}?sort=name{% if current_categories_param %}&categories={{ current_categories_param }}{% elif current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'name' %}selected{% endif %}>Nombre A-Z</option>
+                    <option value="{% url 'shop:products_list' %}?sort=price_asc{% if current_categories_param %}&categories={{ current_categories_param }}{% elif current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'price_asc' %}selected{% endif %}>Precio: Menor a Mayor</option>
+                    <option value="{% url 'shop:products_list' %}?sort=price_desc{% if current_categories_param %}&categories={{ current_categories_param }}{% elif current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'price_desc' %}selected{% endif %}>Precio: Mayor a Menor</option>
                 </select>
             </div>
         </div>
@@ -129,7 +131,7 @@
             <ul class="pagination">
                 {% if products.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ products.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">Anterior</a>
+                        <a class="page-link" href="?page={{ products.previous_page_number }}{% if current_categories_param %}&categories={{ current_categories_param }}{% elif current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">Anterior</a>
                     </li>
                 {% endif %}
                 
@@ -140,14 +142,14 @@
                         </li>
                     {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ num }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ num }}</a>
+                            <a class="page-link" href="?page={{ num }}{% if current_categories_param %}&categories={{ current_categories_param }}{% elif current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ num }}</a>
                         </li>
                     {% endif %}
                 {% endfor %}
                 
                 {% if products.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ products.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">Siguiente</a>
+                        <a class="page-link" href="?page={{ products.next_page_number }}{% if current_categories_param %}&categories={{ current_categories_param }}{% elif current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">Siguiente</a>
                     </li>
                 {% endif %}
             </ul>
@@ -206,6 +208,61 @@
 <script>
 function updateSort(url) {
     window.location.href = url;
+}
+
+// Función para reiniciar todos los filtros
+function resetAllFilters() {
+    window.location.href = '{% url "shop:products_list" %}';
+}
+
+// Función para toggle de categorías (selección múltiple)
+function toggleCategory(categorySlug) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentCategories = urlParams.get('categories') ? urlParams.get('categories').split(',') : [];
+    
+    // Toggle: si la categoría está seleccionada, la quitamos; si no, la agregamos
+    const index = currentCategories.indexOf(categorySlug);
+    if (index > -1) {
+        currentCategories.splice(index, 1);
+    } else {
+        currentCategories.push(categorySlug);
+    }
+    
+    // Construir nueva URL
+    if (currentCategories.length > 0) {
+        urlParams.set('categories', currentCategories.join(','));
+    } else {
+        urlParams.delete('categories');
+    }
+    
+    // Eliminar el parámetro 'category' si existe (usamos solo 'categories')
+    urlParams.delete('category');
+    
+    // Mantener otros parámetros
+    const offers = urlParams.get('offers');
+    const sort = urlParams.get('sort');
+    
+    // Construir URL final
+    let newUrl = '{% url "shop:products_list" %}?';
+    const params = [];
+    
+    if (currentCategories.length > 0) {
+        params.push('categories=' + currentCategories.join(','));
+    }
+    if (offers === 'true') {
+        params.push('offers=true');
+    }
+    if (sort) {
+        params.push('sort=' + sort);
+    }
+    
+    if (params.length > 0) {
+        newUrl += params.join('&');
+    } else {
+        newUrl = '{% url "shop:products_list" %}';
+    }
+    
+    window.location.href = newUrl;
 }
 
 // Función para abrir el modal de talla/color
@@ -332,58 +389,72 @@ document.addEventListener('DOMContentLoaded', function() {
         const imageContainer = card.querySelector('.product-card-image-container');
         let intervalId = null;
         
-        if (imageContainer) {
-            const images = imageContainer.querySelectorAll('.product-card-img');
-            if (images.length > 1) {
-                let currentIndex = 0;
-                
-                function nextImage() {
-                    const currentImg = images[currentIndex];
-                    currentImg.classList.remove('active', 'flip-in');
-                    currentImg.classList.add('flip-out');
+            if (imageContainer) {
+                const images = imageContainer.querySelectorAll('.product-card-img');
+                if (images.length > 1) {
+                    let currentIndex = 0;
+                    let timeoutId = null;
                     
-                    currentIndex = (currentIndex + 1) % images.length;
-                    
-                    setTimeout(() => {
-                        currentImg.classList.remove('flip-out');
-                        const nextImg = images[currentIndex];
-                        nextImg.classList.remove('flip-out');
-                        nextImg.classList.add('flip-in', 'active');
+                    function nextImage() {
+                        const currentImg = images[currentIndex];
+                        currentImg.classList.remove('active', 'flip-in');
+                        currentImg.classList.add('flip-out');
+                        
+                        currentIndex = (currentIndex + 1) % images.length;
                         
                         setTimeout(() => {
-                            images.forEach(img => {
-                                img.classList.remove('flip-in', 'flip-out');
-                                if (img !== nextImg) {
-                                    img.classList.remove('active');
-                                }
-                            });
-                        }, 600);
-                    }, 50);
-                }
-                
-                card.addEventListener('mouseenter', function() {
-                    if (images.length > 1) {
-                        intervalId = setInterval(nextImage, 2000);
-                        imageIntervals.set(card, intervalId);
+                            currentImg.classList.remove('flip-out');
+                            const nextImg = images[currentIndex];
+                            nextImg.classList.remove('flip-out');
+                            nextImg.classList.add('flip-in', 'active');
+                            
+                            setTimeout(() => {
+                                images.forEach(img => {
+                                    img.classList.remove('flip-in', 'flip-out');
+                                    if (img !== nextImg) {
+                                        img.classList.remove('active');
+                                    }
+                                });
+                            }, 500);
+                        }, 50);
                     }
-                });
-                
-                card.addEventListener('mouseleave', function() {
-                    if (intervalId) {
-                        clearInterval(intervalId);
-                        intervalId = null;
-                        imageIntervals.delete(card);
-                    }
-                    images.forEach((img, index) => {
-                        img.classList.remove('active', 'flip-in', 'flip-out');
-                        if (index === 0) {
-                            img.classList.add('active');
+                    
+                    card.addEventListener('mouseenter', function() {
+                        if (images.length > 1) {
+                            // Primer cambio después de 0.3 segundos
+                            timeoutId = setTimeout(() => {
+                                nextImage();
+                                // Luego continuar cambiando cada 2 segundos
+                                intervalId = setInterval(nextImage, 2000);
+                                imageIntervals.set(card, intervalId);
+                            }, 300);
                         }
                     });
-                    currentIndex = 0;
-                });
+                    
+                    card.addEventListener('mouseleave', function() {
+                        // Limpiar el timeout pendiente si existe
+                        if (timeoutId) {
+                            clearTimeout(timeoutId);
+                            timeoutId = null;
+                        }
+                        // Limpiar el intervalo si existe
+                        if (intervalId) {
+                            clearInterval(intervalId);
+                            intervalId = null;
+                            imageIntervals.delete(card);
+                        }
+                        // Resetear el índice a la primera imagen
+                        currentIndex = 0;
+                        // Volver a la imagen principal inmediatamente
+                        images.forEach((img, index) => {
+                            img.classList.remove('active', 'flip-in', 'flip-out');
+                            if (index === 0) {
+                                img.classList.add('active');
+                            }
+                        });
+                    });
+                }
             }
-        }
         
         // Hacer toda la tarjeta clickeable para redirigir al detalle
         card.addEventListener('click', function(e) {

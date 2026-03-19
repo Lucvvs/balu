@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, F, Case, When, IntegerField
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse, HttpResponse, HttpRequest
@@ -75,8 +75,8 @@ def home(request):
     # Categorías destacadas
     categories = Category.objects.filter(is_active=True, highlight_on_home=True)[:3]
 
-    # Marcas para el banner (en orden específico: HRO, SHAFT, motocentric, 4RS, KOVIX)
-    brand_order = ['hro', 'shaft', 'motocentric', '4rs', 'kovix']
+    # Marcas para el banner (en orden específico: HRO, SHAFT, motocentric, 4RS, KOVIX, ICH, SHOT)
+    brand_order = ['hro', 'shaft', 'motocentric', '4rs', 'kovix', 'ich', 'shot']
     brands_dict = {brand.slug: brand for brand in Brand.objects.filter(is_active=True)}
     brands = [brands_dict[slug] for slug in brand_order if slug in brands_dict]
 
@@ -103,10 +103,22 @@ def products_list(request):
         Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id'))
     ).order_by('-created_at')
 
-    # Filtro por categoría
+    # Filtro por categoría (soporta múltiples categorías)
     category_slug = request.GET.get('category')
-    if category_slug:
-        products = products.filter(category__slug=category_slug)
+    categories_param = request.GET.get('categories')  # Múltiples categorías separadas por coma
+    
+    # Determinar categorías seleccionadas
+    selected_categories = []
+    if categories_param:
+        # Si hay parámetro 'categories', usar esas categorías
+        selected_categories = [slug.strip() for slug in categories_param.split(',') if slug.strip()]
+    elif category_slug:
+        # Si solo hay 'category', convertir a lista para consistencia
+        selected_categories = [category_slug]
+    
+    # Aplicar filtro de categorías si hay alguna seleccionada
+    if selected_categories:
+        products = products.filter(category__slug__in=selected_categories)
 
     # Filtro por marca (insensible a mayúsculas/minúsculas)
     brand_slug = request.GET.get('brand')
@@ -134,9 +146,23 @@ def products_list(request):
     # Ordenamiento
     sort_by = request.GET.get('sort', 'newest')
     if sort_by == 'price_asc':
-        products = products.order_by('offer_price', 'price')
+        # Ordenar por el precio efectivo (offer_price si existe, sino price)
+        products = products.annotate(
+            effective_price=Case(
+                When(offer_price__isnull=False, then=F('offer_price')),
+                default=F('price'),
+                output_field=IntegerField()
+            )
+        ).order_by('effective_price', 'price')
     elif sort_by == 'price_desc':
-        products = products.order_by('-offer_price', '-price')
+        # Ordenar por el precio efectivo (offer_price si existe, sino price) descendente
+        products = products.annotate(
+            effective_price=Case(
+                When(offer_price__isnull=False, then=F('offer_price')),
+                default=F('price'),
+                output_field=IntegerField()
+            )
+        ).order_by('-effective_price', '-price')
     elif sort_by == 'name':
         products = products.order_by('name')
 
@@ -150,11 +176,19 @@ def products_list(request):
     
     # Estado de filtro de ofertas
     current_offers = request.GET.get('offers') == 'true'
+    
+    # Determinar categorías actuales para el contexto
+    current_categories = selected_categories.copy() if selected_categories else []
+    
+    # Construir el parámetro de categorías para URLs (siempre usar 'categories' para múltiples)
+    current_categories_param = ','.join(current_categories) if current_categories else None
 
     context = {
         'products': page_obj,
         'categories': categories,
-        'current_category': category_slug,
+        'current_category': category_slug,  # Mantener para compatibilidad
+        'current_categories': current_categories,  # Lista de slugs de categorías seleccionadas
+        'current_categories_param': current_categories_param,  # Parámetro para preservar en URLs
         'current_brand': brand_slug,
         'current_search': search_query,
         'current_sort': sort_by,

@@ -33,6 +33,8 @@ class Command(BaseCommand):
             '4rs.png',
             'kovix.png',
             'motocentric.png',
+            'ich.png',
+            'shot.png',
         ]
         
         copied = 0

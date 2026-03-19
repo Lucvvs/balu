@@ -42,6 +42,28 @@
       "is_active": true,
       "highlight_on_home": true
     }
+  },
+  {
+    "model": "shop.category",
+    "pk": 5,
+    "fields": {
+      "name": "Equipamiento",
+      "slug": "equipamiento",
+      "description": "Equipamiento completo para motociclistas",
+      "is_active": true,
+      "highlight_on_home": false
+    }
+  },
+  {
+    "model": "shop.category",
+    "pk": 6,
+    "fields": {
+      "name": "Otros",
+      "slug": "otros",
+      "description": "Otros productos para motocicletas",
+      "is_active": true,
+      "highlight_on_home": false
+    }
   }
 ]
 

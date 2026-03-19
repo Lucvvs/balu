@@ -412,7 +412,7 @@ body.navbar-scrolled .hero-section {
 
 /* Hero Section */
 .hero-section {
-    background-size: 120%;
+    background-size: 105%;
     background-position: center;
     background-repeat: no-repeat;
     color: var(--white);
@@ -432,7 +432,7 @@ body.navbar-scrolled .hero-section {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(0, 0, 0, 0.25);
     z-index: 1;
 }
 
@@ -718,6 +718,18 @@ body.navbar-scrolled .hero-section {
 .brand-logo-4rs {
     max-height: 96px; /* Mismo tamaño estándar */
     max-width: 180px;
+}
+
+/* ICH: 20% más pequeño */
+.brand-logo-ich {
+    max-height: 77px; /* 96px - 20% = 76.8px */
+    max-width: 144px; /* 180px - 20% = 144px */
+}
+
+/* SHOT: 20% más grande */
+.brand-logo-shot {
+    max-height: 115px; /* 96px + 20% = 115.2px */
+    max-width: 216px; /* 180px + 20% = 216px */
 }
 
 /* SHAFT mantiene tamaño estándar (sin clase especial) */
@@ -1025,7 +1037,7 @@ body.navbar-scrolled .hero-section {
     left: 0;
     opacity: 0;
     transform: rotateY(90deg) scale(0.8);
-    transition: transform 0.7s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.7s ease-in-out;
+    transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.5s ease-in-out;
     backface-visibility: hidden;
     transform-origin: left center;
 }
@@ -2963,7 +2975,7 @@ input.quantity-input,
     .hero-section {
         padding: 3rem 0;
         margin-top: -50px; /* Empujar la imagen hacia arriba para eliminar espacio en blanco */
-        background-size: 140%; /* Alejar más el zoom para mostrar más de la imagen */
+        background-size: 120%; /* Alejar más el zoom para mostrar más de la imagen */
     }
     
     .hero-section h1,
@@ -3247,7 +3259,7 @@ input.quantity-input,
         min-height: auto;
         height: auto;
         margin-top: -40px; /* Empujar la imagen hacia arriba para eliminar espacio en blanco */
-        background-size: 300%; /* Zoom adecuado para mostrar más de la imagen sin que se vea muy pequeña */
+        background-size: 250%; /* Zoom adecuado para mostrar más de la imagen sin que se vea muy pequeña */
         background-position: calc(50% - 80px) calc(50% - 20px); /* Desplazar 80px a la izquierda y subir 20px */
     }
 
@@ -3266,7 +3278,7 @@ input.quantity-input,
     
     
     .hero-section::after {
-        background: rgba(0, 0, 0, 0.25); /* Mismo overlay que desktop para mantener consistencia */
+        background: rgba(0, 0, 0, 0.35); /* Overlay más oscuro para que el texto resalte mejor */
     }
     
     body.navbar-scrolled .hero-section {
@@ -3612,6 +3624,16 @@ input.quantity-input,
     .brand-logo-kovix {
         max-height: 72px; /* 60px + 20% */
         max-width: 144px; /* 120px + 20% */
+    }
+    
+    .brand-logo-ich {
+        max-height: 48px; /* 60px - 20% = 48px */
+        max-width: 96px; /* 120px - 20% = 96px */
+    }
+    
+    .brand-logo-shot {
+        max-height: 72px; /* 60px + 20% = 72px */
+        max-width: 144px; /* 120px + 20% = 144px */
     }
     
     .brand-logo-4rs {
@@ -4296,16 +4318,70 @@ input.quantity-input,
     transform: scale(1.15) rotate(5deg);
 }
 
+.filter-btn.filter-offer {
+    position: relative;
+    animation: subtle-shine 2.5s ease-in-out infinite;
+}
+
+.filter-btn.filter-offer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    animation: shimmer 2.5s infinite;
+    border-radius: 20px;
+}
+
 .filter-btn.filter-offer.active {
-    animation: pulse-glow 2s infinite;
+    animation: pulse-glow 1.5s infinite;
+}
+
+.filter-btn.filter-offer.active::after {
+    animation: shimmer-active 1.5s infinite;
+}
+
+@keyframes subtle-shine {
+    0%, 100% {
+        box-shadow: 0 3px 12px rgba(220, 53, 69, 0.5);
+    }
+    50% {
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.7);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        left: -100%;
+    }
+    50% {
+        left: 100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+@keyframes shimmer-active {
+    0% {
+        left: -100%;
+    }
+    50% {
+        left: 100%;
+    }
+    100% {
+        left: 100%;
+    }
 }
 
 @keyframes pulse-glow {
     0%, 100% {
-        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        box-shadow: 0 5px 22px rgba(220, 53, 69, 0.6);
     }
     50% {
-        box-shadow: 0 4px 20px rgba(220, 53, 69, 0.5);
+        box-shadow: 0 7px 28px rgba(220, 53, 69, 0.8);
     }
 }
 

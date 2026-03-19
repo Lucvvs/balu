@@ -20,19 +20,19 @@
 
 <!-- Category Banner -->
 <section class="category-banner">
-    <a href="{% url 'shop:products_list' %}" class="category-item"
+    <a href="{% url 'shop:products_list' %}?categories=cascos,equipamiento" class="category-item"
         style="background-image: url('{% static 'img/banner1.png' %}');">
         <div class="overlay">
             <span style="color: white; font-size: 2rem; font-weight: bold;">Equipamiento</span>
         </div>
     </a>
-    <a href="{% url 'shop:products_list' %}" class="category-item"
+    <a href="{% url 'shop:products_list' %}?categories=seguridad,maletas" class="category-item"
         style="background-image: url('{% static 'img/banner2.png' %}');">
         <div class="overlay">
             <span style="color: white; font-size: 2rem; font-weight: bold;">Para la Moto</span>
         </div>
     </a>
-    <a href="{% url 'shop:products_list' %}" class="category-item"
+    <a href="{% url 'shop:products_list' %}?category=accesorios" class="category-item"
         style="background-image: url('{% static 'img/banner3.png' %}');">
         <div class="overlay">
             <span style="color: white; font-size: 2rem; font-weight: bold;">Accesorios</span>
@@ -82,19 +82,19 @@
                 {% for brand in brands %}
                     <!-- Primera copia -->
                     <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
-                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% endif %}" onerror="this.style.display='none'">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" onerror="this.style.display='none'">
                     </a>
                 {% endfor %}
                 <!-- Segunda copia para loop infinito -->
                 {% for brand in brands %}
                     <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
-                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% endif %}" onerror="this.style.display='none'">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" onerror="this.style.display='none'">
                     </a>
                 {% endfor %}
                 <!-- Tercera copia para transición perfecta sin saltos -->
                 {% for brand in brands %}
                     <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
-                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% endif %}" onerror="this.style.display='none'">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" onerror="this.style.display='none'">
                     </a>
                 {% endfor %}
             {% endif %}
