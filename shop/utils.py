@@ -2,6 +2,7 @@
 Utilidades para el envío de correos electrónicos y carga de datos
 """
 import json
+import unicodedata
 from pathlib import Path
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -86,6 +87,22 @@ def send_order_notification_to_admin(order):
         # Log del error
         print(f'Error al enviar notificación al admin: {str(e)}')
         return False
+
+
+# =========================
+# Envío por región (Chile)
+# =========================
+# Debe coincidir con el nombre en shop/data/regiones_comunas.json y el formulario de checkout.
+CHILE_METRO_REGION_NAME = 'Metropolitana de Santiago'
+SHIPPING_PRICE_METRO_REGION_DEFAULT = 3000
+SHIPPING_PRICE_OTHER_REGIONS_DEFAULT = 5000
+
+
+def normalize_shipping_match_string(value: str) -> str:
+    """Normaliza espacios y Unicode (ej. tildes) para comparar región/comuna con reglas."""
+    if not value:
+        return ''
+    return unicodedata.normalize('NFKC', str(value)).strip()
 
 
 # =========================

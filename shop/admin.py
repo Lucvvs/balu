@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from .models import (
-    CustomUser, Brand, Category, Product, ProductImage, Coupon, ShippingMethod, PaymentMethod,
+    CustomUser, Brand, Category, Product, ProductImage, Coupon, ShippingMethod, ShippingRule, PaymentMethod,
     Cart, CartItem, Order, OrderItem, Payment, ContactMessage, MetricEvent, PromotionalBanner
 )
 
@@ -112,11 +112,18 @@ class CouponAdmin(admin.ModelAdmin):
     amount_display.short_description = 'Descuento'
 
 
+class ShippingRuleInline(admin.TabularInline):
+    model = ShippingRule
+    extra = 0
+    ordering = ('-priority', 'region')
+
+
 @admin.register(ShippingMethod)
 class ShippingMethodAdmin(admin.ModelAdmin):
     list_display = ('name', 'base_price_display', 'is_active')
     list_filter = ('is_active',)
     search_fields = ('name', 'description')
+    inlines = [ShippingRuleInline]
 
     def base_price_display(self, obj):
         """Muestra el precio formateado"""

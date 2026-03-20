@@ -203,10 +203,10 @@ class ContactForm(forms.ModelForm):
         model = ContactMessage
         fields = ['name', 'email', 'phone', 'message']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono (opcional)'}),
-            'message': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Mensaje'}),
+            'name': forms.TextInput(attrs={'class': 'form-control contact-form-input', 'placeholder': 'Tu nombre'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control contact-form-input', 'placeholder': 'correo@ejemplo.com'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control contact-form-input', 'placeholder': 'Teléfono (opcional)'}),
+            'message': forms.Textarea(attrs={'class': 'form-control contact-form-input', 'rows': 6, 'placeholder': '¿En qué podemos ayudarte?'}),
         }
         labels = {
             'name': 'Nombre',

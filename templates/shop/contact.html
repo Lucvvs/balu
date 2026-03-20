@@ -4,19 +4,40 @@
 {% block title %}Contacto - MotoMoto{% endblock %}
 
 {% block content %}
-<div class="container mt-5 mb-5">
-    <div class="row">
-        <div class="col-md-8 mx-auto">
-            <h1 class="text-center mb-4">Contacto</h1>
-            
-            <div class="card shadow">
-                <div class="card-body p-4">
-                    <form method="post">
+<section class="como-comprar-section contact-page-section">
+    <div class="container py-4 py-lg-5">
+        <div class="row justify-content-center mb-4 mb-lg-5">
+            <div class="col-lg-10 text-center contact-page-hero">
+                <p class="contact-page-badge mb-2">
+                    <i class="bi bi-lightning-charge-fill"></i> Estamos para ayudarte
+                </p>
+                <h1 class="contact-page-title text-white mb-3">
+                    <i class="bi bi-headset contact-page-title-icon"></i>
+                    Contacto
+                </h1>
+                <p class="contact-page-lead text-white-50 mb-0">
+                    Envíanos un mensaje o elige uno de nuestros canales oficiales. Respondemos lo antes posible.
+                </p>
+            </div>
+        </div>
+
+        <div class="row g-4 g-lg-5 align-items-stretch justify-content-center">
+            <!-- Formulario -->
+            <div class="col-lg-7">
+                <div class="contact-form-card">
+                    <h2 class="contact-form-card-title text-white mb-4">
+                        <span class="contact-form-card-icon-wrap">
+                            <i class="bi bi-envelope-paper-heart"></i>
+                        </span>
+                        Escríbenos
+                    </h2>
+
+                    <form method="post" class="contact-form-inner">
                         {% csrf_token %}
-                        
+
                         {% if form.errors %}
-                            <div class="alert alert-danger">
-                                <ul class="mb-0">
+                            <div class="alert alert-danger contact-form-alert" role="alert">
+                                <ul class="mb-0 ps-3">
                                     {% for field in form %}
                                         {% for error in field.errors %}
                                             <li>{{ error }}</li>
@@ -25,45 +46,87 @@
                                 </ul>
                             </div>
                         {% endif %}
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+
+                        <div class="contact-field-wrap" data-field="1">
+                            <label for="{{ form.name.id_for_label }}" class="form-label contact-form-label">
+                                <i class="bi bi-person"></i> {{ form.name.label }}
+                            </label>
                             {{ form.name }}
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+
+                        <div class="contact-field-wrap" data-field="2">
+                            <label for="{{ form.email.id_for_label }}" class="form-label contact-form-label">
+                                <i class="bi bi-at"></i> {{ form.email.label }}
+                            </label>
                             {{ form.email }}
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }}</label>
+
+                        <div class="contact-field-wrap" data-field="3">
+                            <label for="{{ form.phone.id_for_label }}" class="form-label contact-form-label">
+                                <i class="bi bi-phone"></i> {{ form.phone.label }}
+                            </label>
                             {{ form.phone }}
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.message.id_for_label }}" class="form-label">{{ form.message.label }}</label>
+
+                        <div class="contact-field-wrap" data-field="4">
+                            <label for="{{ form.message.id_for_label }}" class="form-label contact-form-label">
+                                <i class="bi bi-chat-text"></i> {{ form.message.label }}
+                            </label>
                             {{ form.message }}
                         </div>
-                        
-                        <button type="submit" class="btn btn-danger btn-lg w-100">
-                            <i class="bi bi-send"></i> Enviar Mensaje
+
+                        <button type="submit" class="btn btn-danger btn-lg w-100 contact-submit-btn">
+                            <span class="contact-submit-shine"></span>
+                            <i class="bi bi-send-fill me-2"></i> Enviar mensaje
                         </button>
                     </form>
                 </div>
             </div>
-            
-            <div class="mt-4">
-                <h4>Canales Oficiales</h4>
-                <ul class="list-unstyled">
-                    <li><i class="bi bi-whatsapp text-success"></i> +569 8211 7748</li>
-                    <li><i class="bi bi-instagram text-danger"></i> @motomotocl</li>
-                    <li><i class="bi bi-globe"></i> www.motomoto.cl</li>
-                    <li><i class="bi bi-whatsapp text-success"></i> +569 8881 5568</li>
-                </ul>
+
+            <!-- Canales oficiales (misma estructura que «Cómo realizar tu pedido») -->
+            <div class="col-lg-5 d-flex">
+                <div class="channels-container contact-page-channels w-100 align-self-stretch">
+                    <h2 class="section-title text-white mb-4 text-center">
+                        <i class="bi bi-share me-2"></i>
+                        CANALES OFICIALES
+                    </h2>
+                    <div class="channels-grid">
+                        <div class="channel-card">
+                            <a href="https://wa.me/56982177468" target="_blank" rel="noopener noreferrer" class="channel-link-card">
+                                <div class="channel-icon-wrapper">
+                                    <img src="{% static 'img/wsplogo.png' %}" alt="WhatsApp" class="channel-logo" onerror="this.style.display='none'">
+                                </div>
+                                <span class="channel-text">+569 8217 7468</span>
+                            </a>
+                        </div>
+                        <div class="channel-card">
+                            <a href="https://www.instagram.com/motomotochile.cl/" target="_blank" rel="noopener noreferrer" class="channel-link-card">
+                                <div class="channel-icon-wrapper">
+                                    <img src="{% static 'img/instagramlogo.png' %}" alt="Instagram" class="channel-logo" onerror="this.style.display='none'">
+                                </div>
+                                <span class="channel-text">@motomotochile.cl</span>
+                            </a>
+                        </div>
+                        <div class="channel-card">
+                            <a href="https://motomoto-web.onrender.com/" class="channel-link-card" rel="noopener noreferrer">
+                                <div class="channel-icon-wrapper">
+                                    <img src="{% static 'img/weblogo.png' %}" alt="Web" class="channel-logo" onerror="this.style.display='none'">
+                                </div>
+                                <span class="channel-text">https://motomoto-web.onrender.com</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-center">
+                        <a href="{% url 'shop:products_list' %}" class="btn btn-outline-light btn-contact contact-page-secondary-btn">
+                            <i class="bi bi-grid-3x3-gap me-2"></i> Ver productos
+                        </a>
+                    </div>
+                    <div class="mt-4 text-center contact-page-logo-wrap">
+                        <img src="{% static 'img/logo.png' %}" alt="MotoMoto" class="footer-logo contact-page-logo" onerror="this.style.display='none'">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}
-

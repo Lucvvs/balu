@@ -187,15 +187,18 @@
                                     <label for="shipping-{{ shipping.id }}" class="checkout-option checkout-option-shipping">
                                         <input type="radio" name="shipping_method" id="shipping-{{ shipping.id }}" 
                                                value="{{ shipping.id }}" required
-                                               {% if forloop.first %}checked{% endif %}
-                                               onchange="updateShippingCost({{ shipping.base_price }})">
+                                               {% if forloop.first %}checked{% endif %}>
                                         <span class="checkout-shipping-label">
                                             <span class="shipping-name">
                                                 <strong>{{ shipping.name }}</strong>
                                                 {% if shipping.base_price == 0 %}
                                                     - Gratis
                                                 {% else %}
-                                                    - {{ shipping.base_price|currency_clp }}
+                                                    {% if shipping_price_min != shipping_price_max %}
+                                                        - Entre {{ shipping_price_min|currency_clp }} y {{ shipping_price_max|currency_clp }} según región
+                                                    {% else %}
+                                                        - {{ shipping_price_min|currency_clp }}
+                                                    {% endif %}
                                                 {% endif %}
                                                 <br>
                                                 <small class="text-muted">{{ shipping.description }}</small>
@@ -313,6 +316,13 @@
 
 {% block extra_js %}
 <script>
+    window.MOTO_SHIPPING = {
+        domesticId: {% if domestic_shipping_method_id %}{{ domestic_shipping_method_id }}{% else %}null{% endif %},
+        metroRegion: "{{ shipping_metro_region_name|default:''|escapejs }}",
+        priceMetro: {{ shipping_price_metro|default:3000 }},
+        priceOther: {{ shipping_price_other|default:5000 }},
+        regionPrices: {{ shipping_region_prices_json|default:'{}'|safe }}
+    };
     // Funcionalidad de botones de cantidad + y -
     document.addEventListener('DOMContentLoaded', function() {
         // Botón de aumentar cantidad
@@ -468,28 +478,66 @@
         });
     }
     
-    function updateShippingCost(cost) {
+    function formatMoneyClp(n) {
+        return new Intl.NumberFormat('es-CL', {
+            style: 'currency',
+            currency: 'CLP',
+            minimumFractionDigits: 0
+        }).format(n).replace('CLP', '$');
+    }
+
+    function getDomesticShippingCost() {
+        const cfg = window.MOTO_SHIPPING;
+        if (!cfg || cfg.domesticId == null) return cfg ? cfg.priceOther : 5000;
+        const regionEl = document.getElementById('shipping-region');
+        const r = regionEl ? regionEl.value : '';
+        if (!r) return cfg.priceOther;
+        const rp = cfg.regionPrices || {};
+        if (Object.prototype.hasOwnProperty.call(rp, r)) {
+            return rp[r];
+        }
+        return cfg.priceOther;
+    }
+
+    function isDomesticShippingSelected() {
+        const cfg = window.MOTO_SHIPPING;
+        if (!cfg || cfg.domesticId == null) return false;
+        const sel = document.querySelector('input[name="shipping_method"]:checked');
+        return !!(sel && String(sel.value) === String(cfg.domesticId));
+    }
+
+    function updateShippingCost(cost, opts) {
+        opts = opts || {};
+        if (opts.skipFieldReset && isDomesticShippingSelected()) {
+            const shippingRow = document.getElementById('shipping-row');
+            const shippingCost = document.getElementById('shipping-cost');
+            const totalAmount = document.getElementById('total-amount');
+            const subtotal = {{ cart.get_subtotal|default:0 }};
+            const discount = {{ discount_amount|default:0 }};
+            const c = getDomesticShippingCost();
+            shippingRow.style.display = 'flex';
+            shippingCost.textContent = formatMoneyClp(c);
+            totalAmount.textContent = formatMoneyClp(subtotal + c - discount);
+            return;
+        }
+
+        const cfg = window.MOTO_SHIPPING;
         const shippingRow = document.getElementById('shipping-row');
         const shippingCost = document.getElementById('shipping-cost');
         const totalAmount = document.getElementById('total-amount');
-        
-        // Ocultar/mostrar todos los campos de envío primero y quitar required
+
         document.querySelectorAll('[id^="shipping-fields-"]').forEach(field => {
             field.style.display = 'none';
-            // Quitar required de los campos select y textarea, y limpiar valores
             const regionSelect = field.querySelector('#shipping-region');
             const comunaSelect = field.querySelector('#shipping-comuna');
             const addressTextarea = field.querySelector('textarea[name="shipping_address"]');
             const notesTextarea = field.querySelector('textarea[name="shipping_notes"]');
-            
+
             if (regionSelect) {
                 regionSelect.removeAttribute('required');
                 regionSelect.value = '';
-                // Habilitar la opción por defecto cuando se oculta
                 const firstOption = regionSelect.querySelector('option[value=""]');
-                if (firstOption) {
-                    firstOption.disabled = false;
-                }
+                if (firstOption) firstOption.disabled = false;
             }
             if (comunaSelect) {
                 comunaSelect.removeAttribute('required');
@@ -499,87 +547,66 @@
                 addressTextarea.removeAttribute('required');
                 addressTextarea.value = '';
             }
-            if (notesTextarea) {
-                notesTextarea.value = '';
-            }
+            if (notesTextarea) notesTextarea.value = '';
         });
-        
-        if (cost > 0) {
+
+        const selectedShipping = document.querySelector('input[name="shipping_method"]:checked');
+        let resolved = cost;
+        if (cfg && selectedShipping && String(selectedShipping.value) === String(cfg.domesticId)) {
+            resolved = getDomesticShippingCost();
+        }
+
+        if (resolved > 0) {
             shippingRow.style.display = 'flex';
-            shippingCost.textContent = new Intl.NumberFormat('es-CL', {
-                style: 'currency',
-                currency: 'CLP',
-                minimumFractionDigits: 0
-            }).format(cost).replace('CLP', '$');
-            
-            // Mostrar y hacer required los campos del método seleccionado
-            const selectedShipping = document.querySelector('input[name="shipping_method"]:checked');
+            shippingCost.textContent = formatMoneyClp(resolved);
+
             if (selectedShipping) {
                 const fieldsId = 'shipping-fields-' + selectedShipping.value;
                 const fields = document.getElementById(fieldsId);
                 if (fields) {
                     fields.style.display = 'block';
-                    // Hacer required solo los campos necesarios (región, comuna, dirección)
                     const regionSelect = fields.querySelector('#shipping-region');
                     const comunaSelect = fields.querySelector('#shipping-comuna');
                     const addressTextarea = fields.querySelector('textarea[name="shipping_address"]');
                     if (regionSelect) {
                         regionSelect.setAttribute('required', 'required');
-                        // Deshabilitar la opción por defecto para que no sea válida
                         const firstOption = regionSelect.querySelector('option[value=""]');
-                        if (firstOption) {
-                            firstOption.disabled = true;
-                        }
+                        if (firstOption) firstOption.disabled = true;
                     }
                     if (comunaSelect) {
                         comunaSelect.setAttribute('required', 'required');
-                        // Deshabilitar la opción por defecto para que no sea válida
                         const firstComunaOption = comunaSelect.querySelector('option[value=""]');
-                        if (firstComunaOption) {
-                            firstComunaOption.disabled = true;
-                        }
+                        if (firstComunaOption) firstComunaOption.disabled = true;
                     }
-                    if (addressTextarea) {
-                        addressTextarea.setAttribute('required', 'required');
-                    }
+                    if (addressTextarea) addressTextarea.setAttribute('required', 'required');
                 }
             }
         } else {
             shippingRow.style.display = 'none';
         }
-        
-        // Update total
+
         const subtotal = {{ cart.get_subtotal|default:0 }};
         const discount = {{ discount_amount|default:0 }};
-        const newTotal = subtotal + cost - discount;
-        totalAmount.textContent = new Intl.NumberFormat('es-CL', {
-            style: 'currency',
-            currency: 'CLP',
-            minimumFractionDigits: 0
-        }).format(newTotal).replace('CLP', '$');
+        totalAmount.textContent = formatMoneyClp(subtotal + resolved - discount);
     }
-    
-    // Initialize on page load
+
+    function syncShippingFromMethodChange(radioInput) {
+        const cfg = window.MOTO_SHIPPING;
+        const isDomestic = cfg && String(radioInput.value) === String(cfg.domesticId);
+        if (isDomestic) {
+            updateShippingCost(0, {});
+            return;
+        }
+        const shippingOption = radioInput.closest('.checkout-option');
+        const costText = shippingOption.textContent;
+        const cost = costText.includes('Gratis') ? 0 :
+            parseInt(costText.match(/\$[\d.]+/)?.[0].replace(/[$.]/g, '') || '0');
+        updateShippingCost(cost, {});
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const selectedShipping = document.querySelector('input[name="shipping_method"]:checked');
-        if (selectedShipping) {
-            const shippingOption = selectedShipping.closest('.checkout-option');
-            const costText = shippingOption.textContent;
-            const cost = costText.includes('Gratis') ? 0 : 
-                       parseInt(costText.match(/\$[\d.]+/)?.[0].replace(/[$.]/g, '') || '0');
-            updateShippingCost(cost);
-        }
-    });
-    
-    // Update on shipping method change
-    document.querySelectorAll('input[name="shipping_method"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const shippingOption = this.closest('.checkout-option');
-            const costText = shippingOption.textContent;
-            const cost = costText.includes('Gratis') ? 0 : 
-                        parseInt(costText.match(/\$[\d.]+/)?.[0].replace(/[$.]/g, '') || '0');
-            updateShippingCost(cost);
-        });
+        if (selectedShipping) syncShippingFromMethodChange(selectedShipping);
     });
     
     // Cargar comunas dinámicamente cuando se selecciona una región
@@ -589,6 +616,9 @@
     if (regionSelect) {
         regionSelect.addEventListener('change', function() {
             const region = this.value;
+            if (isDomesticShippingSelected()) {
+                updateShippingCost(0, { skipFieldReset: true });
+            }
             comunaSelect.innerHTML = '<option value="">Seleccione una comuna</option>';
             
             if (region) {
@@ -708,15 +738,10 @@
         
         // Actualizar estilos cuando cambia la selección
         document.querySelectorAll('.checkout-option-shipping input[type="radio"]').forEach(radio => {
-            radio.addEventListener('change', function() {
+                radio.addEventListener('change', function() {
                 updateShippingMethodStyles();
-                // Llamar a updateShippingCost si existe
-                if (typeof updateShippingCost === 'function') {
-                    const shippingOption = this.closest('.checkout-option-shipping');
-                    const costText = shippingOption.textContent;
-                    const cost = costText.includes('Gratis') ? 0 : 
-                               parseInt(costText.match(/\$[\d.]+/)?.[0].replace(/[$.]/g, '') || '0');
-                    updateShippingCost(cost);
+                if (typeof syncShippingFromMethodChange === 'function') {
+                    syncShippingFromMethodChange(this);
                 }
             });
         });

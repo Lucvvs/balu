@@ -651,8 +651,8 @@ Todos los derechos reservados MotoMoto 2025
 ## 👥 Contacto
 
 - WhatsApp: +569 8211 7748 | +569 8881 5568
-- Instagram: @motomotocl
-- Web: www.motomoto.cl
+- Instagram: @motomotochile.cl
+- Web: https://motomoto-web.onrender.com
 
 ---
 

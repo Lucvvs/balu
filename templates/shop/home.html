@@ -26,16 +26,16 @@
             <span style="color: white; font-size: 2rem; font-weight: bold;">Equipamiento</span>
         </div>
     </a>
-    <a href="{% url 'shop:products_list' %}?categories=seguridad,maletas" class="category-item"
-        style="background-image: url('{% static 'img/banner2.png' %}');">
-        <div class="overlay">
-            <span style="color: white; font-size: 2rem; font-weight: bold;">Para la Moto</span>
-        </div>
-    </a>
     <a href="{% url 'shop:products_list' %}?category=accesorios" class="category-item"
         style="background-image: url('{% static 'img/banner3.png' %}');">
         <div class="overlay">
             <span style="color: white; font-size: 2rem; font-weight: bold;">Accesorios</span>
+        </div>
+    </a>
+    <a href="{% url 'shop:products_list' %}?categories=seguridad,maletas" class="category-item"
+        style="background-image: url('{% static 'img/banner2.png' %}');">
+        <div class="overlay">
+            <span style="color: white; font-size: 2rem; font-weight: bold;">Para la Moto</span>
         </div>
     </a>
 </section>
@@ -192,8 +192,8 @@
         <img src="{% static 'img/envios.png' %}" alt="Envíos" class="service-main-image"
             onerror="this.style.display='none'">
         <h5 class="service-title">Envíos a toda la Región Metropolitana</h5>
-        <p class="service-text">Por solo $3.500</p>
-        <small class="service-text">(Compras superiores a $40.000)</small>
+        <p class="service-text">Por solo $3000 (Compras superiores a $40.000)</p>
+        <small class="service-text">(Cotiza  tu envio a regiones)</small>
         <img src="{% static 'img/couriers.png' %}" alt="Couriers" class="service-small-image mt-2"
             onerror="this.style.display='none'">
         
@@ -202,10 +202,14 @@
         <img src="{% static 'img/retiros.png' %}" alt="Retiros" class="service-main-image"
             onerror="this.style.display='none'">
         <h5 class="service-title">Retiros en Bodega MotoMoto</h5>
-        <p class="service-text">Av. Santisima Trinidad #1935, Puente Alto</p>
-        <p class="service-text">Cercano a Metro Sótero del Río</p>
-        <img src="{% static 'img/gratismetro.png' %}" alt="Gratis Metro" class="service-small-image service-small-image-metro mt-1"
-            onerror="this.style.display='none'">
+        <p class="service-text">Cercano al Peñon & Los Jesuitas, Puente Alto</p>
+        <a href="https://www.google.com/maps/place/Sant%C3%ADsima+Trinidad+%26+Los+Jesuitas,+8206926+Puente+Alto,+Regi%C3%B3n+Metropolitana/@-33.5810237,-70.5618784,19z/data=!3m1!4b1!4m6!3m5!1s0x9662d6c2b8f727c7:0xaaf5b9f5d352d167!8m2!3d-33.5810248!4d-70.5612347!16s%2Fg%2F11gdmf1b2d?entry=ttu&amp;g_ep=EgoyMDI2MDMxNy4wIKXMDSoASAFQAw%3D%3D"
+            target="_blank" rel="noopener noreferrer" class="service-maps-stack mt-1" aria-label="Ver ubicación en Google Maps">
+            <img src="{% static 'img/maps.png' %}" alt=""
+                class="service-small-image service-small-image-maps service-maps-shake"
+                onerror="this.style.display='none'">
+            <span class="service-maps-caption">Ver Ubicación</span>
+        </a>
         
     </div>
     <div class="service-item">
@@ -290,10 +294,28 @@
                                 {% endif %}
                             </div>
                         </a>
-                        <a href="{% url 'shop:product_detail' slug=product.slug %}"
-                            class="btn btn-danger btn-lg best-seller-btn">
-                            <i class="bi bi-cart-plus"></i> ¡Lo Quiero!
-                        </a>
+                        <div class="best-seller-cart-action" onclick="event.stopPropagation();">
+                            {% if product.has_sizes %}
+                            <button type="button" class="btn btn-danger btn-lg best-seller-btn"
+                                title="Agregar al carrito"
+                                data-product-id="{{ product.id }}"
+                                data-product-name="{{ product.name|escapejs }}"
+                                data-product-sizes="{{ product.available_sizes|default:'' }}"
+                                onclick="openSizeModal(this);">
+                                <i class="bi bi-cart-plus"></i> ¡Lo Quiero!
+                            </button>
+                            {% else %}
+                            <form method="post" action="{% url 'shop:add_to_cart' product_id=product.id %}"
+                                class="best-seller-add-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-danger btn-lg best-seller-btn"
+                                    title="Agregar al carrito">
+                                    <i class="bi bi-cart-plus"></i> ¡Lo Quiero!
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>

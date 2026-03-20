@@ -16,9 +16,14 @@ from urllib.parse import urlparse
 
 from .models import (
     Product, Category, Brand, ProductImage, Cart, CartItem, Order, OrderItem,
-    Coupon, ShippingMethod, PaymentMethod, Payment, ContactMessage, MetricEvent, PromotionalBanner
+    Coupon, ShippingMethod, ShippingRule, PaymentMethod, Payment, ContactMessage, MetricEvent, PromotionalBanner
 )
-from .utils import get_comunas_choices
+from .utils import (
+    get_comunas_choices,
+    CHILE_METRO_REGION_NAME,
+    SHIPPING_PRICE_METRO_REGION_DEFAULT,
+    SHIPPING_PRICE_OTHER_REGIONS_DEFAULT,
+)
 from .forms import (
     UserRegistrationForm, AddToCartForm, UpdateCartItemForm, CouponForm,
     CheckoutForm, ContactForm
@@ -128,7 +133,6 @@ def products_list(request):
 
     # Filtro por ofertas - solo productos que realmente tienen oferta válida
     if request.GET.get('offers') == 'true':
-        from django.db.models import F
         products = products.filter(
             offer_price__isnull=False,
             offer_price__lt=F('price')
@@ -360,6 +364,48 @@ def cart_view(request):
         if not applied_coupon:
             total_with_discount = subtotal
 
+    domestic_shipping = ShippingMethod.objects.filter(is_active=True, base_price__gt=0).first()
+    metro_price = SHIPPING_PRICE_METRO_REGION_DEFAULT
+    other_price = SHIPPING_PRICE_OTHER_REGIONS_DEFAULT
+    region_prices = {}
+    shipping_price_min = other_price
+    shipping_price_max = other_price
+    if domestic_shipping:
+        r_metro = ShippingRule.objects.filter(
+            shipping_method=domestic_shipping, is_active=True, region=CHILE_METRO_REGION_NAME, comuna=''
+        ).first()
+        r_other = ShippingRule.objects.filter(
+            shipping_method=domestic_shipping, is_active=True, region='', comuna=''
+        ).first()
+        if r_metro:
+            metro_price = r_metro.price
+        if r_other:
+            other_price = r_other.price
+
+        subtotal_for_rules = cart.get_subtotal() if cart else 0
+        distinct_regions = (
+            ShippingRule.objects.filter(
+                shipping_method=domestic_shipping,
+                is_active=True,
+                comuna='',
+            )
+            .exclude(region='')
+            .values_list('region', flat=True)
+            .distinct()
+        )
+        for rname in distinct_regions:
+            region_prices[rname] = domestic_shipping.resolve_price(subtotal_for_rules, rname, '')
+
+        all_rule_prices = list(
+            ShippingRule.objects.filter(
+                shipping_method=domestic_shipping,
+                is_active=True,
+            ).values_list('price', flat=True)
+        )
+        if all_rule_prices:
+            shipping_price_min = min(all_rule_prices)
+            shipping_price_max = max(all_rule_prices)
+
     context = {
         'cart': cart,
         'coupon_form': CouponForm(),
@@ -369,6 +415,13 @@ def cart_view(request):
         'applied_coupon': applied_coupon,
         'discount_amount': discount_amount,
         'total_with_discount': total_with_discount,
+        'domestic_shipping_method_id': domestic_shipping.id if domestic_shipping else None,
+        'shipping_metro_region_name': CHILE_METRO_REGION_NAME,
+        'shipping_price_metro': metro_price,
+        'shipping_price_other': other_price,
+        'shipping_region_prices_json': json.dumps(region_prices, ensure_ascii=False),
+        'shipping_price_min': shipping_price_min,
+        'shipping_price_max': shipping_price_max,
     }
     return render(request, 'shop/cart.html', context)
 
@@ -586,12 +639,12 @@ def checkout(request):
     # Calcular totales
     subtotal = cart.get_subtotal()
     shipping_method = form.cleaned_data['shipping_method']
-    shipping_cost = shipping_method.base_price
-    
+    shipping_region = (form.cleaned_data.get('shipping_region') or '').strip()
+    shipping_comuna = (form.cleaned_data.get('shipping_comuna') or '').strip()
+    shipping_cost = shipping_method.resolve_price(subtotal, shipping_region, shipping_comuna)
+
     # Validación adicional para envío a domicilio
     if shipping_method.base_price > 0:
-        shipping_region = form.cleaned_data.get('shipping_region', '').strip()
-        shipping_comuna = form.cleaned_data.get('shipping_comuna', '').strip()
         shipping_address = form.cleaned_data.get('shipping_address', '').strip()
         
         if not shipping_region:

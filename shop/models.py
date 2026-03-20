@@ -268,6 +268,85 @@ class ShippingMethod(models.Model):
     def __str__(self):
         return self.name
 
+    def resolve_price(self, subtotal: int, region: str = '', comuna: str = '') -> int:
+        """
+        Precio de envío según reglas (región/comuna/monto). Retiro (base_price 0) → 0.
+        Si no hay reglas activas, usa base_price.
+        """
+        from .utils import normalize_shipping_match_string
+
+        if self.base_price == 0:
+            return 0
+        region_n = normalize_shipping_match_string(region or '')
+        comuna_n = normalize_shipping_match_string(comuna or '')
+        rules = list(
+            ShippingRule.objects.filter(
+                shipping_method=self,
+                is_active=True,
+                min_order_amount__lte=subtotal,
+            )
+        )
+        if not rules:
+            return self.base_price
+        candidates = []
+        for rule in rules:
+            if rule.region and normalize_shipping_match_string(rule.region) != region_n:
+                continue
+            if rule.comuna and normalize_shipping_match_string(rule.comuna) != comuna_n:
+                continue
+            specificity = (2 if rule.region else 0) + (1 if rule.comuna else 0)
+            candidates.append((specificity, rule.priority, rule.min_order_amount, rule.price))
+        if not candidates:
+            return self.base_price
+        candidates.sort(key=lambda x: (x[0], x[1], x[2]), reverse=True)
+        return candidates[0][3]
+
+
+class ShippingRule(models.Model):
+    """Reglas de precio por región/comuna/monto para un método de envío (ej. domicilio)."""
+    shipping_method = models.ForeignKey(
+        ShippingMethod,
+        on_delete=models.CASCADE,
+        related_name='rules',
+        verbose_name="Método de envío",
+    )
+    min_order_amount = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='Monto mínimo del pedido (CLP)',
+        help_text='La regla aplica si el subtotal del carrito es mayor o igual a este monto.',
+    )
+    region = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name='Región',
+        help_text='Opcional. Copiar el nombre exacto del listado de checkout (ej. desde regiones_comunas.json). Vacío = resto de regiones.',
+    )
+    comuna = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name='Comuna',
+        help_text='Opcional. Si se indica, debe coincidir con la comuna del cliente. Vacío = cualquier comuna de la región.',
+    )
+    price = models.IntegerField(validators=[MinValueValidator(0)], verbose_name='Precio de envío (CLP)')
+    priority = models.IntegerField(
+        default=0,
+        verbose_name='Prioridad',
+        help_text='Desempate: mayor valor gana si hay empate en especificidad y monto mínimo.',
+    )
+    is_active = models.BooleanField(default=True, verbose_name='Activa')
+
+    class Meta:
+        verbose_name = 'Regla de envío'
+        verbose_name_plural = 'Reglas de envío'
+        ordering = ['shipping_method', '-min_order_amount', 'region', 'comuna']
+
+    def __str__(self):
+        label = self.region or 'Resto de regiones'
+        return f'{self.shipping_method.name}: {label} → ${self.price:,}'.replace(',', '.')
+
 
 class PaymentMethod(models.Model):
     """Modelo para métodos de pago"""

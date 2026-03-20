@@ -13,7 +13,8 @@ from io import BytesIO
 from django.core.management.base import BaseCommand
 from django.core.files import File
 from django.conf import settings
-from shop.models import ShippingMethod, PaymentMethod
+from shop.models import ShippingMethod, ShippingRule, PaymentMethod
+from shop.utils import CHILE_METRO_REGION_NAME
 
 
 class Command(BaseCommand):
@@ -66,7 +67,10 @@ class Command(BaseCommand):
         shipping_methods = [
             {
                 'name': 'Envío a domicilio',
-                'description': 'Envío a la dirección que indiques. El costo es de $5.000 CLP.',
+                'description': (
+                    'Envío a la dirección que indiques. '
+                    f'{CHILE_METRO_REGION_NAME}: $3.000; demás regiones: $5.000 CLP.'
+                ),
                 'base_price': 5000,
                 'is_active': True,
             },
@@ -92,6 +96,29 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f'   [CREADO] {method.name}'))
             else:
                 self.stdout.write(self.style.WARNING(f'   [EXISTE] {method.name} (usa --force para actualizar)'))
+
+        # Reglas de envío por región (domicilio)
+        domicilio = ShippingMethod.objects.filter(name='Envío a domicilio').first()
+        if domicilio and not ShippingRule.objects.filter(shipping_method=domicilio).exists():
+            ShippingRule.objects.create(
+                shipping_method=domicilio,
+                min_order_amount=0,
+                region=CHILE_METRO_REGION_NAME,
+                comuna='',
+                price=3000,
+                priority=10,
+                is_active=True,
+            )
+            ShippingRule.objects.create(
+                shipping_method=domicilio,
+                min_order_amount=0,
+                region='',
+                comuna='',
+                price=5000,
+                priority=0,
+                is_active=True,
+            )
+            self.stdout.write(self.style.SUCCESS('   [REGLAS] Tarifas por región creadas (RM $3.000 / resto $5.000)'))
         
         # Métodos de pago con imágenes
         self.stdout.write('')
