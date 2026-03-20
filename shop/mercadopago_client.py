@@ -34,6 +34,9 @@ def create_checkout_pro_preference(
     pending_url: str,
     failure_url: str,
     notification_url: str,
+    item_id: Optional[str] = None,
+    item_category_id: Optional[str] = None,
+    item_description: Optional[str] = None,
 ) -> MercadoPagoPreferenceResult:
     """
     Crea una preferencia para Checkout Pro.
@@ -48,6 +51,10 @@ def create_checkout_pro_preference(
                 "quantity": 1,
                 "currency_id": "CLP",
                 "unit_price": int(total_amount_clp),
+                # Recomendaciones Mercado Pago para mejorar tasa de aprobación.
+                "id": str(item_id) if item_id else str(order_id),
+                "category_id": str(item_category_id) if item_category_id else "",
+                "description": item_description if item_description else f"Pedido {order_number}",
             }
         ],
         "external_reference": str(order_id),

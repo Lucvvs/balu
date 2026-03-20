@@ -783,6 +783,24 @@ def checkout(request):
             )
             return redirect('shop:order_confirmation', order_id=order.id)
 
+        # Recomendaciones Mercado Pago: enriquecer "items" dentro de la sección "Preferencias"
+        # usando los OrderItem del pedido (creamos 1 solo item con el total, pero igual enviamos
+        # id/categoría/description para mejorar el motor de prevención de fraude).
+        items_qs = order.items.select_related('product__category')
+        mp_item_id = None
+        mp_item_category_id = None
+        mp_item_description = None
+        if items_qs.exists():
+            first = items_qs.first()
+            if first:
+                mp_item_id = str(first.id)
+                if first.product_id and first.product and first.product.category_id:
+                    mp_item_category_id = str(first.product.category_id)
+                product_names = [it.product.name for it in items_qs[:3] if it.product_id and it.product]
+                if product_names:
+                    suffix = "..." if items_qs.count() > 3 else ""
+                    mp_item_description = f"Pedido {order.order_number}: {', '.join(product_names)}{suffix}"
+
         success_url = f"{base_url}{reverse('shop:mp_return', kwargs={'status': 'success', 'order_id': order.id})}"
         pending_url = f"{base_url}{reverse('shop:mp_return', kwargs={'status': 'pending', 'order_id': order.id})}"
         failure_url = f"{base_url}{reverse('shop:mp_return', kwargs={'status': 'failure', 'order_id': order.id})}"
@@ -808,6 +826,9 @@ def checkout(request):
             pending_url=pending_url,
             failure_url=failure_url,
             notification_url=notification_url,
+            item_id=mp_item_id,
+            item_category_id=mp_item_category_id,
+            item_description=mp_item_description,
         )
         order.mp_preference_id = pref.preference_id
         order.mp_init_point = pref.init_point
