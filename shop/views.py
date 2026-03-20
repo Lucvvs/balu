@@ -709,7 +709,8 @@ def checkout(request):
         discount_total=discount_total,
         total=total,
         customer_name=form.cleaned_data.get('customer_name') or (request.user.get_full_name() if request.user.is_authenticated else None),
-        customer_email=form.cleaned_data.get('customer_email') or (request.user.email if request.user.is_authenticated else None),
+        # Nunca permitir que el email del usuario autenticado sea cambiado desde el navegador.
+        customer_email=(request.user.email if request.user.is_authenticated else form.cleaned_data.get('customer_email')),
         customer_phone=form.cleaned_data.get('customer_phone'),
         status='pending_payment' if is_mp else 'realized',
     )
@@ -1114,7 +1115,8 @@ def update_profile(request):
     # Actualizar datos
     user.first_name = request.POST.get('first_name', user.first_name)
     user.last_name = request.POST.get('last_name', user.last_name)
-    user.email = request.POST.get('email', user.email)
+    # El email es inmodificable desde el frontend.
+    user.phone = request.POST.get('phone', user.phone)
     user.save()
     
     messages.success(request, 'Perfil actualizado correctamente.')

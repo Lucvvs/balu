@@ -166,15 +166,22 @@ class CheckoutForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     customer_email = forms.EmailField(
-        required=False,
+        required=True,
         label="Email",
         widget=forms.EmailInput(attrs={'class': 'form-control'})
     )
     customer_phone = forms.CharField(
         max_length=20,
-        required=False,
+        required=True,
         label="Teléfono",
         widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    accept_terms = forms.BooleanField(
+        required=True,
+        label='',
+        error_messages={
+            'required': 'Debes aceptar los términos y condiciones para continuar.',
+        },
     )
 
     def clean(self):
