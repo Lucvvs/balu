@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
+from .forms import CustomAdminUserCreationForm, CustomUserChangeForm
 from .models import (
     CustomUser, Brand, Category, Product, ProductImage, Coupon, ShippingMethod, ShippingRule, PaymentMethod,
     Cart, CartItem, Order, OrderItem, Payment, ContactMessage, MetricEvent, PromotionalBanner
@@ -9,12 +10,16 @@ from .models import (
 
 @admin.register(CustomUser)
 class CustomUserAdmin(BaseUserAdmin):
-    """Admin para el modelo de usuario personalizado"""
+    """Admin para el modelo de usuario personalizado (email como identificador, sin username en BD)."""
+    form = CustomUserChangeForm
+    add_form = CustomAdminUserCreationForm
     list_display = ('email', 'first_name', 'last_name', 'is_staff', 'is_active', 'date_joined')
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'date_joined')
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
-    
+    # date_joined usa auto_now_add en el modelo → no editable; debe ir solo como lectura en el formulario.
+    readonly_fields = ('last_login', 'date_joined')
+
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Información Personal', {'fields': ('first_name', 'last_name', 'phone')}),
@@ -25,7 +30,7 @@ class CustomUserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'first_name', 'last_name', 'password1', 'password2'),
+            'fields': ('email', 'first_name', 'last_name', 'usable_password', 'password1', 'password2'),
         }),
     )
 

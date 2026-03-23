@@ -1,10 +1,51 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import (
+    BaseUserCreationForm,
+    SetUnusablePasswordMixin,
+    UserChangeForm,
+    UserCreationForm,
+)
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV3
 from .models import Product, Coupon, ContactMessage, ShippingMethod, PaymentMethod, CustomUser
 from .utils import get_regiones_choices
+
+
+class CustomUserChangeForm(UserChangeForm):
+    """Admin: evita field_classes de `username` del UserChangeForm stock (CustomUser no lo tiene en BD)."""
+
+    class Meta(UserChangeForm.Meta):
+        model = CustomUser
+        fields = "__all__"
+        field_classes = {}
+
+
+class CustomAdminUserCreationForm(SetUnusablePasswordMixin, BaseUserCreationForm):
+    """Admin: equivalente a AdminUserCreationForm pero con email en lugar de username (evita clean_username stock)."""
+
+    usable_password = SetUnusablePasswordMixin.create_usable_password_field()
+
+    class Meta:
+        model = CustomUser
+        fields = ("email", "first_name", "last_name")
+        field_classes = {"email": forms.EmailField}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["password1"].required = False
+        self.fields["password2"].required = False
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if email and CustomUser.objects.filter(email__iexact=email).exists():
+            raise ValidationError(
+                _("Ya existe un usuario con este correo electrónico."),
+                code="unique",
+            )
+        return email
 
 
 class UserRegistrationForm(UserCreationForm):
