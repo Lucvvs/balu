@@ -1,0 +1,24 @@
+{% load shop_filters %}
+{% for item in order_items %}
+<tr>
+    <td style="width:72px;padding:12px 10px 12px 0;vertical-align:top;border-bottom:1px solid #e8eaed;">
+        {% if item.product %}
+            {% with primary=item.product.get_primary_image %}
+                {% if primary and primary.image.url %}
+                    <img src="{% email_resolved_url primary.image.url %}" alt="" width="56" height="56" style="display:block;width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #e8eaed;">
+                {% else %}
+                    <div style="width:56px;height:56px;border-radius:8px;background:#f1f3f4;border:1px solid #e8eaed;"></div>
+                {% endif %}
+            {% endwith %}
+        {% else %}
+            <div style="width:56px;height:56px;border-radius:8px;background:#f1f3f4;border:1px solid #e8eaed;"></div>
+        {% endif %}
+    </td>
+    <td style="padding:12px 8px 12px 0;vertical-align:top;border-bottom:1px solid #e8eaed;word-wrap:break-word;overflow-wrap:break-word;max-width:220px;">
+        <span style="font-size:14px;line-height:1.45;color:#202124;font-weight:500;">{{ item.product_name }}</span>
+    </td>
+    <td style="padding:12px 6px;vertical-align:top;border-bottom:1px solid #e8eaed;text-align:center;white-space:nowrap;font-size:14px;color:#5f6368;">{{ item.quantity }}</td>
+    <td style="padding:12px 6px;vertical-align:top;border-bottom:1px solid #e8eaed;text-align:right;white-space:nowrap;font-size:14px;color:#5f6368;">{{ item.unit_price|currency_clp }}</td>
+    <td style="padding:12px 0 12px 6px;vertical-align:top;border-bottom:1px solid #e8eaed;text-align:right;white-space:nowrap;font-size:14px;font-weight:600;color:#202124;">{{ item.line_total|currency_clp }}</td>
+</tr>
+{% endfor %}

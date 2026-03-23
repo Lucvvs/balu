@@ -28,13 +28,13 @@ class Command(BaseCommand):
         
         # Nombres de archivos esperados (basados en los slugs)
         brand_images = [
-            'hro.png',
-            'shaft.png',
-            '4rs.png',
-            'kovix.png',
-            'motocentric.png',
-            'ich.png',
-            'shot.png',
+            'hro.webp',
+            'shaft.webp',
+            '4rs.webp',
+            'kovix.webp',
+            'motocentric.webp',
+            'ich.webp',
+            'shot.webp',
         ]
         
         copied = 0

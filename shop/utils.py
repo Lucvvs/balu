@@ -5,9 +5,21 @@ import json
 import unicodedata
 from pathlib import Path
 from django.core.mail import send_mail
+from django.db.models import Prefetch
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.utils.html import strip_tags
+
+from shop.models import ProductImage
+
+
+def _order_items_for_email(order):
+    return order.items.select_related('product').prefetch_related(
+        Prefetch(
+            'product__images',
+            queryset=ProductImage.objects.order_by('-is_primary', 'order', 'id'),
+        )
+    )
 
 
 def send_order_confirmation_email(order):
@@ -27,7 +39,7 @@ def send_order_confirmation_email(order):
         # Renderizar template de email HTML
         html_message = render_to_string('shop/emails/order_confirmation.html', {
             'order': order,
-            'order_items': order.items.all(),
+            'order_items': _order_items_for_email(order),
         })
         
         # Versión de texto plano (sin HTML)
@@ -67,7 +79,7 @@ def send_order_notification_to_admin(order):
         # Renderizar template de email HTML
         html_message = render_to_string('shop/emails/order_notification_admin.html', {
             'order': order,
-            'order_items': order.items.all(),
+            'order_items': _order_items_for_email(order),
         })
         
         # Versión de texto plano

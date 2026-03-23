@@ -3,130 +3,168 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Nuevo Pedido - MotoMoto</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .email-container {
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .alert {
-            background-color: #fff3cd;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-            border-left: 4px solid #ffc107;
-        }
-        .order-number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #dc3545;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        table th, table td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: left;
-        }
-        table th {
-            background-color: #dc3545;
-            color: white;
-        }
-        .info-section {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-        }
-        .info-section h3 {
-            margin-top: 0;
-            color: #dc3545;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Nuevo pedido — MotoMoto</title>
 </head>
-<body>
-    <div class="email-container">
-        <div class="alert">
-            <h2>Nuevo Pedido Recibido</h2>
-            <p class="order-number">Pedido #{{ order.order_number }}</p>
-        </div>
-        
-        <div class="info-section">
-            <h3>Información del Cliente</h3>
-            <p><strong>Nombre:</strong> {{ order.customer_name|default:"N/A" }}</p>
-            <p><strong>Email:</strong> {{ order.customer_email|default:"N/A" }}</p>
-            <p><strong>Teléfono:</strong> {{ order.customer_phone|default:"N/A" }}</p>
-            {% if order.user %}
-            <p><strong>Usuario:</strong> {{ order.user.get_full_name|default:order.user.email }} ({{ order.user.email }})</p>
-            {% else %}
-            <p><strong>Usuario:</strong> Cliente no registrado</p>
-            {% endif %}
-        </div>
-        
-        <div class="info-section">
-            <h3>Productos</h3>
-            <table>
-                <thead>
+<body style="margin:0;padding:0;background-color:#eceff1;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;background-color:#eceff1;">
+        <tr>
+            <td align="center" style="padding:24px 12px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
                     <tr>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        <th>Total</th>
+                        <td style="background:linear-gradient(135deg,#b71c1c 0%,#c62828 50%,#d32f2f 100%);padding:14px 12px;text-align:center;">
+                            <img src="{% email_static_url 'img/logo.webp' %}" alt="MotoMoto" width="76" height="auto" style="display:block;margin:0 auto 6px auto;max-width:76px;height:auto;border:0;">
+                            <p style="margin:0;font-size:12px;font-weight:600;color:rgba(255,255,255,0.95);font-family:Arial,Helvetica,sans-serif;letter-spacing:0.06em;text-transform:uppercase;">Notificación interna · Nuevo pedido</p>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    {% for item in order_items %}
                     <tr>
-                        <td>{{ item.product_name }}</td>
-                        <td>{{ item.quantity }}</td>
-                        <td>{{ item.unit_price|currency_clp }}</td>
-                        <td>{{ item.line_total|currency_clp }}</td>
+                        <td style="padding:22px 24px 12px;font-family:Arial,Helvetica,sans-serif;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#fff3e0;border-radius:8px;border-left:4px solid #ef6c00;">
+                                <tr>
+                                    <td style="padding:14px 16px;">
+                                        <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#e65100;text-transform:uppercase;letter-spacing:0.06em;">Pedido</p>
+                                        <p style="margin:0;font-size:20px;font-weight:700;color:#bf360c;">#{{ order.order_number }}</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
                     </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="info-section">
-            <h3>Totales</h3>
-            <p><strong>Subtotal:</strong> {{ order.subtotal|currency_clp }}</p>
-            {% if order.coupon %}
-            <p><strong>Descuento ({{ order.coupon.code }}):</strong> -{{ order.discount_total|currency_clp }}</p>
-            {% endif %}
-            <p><strong>Envío:</strong> {{ order.shipping_cost|currency_clp }}</p>
-            <p><strong style="font-size: 20px; color: #dc3545;">Total: {{ order.total|currency_clp }}</strong></p>
-        </div>
-        
-        <div class="info-section">
-            <h3>Método de Entrega</h3>
-            <p><strong>{{ order.shipping_method.name }}</strong></p>
-            {% if order.shipping_address %}
-            <p><strong>Dirección:</strong><br>
-            {{ order.shipping_address }}<br>
-            {{ order.shipping_comuna }}, {{ order.shipping_region }}</p>
-            {% endif %}
-            <p><strong>Método de Pago:</strong> {{ order.payment_method.name }}</p>
-        </div>
-        
-        <div class="info-section">
-            <p><strong>Fecha del Pedido:</strong> {{ order.created_at|date:"d/m/Y H:i" }}</p>
-            <p><strong>Estado:</strong> {{ order.get_status_display }}</p>
-        </div>
-    </div>
+                    <tr>
+                        <td style="padding:4px 24px 16px;font-family:Arial,Helvetica,sans-serif;">
+                            <p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#c62828;text-transform:uppercase;letter-spacing:0.04em;text-decoration:underline;">Cliente</p>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e8eaed;border-radius:8px;">
+                                <tr>
+                                    <td style="padding:10px 14px;font-size:13px;color:#5f6368;width:32%;vertical-align:top;">Nombre</td>
+                                    <td style="padding:10px 14px;font-size:13px;color:#202124;word-wrap:break-word;">{{ order.customer_name|default:"—" }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 14px;font-size:13px;color:#5f6368;vertical-align:top;border-top:1px solid #e8eaed;">Email</td>
+                                    <td style="padding:10px 14px;font-size:13px;color:#202124;border-top:1px solid #e8eaed;word-wrap:break-word;">{{ order.customer_email|default:"—" }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 14px;font-size:13px;color:#5f6368;vertical-align:top;border-top:1px solid #e8eaed;">Teléfono</td>
+                                    <td style="padding:10px 14px;font-size:13px;color:#202124;border-top:1px solid #e8eaed;">{{ order.customer_phone|default:"—" }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 14px;font-size:13px;color:#5f6368;vertical-align:top;border-top:1px solid #e8eaed;">Cuenta</td>
+                                    <td style="padding:10px 14px;font-size:13px;color:#202124;border-top:1px solid #e8eaed;word-wrap:break-word;">
+                                        {% if order.user %}
+                                            {{ order.user.get_full_name|default:order.user.email }} ({{ order.user.email }})
+                                        {% else %}
+                                            Invitado (sin registro)
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 24px;font-family:Arial,Helvetica,sans-serif;">
+                            <p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#c62828;text-transform:uppercase;letter-spacing:0.04em;text-decoration:underline;">Líneas del pedido</p>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e8eaed;border-radius:8px;table-layout:fixed;">
+                                <thead>
+                                    <tr style="background:#fafafa;">
+                                        <th align="left" style="padding:10px 8px 10px 12px;font-size:11px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e8eaed;width:72px;">&nbsp;</th>
+                                        <th align="left" style="padding:10px 8px;font-size:11px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e8eaed;">Producto</th>
+                                        <th style="padding:10px 6px;font-size:11px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e8eaed;text-align:center;width:48px;">Cant.</th>
+                                        <th style="padding:10px 6px;font-size:11px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e8eaed;text-align:right;width:96px;">P. unit.</th>
+                                        <th style="padding:10px 12px 10px 6px;font-size:11px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e8eaed;text-align:right;width:96px;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% include 'shop/emails/_email_items_rows.html' %}
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 24px;font-family:Arial,Helvetica,sans-serif;">
+                            <p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#c62828;text-transform:uppercase;letter-spacing:0.04em;text-decoration:underline;">Totales</p>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e8eaed;border-radius:8px;">
+                                <tr>
+                                    <td style="padding:10px 14px;font-size:13px;color:#5f6368;">Subtotal</td>
+                                    <td style="padding:10px 14px;font-size:13px;color:#202124;text-align:right;white-space:nowrap;">{{ order.subtotal|currency_clp }}</td>
+                                </tr>
+                                {% if order.coupon %}
+                                <tr>
+                                    <td style="padding:10px 14px;font-size:13px;color:#5f6368;border-top:1px solid #e8eaed;">Descuento ({{ order.coupon.code }})</td>
+                                    <td style="padding:10px 14px;font-size:13px;color:#2e7d32;text-align:right;border-top:1px solid #e8eaed;white-space:nowrap;">-{{ order.discount_total|currency_clp }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td style="padding:10px 14px;font-size:13px;color:#5f6368;border-top:1px solid #e8eaed;">Envío</td>
+                                    <td style="padding:10px 14px;font-size:13px;color:#202124;text-align:right;border-top:1px solid #e8eaed;white-space:nowrap;">{{ order.shipping_cost|currency_clp }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:12px 14px;font-size:14px;font-weight:700;color:#202124;border-top:1px solid #e8eaed;">Total</td>
+                                    <td style="padding:12px 14px;font-size:16px;font-weight:700;color:#c62828;text-align:right;border-top:1px solid #e8eaed;white-space:nowrap;">{{ order.total|currency_clp }}</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 24px 20px;font-family:Arial,Helvetica,sans-serif;">
+                            <p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#c62828;text-transform:uppercase;letter-spacing:0.04em;text-decoration:underline;">Entrega y pago</p>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e8eaed;border-radius:8px;">
+                                <tr>
+                                    <td style="padding:10px 14px;font-size:13px;color:#5f6368;width:32%;">Envío</td>
+                                    <td style="padding:10px 14px;font-size:13px;color:#202124;text-align:right;word-wrap:break-word;">{{ order.shipping_method.name }}</td>
+                                </tr>
+                                {% if order.shipping_address %}
+                                <tr>
+                                    <td style="padding:10px 14px;font-size:13px;color:#5f6368;vertical-align:top;border-top:1px solid #e8eaed;">Dirección</td>
+                                    <td style="padding:10px 14px;font-size:13px;color:#202124;text-align:right;border-top:1px solid #e8eaed;line-height:1.5;word-wrap:break-word;">{{ order.shipping_address }}<br>{{ order.shipping_comuna }}, {{ order.shipping_region }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td style="padding:10px 14px;font-size:13px;color:#5f6368;border-top:1px solid #e8eaed;">Pago</td>
+                                    <td style="padding:10px 14px;font-size:13px;color:#202124;text-align:right;border-top:1px solid #e8eaed;">{{ order.payment_method.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 14px;font-size:13px;color:#5f6368;border-top:1px solid #e8eaed;">Fecha</td>
+                                    <td style="padding:10px 14px;font-size:13px;color:#202124;text-align:right;border-top:1px solid #e8eaed;white-space:nowrap;">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 14px;font-size:13px;color:#5f6368;border-top:1px solid #e8eaed;">Estado</td>
+                                    <td style="padding:10px 14px;font-size:13px;color:#202124;text-align:right;border-top:1px solid #e8eaed;">{{ order.get_status_display }}</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0 24px 22px;font-family:Arial,Helvetica,sans-serif;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#eceff1;border-radius:8px;border:1px solid #cfd8dc;">
+                                <tr>
+                                    <td style="padding:14px 16px;font-size:12px;line-height:1.55;color:#455a64;">
+                                        <strong>Contacto del cliente:</strong>
+                                        {% if order.customer_email %}
+                                        <a href="mailto:{{ order.customer_email }}" style="color:#c62828;text-decoration:none;">{{ order.customer_email }}</a>
+                                        {% else %}
+                                        <span style="color:#202124;">—</span>
+                                        {% endif %}
+                                        <span style="color:#90a4ae;"> · </span>
+                                        <strong>WhatsApp:</strong>
+                                        {% with wa_url=order.customer_phone|whatsapp_wa_url %}
+                                        {% if wa_url %}
+                                        <a href="{{ wa_url }}" style="color:#c62828;text-decoration:none;">{{ order.customer_phone }}</a>
+                                        {% else %}
+                                        <span style="color:#202124;">{{ order.customer_phone|default:"—" }}</span>
+                                        {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:14px 24px 20px;font-family:Arial,Helvetica,sans-serif;border-top:1px solid #e8eaed;background:#fafafa;">
+                            <p style="margin:0;font-size:11px;line-height:1.5;color:#9aa0a6;text-align:center;">Mensaje automático generado por el sistema MotoMoto.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
-

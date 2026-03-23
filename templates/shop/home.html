@@ -4,16 +4,21 @@
 
 {% block title %}MotoMoto - Inicio{% endblock %}
 
+{% block extra_head %}
+<link rel="preload" as="image" href="{% static 'img/bienvenida.webp' %}">
+<link rel="preload" as="image" href="{% static 'img/vercatalogo.webp' %}">
+{% endblock %}
+
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-section"
-    style="background-image: url('{% static 'img/bienvenida.png' %}'); filter: brightness(1.0);">
+    style="background-image: url('{% static 'img/bienvenida.webp' %}'); filter: brightness(1.0);">
     <div class="container">
         <div class="masking-container">
             <h1 class="masked-text">¿Qué productos MotoMoto buscas hoy?</h1>
         </div>
         <a href="{% url 'shop:products_list' %}" class="btn btn-hero">
-            <img src="{% static 'img/vercatalogo.png' %}" alt="Ver Catálogo" onerror="this.style.display='none'">
+            <img src="{% static 'img/vercatalogo.webp' %}" alt="Ver Catálogo" fetchpriority="high" onerror="this.style.display='none'">
         </a>
     </div>
 </section>
@@ -21,19 +26,19 @@
 <!-- Category Banner -->
 <section class="category-banner">
     <a href="{% url 'shop:products_list' %}?categories=cascos,equipamiento" class="category-item"
-        style="background-image: url('{% static 'img/banner1.png' %}');">
+        style="background-image: url('{% static 'img/banner1.webp' %}');">
         <div class="overlay">
             <span style="color: white; font-size: 2rem; font-weight: bold;">Equipamiento</span>
         </div>
     </a>
     <a href="{% url 'shop:products_list' %}?category=accesorios" class="category-item"
-        style="background-image: url('{% static 'img/banner3.png' %}');">
+        style="background-image: url('{% static 'img/banner3.webp' %}');">
         <div class="overlay">
             <span style="color: white; font-size: 2rem; font-weight: bold;">Accesorios</span>
         </div>
     </a>
     <a href="{% url 'shop:products_list' %}?categories=seguridad,maletas" class="category-item"
-        style="background-image: url('{% static 'img/banner2.png' %}');">
+        style="background-image: url('{% static 'img/banner2.webp' %}');">
         <div class="overlay">
             <span style="color: white; font-size: 2rem; font-weight: bold;">Para la Moto</span>
         </div>
@@ -46,27 +51,27 @@
 <section class="security-banner">
     <div class="container">
         <h3 class="security-title">
-            <img src="{% static 'img/garant1.png' %}" alt="Garantía 1" class="security-title-image-left" onerror="this.style.display='none'">
+            <img src="{% static 'img/garant1.webp' %}" alt="Garantía 1" class="security-title-image-left" loading="lazy" decoding="async" onerror="this.style.display='none'">
             Seguridad Garantizada al Mejor Precio
-            <img src="{% static 'img/garant2.png' %}" alt="Garantía 2" class="security-title-image-right" onerror="this.style.display='none'">
+            <img src="{% static 'img/garant2.webp' %}" alt="Garantía 2" class="security-title-image-right" loading="lazy" decoding="async" onerror="this.style.display='none'">
         
         </h3>
         <div class="security-images-container">
             <div class="security-image-item">
-                <img src="{% static 'img/seguridad1.png' %}" alt="Seguridad 1" class="security-image"
+                <img src="{% static 'img/seguridad1.webp' %}" alt="Seguridad 1" class="security-image" loading="lazy" decoding="async"
                     onerror="this.style.display='none'">
             </div>
             <div class="security-image-item">
-                <img src="{% static 'img/seguridad3.png' %}" alt="Seguridad 3" class="security-image"
+                <img src="{% static 'img/seguridad3.webp' %}" alt="Seguridad 3" class="security-image" loading="lazy" decoding="async"
                     onerror="this.style.display='none'">
             </div>
             <div class="security-image-item">
-                <img src="{% static 'img/seguridad2.png' %}" alt="Seguridad 2" class="security-image"
+                <img src="{% static 'img/seguridad2.webp' %}" alt="Seguridad 2" class="security-image" loading="lazy" decoding="async"
                     onerror="this.style.display='none'">
             </div>
             
             <div class="security-image-item">
-                <img src="{% static 'img/seguridad4.png' %}" alt="Seguridad 4" class="security-image"
+                <img src="{% static 'img/seguridad4.webp' %}" alt="Seguridad 4" class="security-image" loading="lazy" decoding="async"
                     onerror="this.style.display='none'">
             </div>
         </div>
@@ -82,19 +87,19 @@
                 {% for brand in brands %}
                     <!-- Primera copia -->
                     <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
-                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" onerror="this.style.display='none'">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" loading="lazy" decoding="async" onerror="this.style.display='none'">
                     </a>
                 {% endfor %}
                 <!-- Segunda copia para loop infinito -->
                 {% for brand in brands %}
                     <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
-                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" onerror="this.style.display='none'">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" loading="lazy" decoding="async" onerror="this.style.display='none'">
                     </a>
                 {% endfor %}
                 <!-- Tercera copia para transición perfecta sin saltos -->
                 {% for brand in brands %}
                     <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
-                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" onerror="this.style.display='none'">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" loading="lazy" decoding="async" onerror="this.style.display='none'">
                     </a>
                 {% endfor %}
             {% endif %}
@@ -121,11 +126,12 @@
                             <img src="{{ image.image.url }}" alt="{{ product.name }}" 
                                  class="product-card-img offer-product-img {% if forloop.first %}active{% endif %}" 
                                  data-image-index="{{ forloop.counter0 }}"
-                                 onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
+                                 loading="lazy" decoding="async"
+                                 onerror="if(this.src!='{% static 'img/placeholder.webp' %}'){this.src='{% static 'img/placeholder.webp' %}';}else{this.style.display='none';}">
                             {% endfor %}
                         </div>
                         {% else %}
-                        <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" class="product-card-img"
+                        <img src="{% static 'img/placeholder.webp' %}" alt="{{ product.name }}" class="product-card-img" loading="lazy" decoding="async"
                             onerror="this.style.display='none';">
                         {% endif %}
                         {% endwith %}
@@ -189,35 +195,35 @@
 <!-- Service Banner -->
 <section class="service-banner">
     <div class="service-item">
-        <img src="{% static 'img/envios.png' %}" alt="Envíos" class="service-main-image"
+        <img src="{% static 'img/envios.webp' %}" alt="Envíos" class="service-main-image" loading="lazy" decoding="async"
             onerror="this.style.display='none'">
         <h5 class="service-title">Envíos a toda la Región Metropolitana</h5>
         <p class="service-text">Por solo $3000 (Compras superiores a $40.000)</p>
         <small class="service-text">(Cotiza  tu envio a regiones)</small>
-        <img src="{% static 'img/couriers.png' %}" alt="Couriers" class="service-small-image mt-2"
+        <img src="{% static 'img/couriers.webp' %}" alt="Couriers" class="service-small-image mt-2" loading="lazy" decoding="async"
             onerror="this.style.display='none'">
         
     </div>
     <div class="service-item">
-        <img src="{% static 'img/retiros.png' %}" alt="Retiros" class="service-main-image"
+        <img src="{% static 'img/retiros.webp' %}" alt="Retiros" class="service-main-image" loading="lazy" decoding="async"
             onerror="this.style.display='none'">
         <h5 class="service-title">Retiros en Bodega MotoMoto</h5>
         <p class="service-text">Cercano al Peñon & Los Jesuitas, Puente Alto</p>
         <a href="https://www.google.com/maps/place/Sant%C3%ADsima+Trinidad+%26+Los+Jesuitas,+8206926+Puente+Alto,+Regi%C3%B3n+Metropolitana/@-33.5810237,-70.5618784,19z/data=!3m1!4b1!4m6!3m5!1s0x9662d6c2b8f727c7:0xaaf5b9f5d352d167!8m2!3d-33.5810248!4d-70.5612347!16s%2Fg%2F11gdmf1b2d?entry=ttu&amp;g_ep=EgoyMDI2MDMxNy4wIKXMDSoASAFQAw%3D%3D"
             target="_blank" rel="noopener noreferrer" class="service-maps-stack mt-1" aria-label="Ver ubicación en Google Maps">
-            <img src="{% static 'img/maps.png' %}" alt=""
-                class="service-small-image service-small-image-maps service-maps-shake"
+            <img src="{% static 'img/maps.webp' %}" alt=""
+                class="service-small-image service-small-image-maps service-maps-shake" loading="lazy" decoding="async"
                 onerror="this.style.display='none'">
             <span class="service-maps-caption">Ver Ubicación</span>
         </a>
         
     </div>
     <div class="service-item">
-        <img src="{% static 'img/metodospago.png' %}" alt="Métodos de Pago" class="service-main-image"
+        <img src="{% static 'img/metodospago.webp' %}" alt="Métodos de Pago" class="service-main-image" loading="lazy" decoding="async"
             onerror="this.style.display='none'">
         <h5 class="service-title">Métodos de Pago</h5>
         <p class="service-text">Aceptamos Todo medio de pago, Transferencia, Efectivo y Tarjetas</p>
-        <img src="{% static 'img/tarjetas.png' %}" alt="Tarjetas" class="service-small-image mt-2"
+        <img src="{% static 'img/tarjetas.webp' %}" alt="Tarjetas" class="service-small-image mt-2" loading="lazy" decoding="async"
             onerror="this.style.display='none'">
     </div>
 </section>
@@ -243,7 +249,7 @@
                             {% with primary_img=product.get_primary_image %}
                                 {% if primary_img %}
                                     <img src="{{ primary_img.image.url }}" alt="{{ product.name }}"
-                                        class="carousel-main main-image-{{ product.id }}" id="main-image-{{ product.id }}">
+                                        class="carousel-main main-image-{{ product.id }}" id="main-image-{{ product.id }}" loading="lazy" decoding="async">
                                 {% endif %}
                             {% endwith %}
                         </a>
@@ -253,7 +259,7 @@
                         <a href="{% url 'shop:product_detail' slug=product.slug %}">
                             {% with first_img=images|first %}
                                 <img src="{{ first_img.image.url }}" alt="{{ product.name }}"
-                                    class="carousel-main main-image-{{ product.id }}" id="main-image-{{ product.id }}">
+                                    class="carousel-main main-image-{{ product.id }}" id="main-image-{{ product.id }}" loading="lazy" decoding="async">
                             {% endwith %}
                         </a>
                         {% endif %}
@@ -265,6 +271,7 @@
                         <img src="{{ image.image.url }}" alt="{{ product.name }}"
                             class="carousel-thumb {% if forloop.first %}active{% endif %}"
                             data-product="{{ product.id }}" data-index="{{ forloop.counter0 }}"
+                            loading="lazy" decoding="async"
                             onclick="setCarouselImage({{ product.id }}, {{ forloop.counter0 }}, '{{ image.image.url }}')">
                         {% endfor %}
                     </div>
@@ -273,8 +280,8 @@
                     <div class="carousel-main-container">
                         <a href="{% url 'shop:product_detail' slug=product.slug %}"
                             style="display: block; width: 100%; height: 100%;">
-                            <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}"
-                                class="carousel-main main-image-{{ product.id }}" id="main-image-{{ product.id }}">
+                            <img src="{% static 'img/placeholder.webp' %}" alt="{{ product.name }}"
+                                class="carousel-main main-image-{{ product.id }}" id="main-image-{{ product.id }}" loading="lazy" decoding="async">
                         </a>
                     </div>
                     {% endif %}

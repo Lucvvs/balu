@@ -17,9 +17,9 @@
                             <img src="{{ primary_image.image.url|default:images.0.image.url }}" alt="{{ product.name }}" 
                                  class="img-fluid main-product-image" id="main-product-image" 
                                  style="max-height: 405px; object-fit: contain;"
-                                 onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
+                                 onerror="if(this.src!='{% static 'img/placeholder.webp' %}'){this.src='{% static 'img/placeholder.webp' %}';}else{this.style.display='none';}">
                         {% else %}
-                            <img src="{% static 'img/placeholder.jpg' %}" alt="{{ product.name }}" 
+                            <img src="{% static 'img/placeholder.webp' %}" alt="{{ product.name }}" 
                                  class="img-fluid main-product-image" id="main-product-image" style="max-height: 405px; object-fit: contain;"
                                  onerror="this.style.display='none';">
                         {% endif %}
@@ -155,11 +155,11 @@
                                     <img src="{{ image.image.url }}" alt="{{ related_product.name }}" 
                                          class="product-card-img {% if forloop.first %}active{% endif %}" 
                                          style="cursor: pointer;"
-                                         onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
+                                         onerror="if(this.src!='{% static 'img/placeholder.webp' %}'){this.src='{% static 'img/placeholder.webp' %}';}else{this.style.display='none';}">
                                     {% endfor %}
                                 </div>
                                 {% else %}
-                                <img src="{% static 'img/placeholder.jpg' %}" alt="{{ related_product.name }}" 
+                                <img src="{% static 'img/placeholder.webp' %}" alt="{{ related_product.name }}" 
                                      class="product-card-img" style="cursor: pointer;"
                                      onerror="this.style.display='none';">
                                 {% endif %}

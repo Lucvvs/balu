@@ -4,181 +4,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmación de Pedido - MotoMoto</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .email-container {
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #dc3545;
-        }
-        .header h1 {
-            color: #dc3545;
-            margin: 0;
-            font-size: 28px;
-        }
-        .order-number {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 5px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            margin: 20px 0;
-        }
-        .info-section {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-        }
-        .info-section h3 {
-            margin-top: 0;
-            color: #dc3545;
-            font-size: 18px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        table th, table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        table th {
-            background-color: #dc3545;
-            color: white;
-        }
-        .total-section {
-            background-color: #fff3cd;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 20px;
-            text-align: right;
-        }
-        .total-section strong {
-            font-size: 20px;
-            color: #dc3545;
-        }
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-        }
-        .contact-info {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #e9ecef;
-            border-radius: 5px;
-        }
-        .contact-info h3 {
-            margin-top: 0;
-            color: #dc3545;
-        }
-    </style>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Confirmación de pedido — MotoMoto</title>
+    <!--[if mso]>
+    <noscript>
+        <xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
+    </noscript>
+    <![endif]-->
 </head>
-<body>
-    <div class="email-container">
-        <div class="header">
-            <h1>MotoMoto</h1>
-            <p>Accesorios para Motocicletas</p>
-        </div>
-        
-        <div class="order-number">
-            ¡Pedido Confirmado! #{{ order.order_number }}
-        </div>
-        
-        <p>Hola <strong>{{ order.customer_name|default:"Cliente" }}</strong>,</p>
-        
-        <p>Gracias por tu compra en MotoMoto. Hemos recibido tu pedido y te contactaremos en breve para confirmar los detalles.</p>
-        
-        <div class="info-section">
-            <h3>Detalles del Pedido</h3>
-            <p><strong>Número de Pedido:</strong> #{{ order.order_number }}</p>
-            <p><strong>Fecha:</strong> {{ order.created_at|date:"d/m/Y H:i" }}</p>
-            <p><strong>Estado:</strong> {{ order.get_status_display }}</p>
-        </div>
-        
-        <div class="info-section">
-            <h3>Productos</h3>
-            <table>
-                <thead>
+<body style="margin:0;padding:0;background-color:#eceff1;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;background-color:#eceff1;">
+        <tr>
+            <td align="center" style="padding:24px 12px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                    <!-- Header -->
                     <tr>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        <th>Total</th>
+                        <td style="background:linear-gradient(135deg,#b71c1c 0%,#c62828 50%,#d32f2f 100%);padding:14px 12px;text-align:center;">
+                            <img src="{% email_static_url 'img/logo.webp' %}" alt="MotoMoto" width="84" height="auto" style="display:block;margin:0 auto;max-width:84px;height:auto;border:0;outline:none;">
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    {% for item in order_items %}
+                    <!-- Lead -->
                     <tr>
-                        <td>{{ item.product_name }}</td>
-                        <td>{{ item.quantity }}</td>
-                        <td>{{ item.unit_price|currency_clp }}</td>
-                        <td>{{ item.line_total|currency_clp }}</td>
+                        <td style="padding:28px 24px 8px 24px;font-family:Arial,Helvetica,sans-serif;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#e8f5e9;border-radius:10px;border:1px solid #c8e6c9;">
+                                <tr>
+                                    <td style="padding:16px 18px;text-align:center;">
+                                        <p style="margin:0 0 4px;font-size:12px;font-weight:600;color:#2e7d32;text-transform:uppercase;letter-spacing:0.06em;">Pedido registrado</p>
+                                        <p style="margin:0;font-size:22px;font-weight:700;color:#1b5e20;letter-spacing:-0.02em;">#{{ order.order_number }}</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="margin:22px 0 8px;font-size:15px;line-height:1.55;color:#202124;">Hola <strong>{{ order.customer_name|default:"Cliente" }}</strong>,</p>
+                            <p style="margin:0 0 0;font-size:14px;line-height:1.6;color:#5f6368;">Gracias por comprar en <strong style="color:#202124;">MotoMoto</strong>. Hemos recibido tu pedido correctamente. Te contactaremos si necesitamos confirmar datos de entrega o pago.</p>
+                        </td>
                     </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="info-section">
-            <h3>Información de Entrega</h3>
-            <p><strong>Método:</strong> {{ order.shipping_method.name }}</p>
-            {% if order.shipping_address %}
-            <p><strong>Dirección:</strong><br>
-            {{ order.shipping_address }}<br>
-            {{ order.shipping_comuna }}, {{ order.shipping_region }}</p>
-            {% endif %}
-            <p><strong>Método de Pago:</strong> {{ order.payment_method.name }}</p>
-        </div>
-        
-        <div class="total-section">
-            <p><strong>Subtotal:</strong> {{ order.subtotal|currency_clp }}</p>
-            {% if order.coupon %}
-            <p><strong>Descuento ({{ order.coupon.code }}):</strong> -{{ order.discount_total|currency_clp }}</p>
-            {% endif %}
-            <p><strong>Envío:</strong> {{ order.shipping_cost|currency_clp }}</p>
-            <p><strong style="font-size: 24px;">Total: {{ order.total|currency_clp }}</strong></p>
-        </div>
-        
-        <div class="contact-info">
-            <h3>¿Necesitas ayuda?</h3>
-            <p>Puedes contactarnos indicando tu número de pedido: <strong>#{{ order.order_number }}</strong></p>
-            <p>
-                <strong>WhatsApp:</strong> +569 8211 7748 | +569 8881 5568<br>
-                <strong>Instagram:</strong> @motomotochile.cl<br>
-                <strong>Web:</strong> <a href="https://motomoto-web.onrender.com/" style="color: inherit;">https://motomoto-web.onrender.com</a>
-            </p>
-        </div>
-        
-        <div class="footer">
-            <p>Este es un email automático, por favor no respondas a este mensaje.</p>
-            <p>&copy; 2026 MotoMoto. Todos los derechos reservados.</p>
-        </div>
-    </div>
+                    <!-- Detalle pedido -->
+                    <tr>
+                        <td style="padding:8px 24px 0;font-family:Arial,Helvetica,sans-serif;">
+                            <p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#c62828;text-transform:uppercase;letter-spacing:0.04em;text-decoration:underline;">Resumen del pedido</p>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e8eaed;border-radius:8px;">
+                                <tr>
+                                    <td style="padding:12px 14px;font-size:13px;color:#5f6368;border-bottom:1px solid #e8eaed;">Fecha</td>
+                                    <td style="padding:12px 14px;font-size:13px;color:#202124;text-align:right;border-bottom:1px solid #e8eaed;">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:12px 14px;font-size:13px;color:#5f6368;border-bottom:1px solid #e8eaed;">Estado</td>
+                                    <td style="padding:12px 14px;font-size:13px;color:#202124;text-align:right;border-bottom:1px solid #e8eaed;">{{ order.get_status_display }}</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Productos -->
+                    <tr>
+                        <td style="padding:20px 24px 8px;font-family:Arial,Helvetica,sans-serif;">
+                            <p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#c62828;text-transform:uppercase;letter-spacing:0.04em;text-decoration:underline;">Productos</p>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e8eaed;border-radius:8px;table-layout:fixed;">
+                                <thead>
+                                    <tr style="background:#fafafa;">
+                                        <th align="left" style="padding:10px 8px 10px 12px;font-size:11px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e8eaed;width:72px;">&nbsp;</th>
+                                        <th align="left" style="padding:10px 8px;font-size:11px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e8eaed;">Producto</th>
+                                        <th style="padding:10px 6px;font-size:11px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e8eaed;text-align:center;width:48px;">Cant.</th>
+                                        <th style="padding:10px 6px;font-size:11px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e8eaed;text-align:right;white-space:nowrap;width:96px;">P. unit.</th>
+                                        <th style="padding:10px 12px 10px 6px;font-size:11px;font-weight:600;color:#5f6368;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #e8eaed;text-align:right;white-space:nowrap;width:96px;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% include 'shop/emails/_email_items_rows.html' %}
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Entrega -->
+                    <tr>
+                        <td style="padding:12px 24px;font-family:Arial,Helvetica,sans-serif;">
+                            <p style="margin:0 0 10px;font-size:13px;font-weight:600;color:#c62828;text-transform:uppercase;letter-spacing:0.04em;text-decoration:underline;">Entrega y pago</p>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e8eaed;border-radius:8px;">
+                                <tr>
+                                    <td style="padding:12px 14px;font-size:13px;color:#5f6368;vertical-align:top;width:38%;">Envío</td>
+                                    <td style="padding:12px 14px;font-size:13px;color:#202124;text-align:right;">{{ order.shipping_method.name }}</td>
+                                </tr>
+                                {% if order.shipping_address %}
+                                <tr>
+                                    <td style="padding:12px 14px;font-size:13px;color:#5f6368;vertical-align:top;border-top:1px solid #e8eaed;">Dirección</td>
+                                    <td style="padding:12px 14px;font-size:13px;color:#202124;text-align:right;border-top:1px solid #e8eaed;line-height:1.5;word-wrap:break-word;">{{ order.shipping_address }}<br>{{ order.shipping_comuna }}, {{ order.shipping_region }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td style="padding:12px 14px;font-size:13px;color:#5f6368;vertical-align:top;border-top:1px solid #e8eaed;">Pago</td>
+                                    <td style="padding:12px 14px;font-size:13px;color:#202124;text-align:right;border-top:1px solid #e8eaed;">{{ order.payment_method.name }}</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Totales -->
+                    <tr>
+                        <td style="padding:8px 24px 24px;font-family:Arial,Helvetica,sans-serif;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;">
+                                <tr>
+                                    <td style="padding:12px 16px;">
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                                            <tr>
+                                                <td style="padding:4px 0;font-size:13px;color:#5f6368;">Subtotal</td>
+                                                <td style="padding:4px 0;font-size:13px;color:#202124;text-align:right;white-space:nowrap;">{{ order.subtotal|currency_clp }}</td>
+                                            </tr>
+                                            {% if order.coupon %}
+                                            <tr>
+                                                <td style="padding:4px 0;font-size:13px;color:#5f6368;">Descuento ({{ order.coupon.code }})</td>
+                                                <td style="padding:4px 0;font-size:13px;color:#2e7d32;text-align:right;white-space:nowrap;">-{{ order.discount_total|currency_clp }}</td>
+                                            </tr>
+                                            {% endif %}
+                                            <tr>
+                                                <td style="padding:4px 0;font-size:13px;color:#5f6368;">Envío</td>
+                                                <td style="padding:4px 0;font-size:13px;color:#202124;text-align:right;white-space:nowrap;">{{ order.shipping_cost|currency_clp }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding:10px 0 0;margin-top:6px;font-size:15px;font-weight:700;color:#202124;border-top:1px dashed #ffe082;">Total</td>
+                                                <td style="padding:10px 0 0;font-size:18px;font-weight:700;color:#c62828;text-align:right;border-top:1px dashed #ffe082;white-space:nowrap;">{{ order.total|currency_clp }}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Ayuda -->
+                    <tr>
+                        <td style="padding:0 24px 24px;font-family:Arial,Helvetica,sans-serif;">
+                            {% include 'shop/emails/_email_contact_block.html' %}
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding:16px 24px 24px;font-family:Arial,Helvetica,sans-serif;border-top:1px solid #e8eaed;background:#fafafa;">
+                            <p style="margin:0 0 8px;font-size:11px;line-height:1.5;color:#9aa0a6;text-align:center;">Este mensaje fue generado automáticamente. Para consultas, utiliza los canales indicados arriba.</p>
+                            <p style="margin:0;font-size:11px;color:#9aa0a6;text-align:center;">© {% now "Y" %} MotoMoto. Todos los derechos reservados.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
-

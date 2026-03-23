@@ -12,7 +12,7 @@ El comando:
 2. Escanea el directorio de imágenes (static/img/productos/ por defecto)
 3. Detecta automáticamente productos basándose en los nombres de archivo
 4. Asigna categorías y marcas según patrones en los nombres
-5. Asigna imágenes globales (AccesoriosShaftGLOB.png, soportemaletaGLOB.png)
+5. Asigna imágenes globales (AccesoriosShaftGLOB.webp, soportemaletaGLOB.webp)
 6. Crea/actualiza los productos en la base de datos
 """
 
@@ -264,7 +264,10 @@ class Command(BaseCommand):
         media_products_dir.mkdir(parents=True, exist_ok=True)
 
         # Obtener todas las imágenes
-        image_extensions = ['*.png', '*.jpg', '*.jpeg', '*.PNG', '*.JPG', '*.JPEG']
+        image_extensions = [
+            '*.webp', '*.WEBP',
+            '*.png', '*.jpg', '*.jpeg', '*.PNG', '*.JPG', '*.JPEG',
+        ]
         image_files = []
         for ext in image_extensions:
             image_files.extend(data_dir.glob(ext))
@@ -328,7 +331,7 @@ class Command(BaseCommand):
                         return (0, 99, fname.name)
                     
                     # Buscar número al final del nombre
-                    match = re.search(r'(\d+)(\.(png|jpg|jpeg))?$', name_lower)
+                    match = re.search(r'(\d+)(\.(png|jpg|jpeg|webp))?$', name_lower)
                     if match:
                         num = int(match.group(1))
                         return (0 if num == 1 else 1, num, fname.name)

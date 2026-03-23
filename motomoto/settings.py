@@ -259,6 +259,10 @@ else:
 # Email para notificaciones de pedidos al administrador
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@motomoto.cl')
 
+# URL pública absoluta (logos/imágenes en correos, enlaces). Prioridad: SITE_PUBLIC_URL > MP_BASE_URL > dominio por defecto
+_SITE_PUBLIC = os.environ.get('SITE_PUBLIC_URL', '').strip().rstrip('/')
+SITE_PUBLIC_URL = _SITE_PUBLIC or os.environ.get('MP_BASE_URL', '').strip().rstrip('/') or 'https://www.motomotochile.cl'
+
 # =========================
 # Mercado Pago (Checkout Pro)
 # =========================

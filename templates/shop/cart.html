@@ -27,9 +27,9 @@
                                     {% with primary_image=item.product.get_primary_image %}
                                         {% if primary_image %}
                                             <img src="{{ primary_image.image.url }}" alt="{{ item.product.name }}" class="cart-item-image"
-                                                 onerror="if(this.src!='{% static 'img/placeholder.jpg' %}'){this.src='{% static 'img/placeholder.jpg' %}';}else{this.style.display='none';}">
+                                                 onerror="if(this.src!='{% static 'img/placeholder.webp' %}'){this.src='{% static 'img/placeholder.webp' %}';}else{this.style.display='none';}">
                                         {% else %}
-                                            <img src="{% static 'img/placeholder.jpg' %}" alt="{{ item.product.name }}" class="cart-item-image"
+                                            <img src="{% static 'img/placeholder.webp' %}" alt="{{ item.product.name }}" class="cart-item-image"
                                                  onerror="this.style.display='none';">
                                         {% endif %}
                                     {% endwith %}
@@ -239,7 +239,7 @@
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <h5 class="mb-0">Método de pago</h5>
                             <div class="payment-secure-image-container">
-                                <img src="{% static 'img/pago_seguro.png' %}" alt="Pago Seguro" class="payment-secure-image">
+                                <img src="{% static 'img/pago_seguro.webp' %}" alt="Pago Seguro" class="payment-secure-image">
                             </div>
                         </div>
                         <div class="row g-2 mb-3">

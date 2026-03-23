@@ -20,6 +20,10 @@ urlpatterns = [
     path('carrito/checkout/', views.checkout, name='checkout'),
     path('get-comunas/', views.get_comunas, name='get_comunas'),
     
+    # Previsualización de correos (solo DEBUG; ver views)
+    path('dev/preview-email/cliente/', views.preview_email_customer, name='preview_email_customer'),
+    path('dev/preview-email/admin/', views.preview_email_admin, name='preview_email_admin'),
+
     # Pedidos
     path('pedido/<int:order_id>/', views.order_confirmation, name='order_confirmation'),
     path('buscar-pedido/', views.search_order, name='search_order'),

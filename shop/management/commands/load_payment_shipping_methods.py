@@ -129,25 +129,25 @@ class Command(BaseCommand):
                 'name': 'Efectivo',
                 'description': 'Pago en efectivo al momento de la entrega o retiro.',
                 'is_active': True,
-                'image_source': 'efectivo.png',
+                'image_source': 'efectivo.webp',
             },
             {
                 'name': 'Transferencia Bancaria',
                 'description': 'Realiza una transferencia bancaria. Te enviaremos los datos por email.',
                 'is_active': True,
-                'image_source': 'transferencia.png',
+                'image_source': 'transferencia.webp',
             },
             {
                 'name': 'Tarjeta de Crédito',
                 'description': 'Pago con tarjeta de crédito a través de Mercado Pago.',
                 'is_active': True,
-                'image_source': 'credito.png',
+                'image_source': 'credito.webp',
             },
             {
                 'name': 'Tarjeta de Débito',
                 'description': 'Pago con tarjeta de débito a través de Mercado Pago.',
                 'is_active': True,
-                'image_source': 'debito.png',
+                'image_source': 'debito.webp',
             },
         ]
         

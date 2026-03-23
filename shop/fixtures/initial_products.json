@@ -27,19 +27,19 @@
     "_is_best_seller_comment": "true = aparece en la sección de más vendidos, false = no aparece",
     "images": [
       {
-        "file": "Hro514BILT1.png",
+        "file": "Hro514BILT1.webp",
         "_file_comment": "Nombre exacto del archivo de imagen en static/img/productos/",
         "is_primary": true,
         "_is_primary_comment": "true = imagen principal (se muestra en listados), solo una imagen por producto debe ser primary",
         "order": 0
       },
       {
-        "file": "Hro514BILT2.png",
+        "file": "Hro514BILT2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "Hro514BILT3.png",
+        "file": "Hro514BILT3.webp",
         "is_primary": false,
         "order": 2
       }
@@ -61,17 +61,17 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "Hro514GRis1.png",
+        "file": "Hro514GRis1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "Hro514GRis2.png",
+        "file": "Hro514GRis2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "Hro514GRis3.png",
+        "file": "Hro514GRis3.webp",
         "is_primary": false,
         "order": 2
       }
@@ -93,12 +93,12 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "Hro514Mora1.png",
+        "file": "Hro514Mora1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "Hro514Mora2.png",
+        "file": "Hro514Mora2.webp",
         "is_primary": false,
         "order": 1
       }
@@ -120,17 +120,17 @@
     "is_best_seller": true,
     "images": [
       {
-        "file": "Hro514Negro-Rojo1.png",
+        "file": "Hro514Negro-Rojo1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "Hro514Negro-Rojo2.png",
+        "file": "Hro514Negro-Rojo2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "Hro514Negro-Rojo3.png",
+        "file": "Hro514Negro-Rojo3.webp",
         "is_primary": false,
         "order": 2
       }
@@ -152,22 +152,22 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "shaft502Negris1.png",
+        "file": "shaft502Negris1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "shaft502Negris2.png",
+        "file": "shaft502Negris2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "shaft502Negris3.png",
+        "file": "shaft502Negris3.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "AccesoriosShaftGLOB.png",
+        "file": "AccesoriosShaftGLOB.webp",
         "is_primary": false,
         "order": 10
       }
@@ -191,22 +191,22 @@
     "featured_order": 1,
     "images": [
       {
-        "file": "shaft502Rosado1.png",
+        "file": "shaft502Rosado1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "shaft502Rosado2.png",
+        "file": "shaft502Rosado2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "shaft502Rosado3.png",
+        "file": "shaft502Rosado3.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "AccesoriosShaftGLOB.png",
+        "file": "AccesoriosShaftGLOB.webp",
         "is_primary": false,
         "order": 10
       }
@@ -228,27 +228,27 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "shaft502spAzul1.png",
+        "file": "shaft502spAzul1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "shaft502spAzul2.png",
+        "file": "shaft502spAzul2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "shaft502spAzul3.png",
+        "file": "shaft502spAzul3.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "shaft502spAzul4.png",
+        "file": "shaft502spAzul4.webp",
         "is_primary": false,
         "order": 3
       },
       {
-        "file": "AccesoriosShaftGLOB.png",
+        "file": "AccesoriosShaftGLOB.webp",
         "is_primary": false,
         "order": 10
       }
@@ -270,22 +270,22 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "shaft502SpikeRojoNeg1.png",
+        "file": "shaft502SpikeRojoNeg1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "shaft502SpikeRojoNeg2.png",
+        "file": "shaft502SpikeRojoNeg2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "shaft502SpikeRojoNeg3.png",
+        "file": "shaft502SpikeRojoNeg3.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "AccesoriosShaftGLOB.png",
+        "file": "AccesoriosShaftGLOB.webp",
         "is_primary": false,
         "order": 10
       }
@@ -307,22 +307,22 @@
     "is_best_seller": true,
     "images": [
       {
-        "file": "Shaft560EVONegro-Dor1.png",
+        "file": "Shaft560EVONegro-Dor1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "Shaft560EVONegro-Dor2.png",
+        "file": "Shaft560EVONegro-Dor2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "Shaft560EVONegro-Dor3.png",
+        "file": "Shaft560EVONegro-Dor3.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "AccesoriosShaftGLOB.png",
+        "file": "AccesoriosShaftGLOB.webp",
         "is_primary": false,
         "order": 10
       }
@@ -344,27 +344,27 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "maletaE570tipoAL1.png",
+        "file": "maletaE570tipoAL1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "maletaE570tipoAL2.png",
+        "file": "maletaE570tipoAL2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "maletaE570tipoAL3.png",
+        "file": "maletaE570tipoAL3.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "maletaE570tipoAL4.png",
+        "file": "maletaE570tipoAL4.webp",
         "is_primary": false,
         "order": 3
       },
       {
-        "file": "soportemaletaGLOB.png",
+        "file": "soportemaletaGLOB.webp",
         "is_primary": false,
         "order": 10
       }
@@ -386,22 +386,22 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "maletaE63parrilla1.png",
+        "file": "maletaE63parrilla1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "maletaE63parrilla2.png",
+        "file": "maletaE63parrilla2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "maletaE63parrilla3.png",
+        "file": "maletaE63parrilla3.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "soportemaletaGLOB.png",
+        "file": "soportemaletaGLOB.webp",
         "is_primary": false,
         "order": 10
       }
@@ -425,22 +425,22 @@
     "featured_order": 3,
     "images": [
       {
-        "file": "maletaE7601.png",
+        "file": "maletaE7601.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "maletaE7602.png",
+        "file": "maletaE7602.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "maletaE7603.png",
+        "file": "maletaE7603.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "soportemaletaGLOB.png",
+        "file": "soportemaletaGLOB.webp",
         "is_primary": false,
         "order": 10
       }
@@ -462,22 +462,22 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "kovixKN1Amarillo1.png",
+        "file": "kovixKN1Amarillo1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "kovixKN1marillo2.png",
+        "file": "kovixKN1marillo2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "kovixKN1Amarillo3.png",
+        "file": "kovixKN1Amarillo3.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "candadosglobno.png",
+        "file": "candadosglobno.webp",
         "is_primary": false,
         "order": 3
       }
@@ -499,22 +499,22 @@
     "is_best_seller": true,
     "images": [
       {
-        "file": "kovixknn1negro1.png",
+        "file": "kovixknn1negro1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "kovixknn1negro2.png",
+        "file": "kovixknn1negro2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "kovixknn1negro3.png",
+        "file": "kovixknn1negro3.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "candadosglobno.png",
+        "file": "candadosglobno.webp",
         "is_primary": false,
         "order": 3
       }
@@ -536,22 +536,22 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "kovixKNX10Metal1.png",
+        "file": "kovixKNX10Metal1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "kovixKNX10Metal2.png",
+        "file": "kovixKNX10Metal2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "kovixKNX10Metal3.png",
+        "file": "kovixKNX10Metal3.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "kovixKT6Verde4.png",
+        "file": "kovixKT6Verde4.webp",
         "is_primary": false,
         "order": 3
       }
@@ -573,27 +573,27 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "kovixKT6negro.png",
+        "file": "kovixKT6negro.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "kovixKT6Negro1.png",
+        "file": "kovixKT6Negro1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "kovixKT6Negro2.png",
+        "file": "kovixKT6Negro2.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "kovixKT6Negro3.png",
+        "file": "kovixKT6Negro3.webp",
         "is_primary": false,
         "order": 3
       },
       {
-        "file": "kovixKT6Verde4.png",
+        "file": "kovixKT6Verde4.webp",
         "is_primary": false,
         "order": 4
       }
@@ -618,22 +618,22 @@
     "featured_order": 2,
     "images": [
       {
-        "file": "kovixKT6Verde1.png",
+        "file": "kovixKT6Verde1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "kovixKT6Verde2.png",
+        "file": "kovixKT6Verde2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "kovixKT6Verde3.png",
+        "file": "kovixKT6Verde3.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "kovixKT6Verde4.png",
+        "file": "kovixKT6Verde4.webp",
         "is_primary": false,
         "order": 3
       }
@@ -655,7 +655,7 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "soporteKovix1.png",
+        "file": "soporteKovix1.webp",
         "is_primary": true,
         "order": 0
       }
@@ -677,17 +677,17 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "BolsoEstanqueMC1.png",
+        "file": "BolsoEstanqueMC1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "BolsoEstanqueMC2.png",
+        "file": "BolsoEstanqueMC2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "BolsoEstanqueMC3.png",
+        "file": "BolsoEstanqueMC3.webp",
         "is_primary": false,
         "order": 2
       }
@@ -709,17 +709,17 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "muslera1.png",
+        "file": "muslera1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "muslera2.png",
+        "file": "muslera2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "muslera3.png",
+        "file": "muslera3.webp",
         "is_primary": false,
         "order": 2
       }
@@ -741,12 +741,12 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "ProtectoPata1.png",
+        "file": "ProtectoPata1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "ProtectoPata2.png",
+        "file": "ProtectoPata2.webp",
         "is_primary": false,
         "order": 1
       }
@@ -768,7 +768,7 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "CubreEstanqueGoma1.png",
+        "file": "CubreEstanqueGoma1.webp",
         "is_primary": true,
         "order": 0
       }
@@ -790,12 +790,12 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "AntiFOG1.png",
+        "file": "AntiFOG1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "AntiFOG2.png",
+        "file": "AntiFOG2.webp",
         "is_primary": false,
         "order": 1
       }
@@ -817,12 +817,12 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "Antilluvia1.png",
+        "file": "Antilluvia1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "Antilluvia2.png",
+        "file": "Antilluvia2.webp",
         "is_primary": false,
         "order": 1
       }
@@ -844,17 +844,17 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "interluvin1.png",
+        "file": "interluvin1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "interluvin2.png",
+        "file": "interluvin2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "interluvin3.png",
+        "file": "interluvin3.webp",
         "is_primary": false,
         "order": 2
       }
@@ -876,17 +876,17 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "kitrepllant1.png",
+        "file": "kitrepllant1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "kitrepllant2.png",
+        "file": "kitrepllant2.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "kitrepllan3.png",
+        "file": "kitrepllan3.webp",
         "is_primary": false,
         "order": 2
       }
@@ -908,27 +908,27 @@
     "is_best_seller": true,
     "images": [
       {
-        "file": "TrenaAmarilla.png",
+        "file": "TrenaAmarilla.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "TrenzaAzul.png",
+        "file": "TrenzaAzul.webp",
         "is_primary": false,
         "order": 1
       },
       {
-        "file": "TrenzaMorada.png",
+        "file": "TrenzaMorada.webp",
         "is_primary": false,
         "order": 2
       },
       {
-        "file": "TrenzaRoja.png",
+        "file": "TrenzaRoja.webp",
         "is_primary": false,
         "order": 3
       },
       {
-        "file": "TrenzaRosa.png",
+        "file": "TrenzaRosa.webp",
         "is_primary": false,
         "order": 4
       }
@@ -950,12 +950,12 @@
     "is_best_seller": false,
     "images": [
       {
-        "file": "rodilleraslider1.png",
+        "file": "rodilleraslider1.webp",
         "is_primary": true,
         "order": 0
       },
       {
-        "file": "rodilleraslider2.png",
+        "file": "rodilleraslider2.webp",
         "is_primary": false,
         "order": 1
       }

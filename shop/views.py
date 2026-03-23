@@ -4,8 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Prefetch, F, Case, When, IntegerField
 from django.core.paginator import Paginator
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse, HttpResponse, HttpRequest
+from django.views.decorators.http import require_POST, require_GET
+from django.http import JsonResponse, HttpResponse, HttpRequest, Http404
 from django.utils import timezone
 from django.db import transaction
 from django.urls import reverse
@@ -30,6 +30,7 @@ from .forms import (
 )
 from .utils import send_order_confirmation_email, send_order_notification_to_admin
 from .mercadopago_client import create_checkout_pro_preference, get_payment
+from .email_preview import get_mock_order_email_context
 
 
 def format_currency_clp(value):
@@ -1410,3 +1411,24 @@ def update_order_status(request, order_id):
     if request.POST.get('from_detail'):
         return redirect('shop:order_confirmation', order_id=order.id)
     return redirect('shop:admin_dashboard')
+
+
+@require_GET
+def preview_email_customer(request):
+    """Previsualiza el HTML del correo al cliente (solo DEBUG)."""
+    if not settings.DEBUG:
+        raise Http404()
+    ctx = get_mock_order_email_context()
+    # Base del sitio actual para que logo e imágenes carguen en local (no solo SITE_PUBLIC_URL).
+    ctx['email_site_base'] = request.build_absolute_uri('/').rstrip('/')
+    return render(request, 'shop/emails/order_confirmation.html', ctx)
+
+
+@require_GET
+def preview_email_admin(request):
+    """Previsualiza el HTML del correo al administrador (solo DEBUG)."""
+    if not settings.DEBUG:
+        raise Http404()
+    ctx = get_mock_order_email_context()
+    ctx['email_site_base'] = request.build_absolute_uri('/').rstrip('/')
+    return render(request, 'shop/emails/order_notification_admin.html', ctx)
