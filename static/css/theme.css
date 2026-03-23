@@ -2037,8 +2037,14 @@ body.navbar-scrolled .hero-section {
 }
 
 .cart-items-container {
-    min-height: 400px;
     padding-right: 1rem; /* Reducir padding entre contenedores */
+}
+
+/* Altura mínima solo en escritorio (dos columnas); en móvil empujaba el separador y el resumen */
+@media (min-width: 992px) {
+    .cart-items-container {
+        min-height: 400px;
+    }
 }
 
 .cart-item {
@@ -3607,7 +3613,7 @@ input.quantity-input,
 
     .cart-summary {
         position: static;
-        margin-top: 2rem;
+        margin-top: 0.75rem;
     }
     
     /* En móvil, volver a columnas iguales */
@@ -3615,6 +3621,10 @@ input.quantity-input,
     .cart-page-container .row > .col-lg-6:last-child {
         flex: 0 0 100% !important;
         max-width: 100% !important;
+    }
+
+    .cart-page-container .row > .col-lg-6:first-child {
+        margin-bottom: 0.5rem !important;
     }
     
     .cart-items-container {
@@ -5497,12 +5507,13 @@ input.quantity-input,
     
     .cart-items-container {
         padding-right: 0;
+        min-height: 0 !important;
     }
     
-    /* Separadora más compacta en móvil */
+    /* Separadora pegada al último producto para ver el resumen antes */
     .cart-separator {
-        margin: 1.5rem 0;
-        padding: 0.75rem 0;
+        margin: 0.35rem 0 0.75rem;
+        padding: 0.35rem 0;
     }
     
     .separator-icon {
