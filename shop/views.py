@@ -622,12 +622,6 @@ def checkout(request):
                 messages.error(request, str(error))
         return redirect('shop:cart')
 
-    # Verificar stock antes de procesar
-    for item in cart.items.all():
-        if item.quantity > item.product.stock:
-            messages.error(request, f'No hay suficiente stock para {item.product.name}. Stock disponible: {item.product.stock}')
-            return redirect('shop:cart')
-
     # Obtener cupón si existe
     coupon = None
     coupon_id = request.session.get('applied_coupon_id')
@@ -656,6 +650,30 @@ def checkout(request):
             return redirect('shop:cart')
         if not shipping_address:
             messages.error(request, '❌ Error: Debe ingresar la dirección para envío a domicilio.')
+            return redirect('shop:cart')
+
+    # Reserva de stock atómica (evita carreras y asegura descuento también con Mercado Pago)
+    cart_items = list(cart.items.select_related('product').all())
+    if not cart_items:
+        messages.error(request, 'Tu carrito está vacío.')
+        return redirect('shop:cart')
+
+    product_ids = sorted({ci.product_id for ci in cart_items})
+    locked_products = {
+        p.id: p
+        for p in Product.objects.select_for_update().filter(pk__in=product_ids)
+    }
+    if len(locked_products) != len(product_ids):
+        messages.error(request, 'Uno o más productos ya no están disponibles.')
+        return redirect('shop:cart')
+
+    for ci in cart_items:
+        product = locked_products[ci.product_id]
+        if ci.quantity > product.stock:
+            messages.error(
+                request,
+                f'No hay suficiente stock para {product.name}. Stock disponible: {product.stock}',
+            )
             return redirect('shop:cart')
 
     # Aplicar descuento del cupón
@@ -716,21 +734,21 @@ def checkout(request):
         status='pending_payment' if is_mp else 'realized',
     )
 
-    # Crear items del pedido y (si NO es Mercado Pago) actualizar stock inmediatamente
-    for cart_item in cart.items.all():
+    # Crear items del pedido y descontar stock (transferencia y MP: reserva al crear el pedido)
+    for cart_item in cart_items:
+        product = locked_products[cart_item.product_id]
         OrderItem.objects.create(
             order=order,
-            product=cart_item.product,
-            product_name=cart_item.product.name,
+            product=product,
+            product_name=product.name,
             unit_price=cart_item.unit_price,
             quantity=cart_item.quantity,
             line_total=cart_item.get_line_total(),
         )
-        if not is_mp:
-            # Actualizar stock (flujo existente)
-            cart_item.product.stock -= cart_item.quantity
-            cart_item.product.save()
-            order.stock_committed = True
+        product.stock -= cart_item.quantity
+        product.save(update_fields=['stock'])
+    order.stock_committed = True
+    order.save(update_fields=['stock_committed'])
 
     # Limpiar carrito
     cart.items.all().delete()
@@ -852,7 +870,6 @@ def checkout(request):
         f'Puedes contactarnos indicando tu número de pedido: #{order.order_number}',
         extra_tags='alert-success alert-dismissible fade show'
     )
-    order.save(update_fields=['stock_committed'])
     return redirect('shop:order_confirmation', order_id=order.id)
 
 
@@ -959,15 +976,15 @@ def mp_webhook(request: HttpRequest):
         
         payment_obj.save()
 
-        # Si se aprobó, confirmar y descontar stock una sola vez
+        # Si se aprobó: confirmar pedido. Stock ya se descontó en checkout (pedidos nuevos);
+        # pedidos antiguos MP pueden tener stock_committed=False hasta este webhook.
         if status == 'approved':
+            prev_status = order.status
             order.status = 'confirmed'
             if not order.stock_committed:
-                # Descontar stock de manera segura
                 for item in order.items.select_related('product').all():
                     product = Product.objects.select_for_update().get(id=item.product_id)
                     if item.quantity > product.stock:
-                        # Si no hay stock, cancelar pedido (edge-case por carreras)
                         order.status = 'cancelled'
                         payment_obj.status = 'cancelled'
                         payment_obj.save()
@@ -977,7 +994,7 @@ def mp_webhook(request: HttpRequest):
                     product.save(update_fields=['stock'])
                 order.stock_committed = True
 
-                # Emails post-pago
+            if prev_status == 'pending_payment':
                 try:
                     send_order_confirmation_email(order)
                 except Exception as e:
@@ -988,6 +1005,11 @@ def mp_webhook(request: HttpRequest):
                     print(f'Error al enviar notificación al admin (MP): {str(e)}')
 
         elif status in ('rejected', 'cancelled', 'charged_back', 'refunded'):
+            # Devolver stock si el pago nunca se concretó (reserva hecha en checkout)
+            if order.stock_committed and order.status == 'pending_payment':
+                for item in order.items.all():
+                    Product.objects.filter(pk=item.product_id).update(stock=F('stock') + item.quantity)
+                order.stock_committed = False
             order.status = 'cancelled'
         else:
             # in_process / pending / etc.

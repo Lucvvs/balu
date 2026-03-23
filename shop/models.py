@@ -454,7 +454,11 @@ class Order(models.Model):
     mp_payment_id = models.CharField(max_length=100, blank=True, null=True, verbose_name="MP Payment ID")
     mp_payment_status = models.CharField(max_length=50, blank=True, null=True, verbose_name="MP Payment Status")
     mp_last_event_at = models.DateTimeField(blank=True, null=True, verbose_name="Último evento MP")
-    stock_committed = models.BooleanField(default=False, verbose_name="Stock descontado (MP)")
+    stock_committed = models.BooleanField(
+        default=False,
+        verbose_name="Stock descontado del inventario",
+        help_text="True cuando el stock ya se descontó al crear el pedido (transferencia y Mercado Pago).",
+    )
     
     # Datos del cliente (para usuarios no registrados)
     customer_name = models.CharField(max_length=200, blank=True, null=True, verbose_name="Nombre del cliente")

@@ -51,7 +51,7 @@
                     {% if product.has_offer %}
                         <span class="offer-badge">OFERTA</span>
                     {% endif %}
-                    <div class="product-card-image-wrapper">
+                    <div class="product-card-image-wrapper{% if product.stock == 0 %} product-media--out-of-stock{% endif %}">
                         {% with images=product.images.all %}
                             {% if images|length > 0 %}
                                 <div class="product-card-image-container" data-product-id="{{ product.id }}">

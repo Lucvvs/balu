@@ -1097,6 +1097,60 @@ body.navbar-scrolled .hero-section {
     position: relative;
 }
 
+/* Sin stock: solo en catálogo (lista de productos). En ficha se usa la alerta de texto. */
+.product-media--out-of-stock {
+    position: relative;
+}
+
+.product-media--out-of-stock::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(88, 88, 96, 0.42);
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 6;
+    border-radius: inherit;
+}
+
+.product-media--out-of-stock:hover::after {
+    opacity: 0;
+}
+
+/* Rótulo centrado (sutil) */
+.product-media--out-of-stock::before {
+    content: 'Agotado';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 7;
+    pointer-events: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.82);
+    text-shadow:
+        0 0 1px rgba(0, 0, 0, 0.5),
+        0 1px 4px rgba(0, 0, 0, 0.4);
+    transition: opacity 0.4s ease;
+}
+
+.product-media--out-of-stock:hover::before {
+    opacity: 0;
+}
+
+.product-media--out-of-stock .product-card-img {
+    filter: grayscale(1) brightness(0.93);
+    transition: filter 0.4s ease;
+}
+
+.product-media--out-of-stock:hover .product-card-img {
+    filter: none;
+}
+
 .product-card-link-text {
     text-decoration: none;
     color: inherit;
