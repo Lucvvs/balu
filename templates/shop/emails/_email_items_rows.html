@@ -14,8 +14,8 @@
             <div style="width:56px;height:56px;border-radius:8px;background:#f1f3f4;border:1px solid #e8eaed;"></div>
         {% endif %}
     </td>
-    <td style="padding:12px 8px 12px 0;vertical-align:top;border-bottom:1px solid #e8eaed;word-wrap:break-word;overflow-wrap:break-word;max-width:220px;">
-        <span style="font-size:14px;line-height:1.45;color:#202124;font-weight:500;">{{ item.product_name }}</span>
+    <td style="padding:12px 6px 12px 0;vertical-align:top;border-bottom:1px solid #e8eaed;width:200px;max-width:200px;white-space:normal;word-break:normal;overflow-wrap:break-word;">
+        <span style="font-size:14px;line-height:1.45;color:#202124;font-weight:500;display:block;white-space:normal;word-break:normal;overflow-wrap:break-word;">{{ item.product_name }}</span>
     </td>
     <td style="padding:12px 6px;vertical-align:top;border-bottom:1px solid #e8eaed;text-align:center;white-space:nowrap;font-size:14px;color:#5f6368;">{{ item.quantity }}</td>
     <td style="padding:12px 6px;vertical-align:top;border-bottom:1px solid #e8eaed;text-align:right;white-space:nowrap;font-size:14px;color:#5f6368;">{{ item.unit_price|currency_clp }}</td>
