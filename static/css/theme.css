@@ -36,6 +36,11 @@
     }
 }
 
+html {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: var(--text-color);
@@ -46,6 +51,13 @@ body {
     overflow-x: hidden;
     width: 100%;
     max-width: 100%;
+}
+
+/* En móvil, sin transición del padding al cambiar navbar: menos saltos visibles si el scroll cruza el umbral */
+@media (max-width: 991.98px) {
+    body {
+        transition: padding-top 0s;
+    }
 }
 
 /* Ajustar padding cuando el navbar está scrolled */
@@ -2392,6 +2404,52 @@ input.quantity-input,
     font-weight: bold;
     margin-bottom: 1rem;
     color: var(--text-color);
+}
+
+/* Términos: checkbox grande + fila táctil; scroll-margin evita que el foco empuje el scroll de forma brusca */
+.checkout-terms-check.form-check {
+    padding-left: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-height: 3.25rem;
+    padding: 0.5rem 0;
+    border-radius: 8px;
+    touch-action: manipulation;
+}
+
+.checkout-terms-check .form-check-input {
+    float: none;
+    margin-left: 0;
+    margin-top: 0;
+    flex-shrink: 0;
+    width: 1.65em;
+    min-width: 1.65em;
+    height: 1.65em;
+    min-height: 1.65em;
+    cursor: pointer;
+    scroll-margin-top: 5.5rem;
+}
+
+.checkout-terms-label {
+    cursor: pointer;
+    flex: 1;
+    line-height: 1.45;
+    user-select: none;
+    padding: 0.35rem 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Finalizar compra: área táctil clara */
+.btn-checkout-submit {
+    min-height: 3.25rem;
+    padding-top: 0.85rem !important;
+    padding-bottom: 0.85rem !important;
+    font-size: 1.05rem !important;
+    font-weight: 600;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    scroll-margin-bottom: 1rem;
 }
 
 .checkout-option {
