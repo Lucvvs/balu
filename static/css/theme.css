@@ -3466,9 +3466,13 @@ input.quantity-input,
 
 @media (max-width: 768px) {
     .hero-section {
-        padding: 3rem 0;
+        padding: 3rem 0 1.75rem;
         margin-top: -50px; /* Empujar la imagen hacia arriba para eliminar espacio en blanco */
-        background-size: 120%; /* Alejar más el zoom para mostrar más de la imagen */
+        background-size: cover; /* Cubre todo el hero (sin franjas negras ni grises) */
+        background-position: 64% center; /* Pantallas pequeñas */
+        min-height: auto; /* Evita franja vacía bajo el botón (antes heredaba 400px) */
+        align-items: flex-start;
+        padding-top: 2.5rem;
     }
     
     .hero-section h1,
@@ -3483,6 +3487,7 @@ input.quantity-input,
     .hero-section .btn-hero {
         padding: 0;
         margin-top: 1.5rem;
+        margin-bottom: 0;
     }
     
     .hero-section .btn-hero img {
@@ -3495,6 +3500,7 @@ input.quantity-input,
 
     .category-banner {
         grid-template-columns: 1fr;
+        margin-top: 1rem;
     }
 
     .category-item {
@@ -3752,12 +3758,14 @@ input.quantity-input,
 
 @media (max-width: 576px) {
     .hero-section {
-        padding: 2rem 0;
+        padding: 1.75rem 0 1.25rem;
         min-height: auto;
         height: auto;
         margin-top: -40px; /* Empujar la imagen hacia arriba para eliminar espacio en blanco */
-        background-size: 250%; /* Zoom adecuado para mostrar más de la imagen sin que se vea muy pequeña */
-        background-position: calc(50% - 80px) calc(50% - 20px); /* Desplazar 80px a la izquierda y subir 20px */
+        background-size: cover;
+        /* Encuadre con cover; bastante hacia la derecha */
+        background-position: 70% 48%;
+        align-items: flex-start;
     }
 
     .hero-section h1,
@@ -3785,6 +3793,12 @@ input.quantity-input,
     .hero-section .btn-hero {
         padding: 0;
         margin-top: 1.5rem;
+        margin-bottom: 0;
+    }
+
+    /* Menos “franja gris” del body entre hero y categorías */
+    .category-banner {
+        margin-top: 0.5rem;
     }
     
     .category-item {
