@@ -527,7 +527,9 @@ class CartItem(models.Model):
 
     def get_line_total(self):
         """Retorna el total de la línea (cantidad * precio unitario)"""
-        return self.quantity * self.unit_price
+        qty = self.quantity if self.quantity is not None else 0
+        price = self.unit_price if self.unit_price is not None else 0
+        return qty * price
 
     def get_stock_cap(self):
         """Tope de cantidad según inventario (variante o producto simple)."""
