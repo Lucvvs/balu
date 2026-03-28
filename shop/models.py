@@ -212,7 +212,8 @@ class ProductImage(models.Model):
     class Meta:
         verbose_name = "Imagen de producto"
         verbose_name_plural = "Imágenes de productos"
-        ordering = ['is_primary', 'order', 'id']
+        # True antes que False: la principal primero; luego campo "Orden" e id
+        ordering = ['-is_primary', 'order', 'id']
 
     def __str__(self):
         return f"{self.product.name} - Imagen {self.order}"

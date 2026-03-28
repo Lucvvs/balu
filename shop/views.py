@@ -218,7 +218,10 @@ def product_detail(request, slug):
     """Vista de detalle de producto"""
     product = get_object_or_404(
         Product.objects.select_related('category', 'brand').prefetch_related(
-            'images',
+            Prefetch(
+                'images',
+                queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id'),
+            ),
             'variants',
         ),
         slug=slug,
