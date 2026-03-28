@@ -33,6 +33,14 @@
                     </a>
                 </li>
                 <li class="nav-item d-lg-none">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'cart' %}active{% endif %}" href="{% url 'shop:cart' %}">
+                        <i class="bi bi-cart3"></i> Carrito
+                        {% if cart_items_count > 0 %}
+                            <span class="cart-badge">{{ cart_items_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li class="nav-item d-lg-none">
                     <a class="nav-link {% if request.resolver_match.url_name == 'search_order' %}active{% endif %}" href="{% url 'shop:search_order' %}">
                         <i class="bi bi-search"></i> Buscar Pedido
                     </a>

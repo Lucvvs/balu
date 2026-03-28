@@ -72,7 +72,7 @@
                 <div class="stock-alert mb-3">
                     <i class="bi bi-exclamation-triangle"></i> ¡Pocas unidades disponibles!
                 </div>
-            {% elif product.stock == 0 %}
+            {% elif not product.is_available_for_purchase %}
                 <div class="alert alert-danger mb-3">
                     <i class="bi bi-x-circle"></i> Producto sin stock
                 </div>
@@ -97,22 +97,43 @@
                 <p>{{ product.description|linebreaks }}</p>
             </div>
             
-            <!-- Add to Cart Form -->
-            {% if product.stock > 0 %}
-                <form method="post" action="{% url 'shop:add_to_cart' product_id=product.id %}" class="mb-3">
+            <!-- Add to Cart Form: con variantes, mostrar siempre el selector aunque todo esté agotado -->
+            {% if product.uses_variant_stock %}
+                <form method="post" action="{% url 'shop:add_to_cart' product_id=product.id %}" class="mb-3" id="add-to-cart-form">
                     {% csrf_token %}
                     <div class="row g-3 align-items-end">
-                        {% if product.has_sizes %}
-                            <div class="col-12">
-                                <label for="id_size" class="form-label">Talla:</label>
-                                {{ form.size }}
-                            </div>
-                        {% else %}
+                        <div class="col-12">
+                            <label for="id_variant" class="form-label">Talla / color:</label>
+                            {{ form.variant }}
                             {{ form.size }}
-                        {% endif %}
+                        </div>
+                        {% if product.is_available_for_purchase %}
                         <div class="col-auto">
-                            <label for="quantity" class="form-label">Cantidad:</label>
-                            <input type="number" name="quantity" id="quantity" 
+                            <label for="id_quantity" class="form-label">Cantidad:</label>
+                            <input type="number" name="quantity" id="id_quantity" 
+                                   class="form-control" value="1" min="1" max="{{ product.stock }}" required>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-cart-plus"></i> Agregar al Carrito
+                            </button>
+                        </div>
+                        {% else %}
+                        <div class="col-12">
+                            <p class="alert alert-warning mb-0"><i class="bi bi-info-circle"></i> No hay stock disponible en ninguna opción por ahora.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </form>
+            {% elif product.is_available_for_purchase %}
+                <form method="post" action="{% url 'shop:add_to_cart' product_id=product.id %}" class="mb-3" id="add-to-cart-form">
+                    {% csrf_token %}
+                    <div class="row g-3 align-items-end">
+                        {{ form.size }}
+                        {{ form.variant }}
+                        <div class="col-auto">
+                            <label for="id_quantity" class="form-label">Cantidad:</label>
+                            <input type="number" name="quantity" id="id_quantity" 
                                    class="form-control" value="1" min="1" max="{{ product.stock }}" required>
                         </div>
                         <div class="col-auto">
@@ -288,6 +309,21 @@
     // Initialize zoom on page load
     document.addEventListener('DOMContentLoaded', function() {
         initImageZoom();
+        (function syncVariantQuantityCap() {
+            var sel = document.getElementById('id_variant');
+            var qty = document.getElementById('id_quantity');
+            if (!sel || !qty) return;
+            function apply() {
+                var opt = sel.options[sel.selectedIndex];
+                var cap = (opt && opt.dataset && opt.dataset.stock) ? parseInt(opt.dataset.stock, 10) : parseInt(qty.getAttribute('max'), 10) || 1;
+                if (isNaN(cap) || cap < 1) cap = 1;
+                qty.setAttribute('max', cap);
+                var v = parseInt(qty.value, 10);
+                if (v > cap) qty.value = String(cap);
+            }
+            sel.addEventListener('change', apply);
+            apply();
+        })();
     });
     
     // Re-initialize on window resize (in case user resizes window)

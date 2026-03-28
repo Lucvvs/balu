@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV3
-from .models import Product, Coupon, ContactMessage, ShippingMethod, PaymentMethod, CustomUser
+from .models import Product, ProductVariant, Coupon, ContactMessage, ShippingMethod, PaymentMethod, CustomUser
 from .utils import get_regiones_choices
 
 
@@ -114,27 +114,65 @@ class UserRegistrationForm(UserCreationForm):
         return user
 
 
+class VariantOptionSelect(forms.Select):
+    """Select de variantes con data-stock en cada <option> para limitar cantidad en el cliente."""
+
+    def __init__(self, variant_stocks=None, attrs=None):
+        super().__init__(attrs)
+        self.variant_stocks = variant_stocks or {}
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+        if value is not None and value != '':
+            key = str(value)
+            if key in self.variant_stocks:
+                option.setdefault('attrs', {})
+                stock = int(self.variant_stocks[key])
+                option['attrs']['data-stock'] = str(stock)
+                if stock <= 0:
+                    option['attrs']['disabled'] = True
+        return option
+
+
 class AddToCartForm(forms.Form):
     """Formulario para agregar producto al carrito"""
     quantity = forms.IntegerField(
         min_value=1,
         initial=1,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '1'})
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'id': 'id_quantity'})
     )
     size = forms.ChoiceField(
         required=False,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+    variant = forms.ModelChoiceField(
+        queryset=ProductVariant.objects.none(),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         product = kwargs.pop('product', None)
         super().__init__(*args, **kwargs)
-        if product and product.has_sizes():
-            sizes = product.get_available_sizes_list()
-            self.fields['size'].choices = [('', 'Seleccione talla')] + [(size, size) for size in sizes]
-            self.fields['size'].required = True
+        if product and product.uses_variant_stock():
+            qs = product.variants.all().order_by('sort_order', 'name', 'id')
+            stocks = {str(v.id): v.stock for v in qs}
+            self.fields['variant'].empty_label = 'Seleccione talla / color'
+            self.fields['variant'].label = 'Talla / color'
+            self.fields['variant'].label_from_instance = lambda obj: obj.name
+            # El widget debe asignarse ANTES que queryset: si no, el setter de queryset
+            # deja las choices en el widget por defecto y el Select nuevo queda vacío.
+            self.fields['variant'].widget = VariantOptionSelect(
+                variant_stocks=stocks,
+                attrs={'class': 'form-control form-select', 'id': 'id_variant'},
+            )
+            self.fields['variant'].queryset = qs
+            self.fields['variant'].required = any(v.stock > 0 for v in qs)
+            self.fields['size'].widget = forms.HiddenInput()
+            self.fields['size'].required = False
         else:
             self.fields['size'].widget = forms.HiddenInput()
+            self.fields['variant'].widget = forms.HiddenInput()
+            self.fields['variant'].required = False
 
 
 class UpdateCartItemForm(forms.Form):

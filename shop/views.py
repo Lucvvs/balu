@@ -15,7 +15,7 @@ import json
 from urllib.parse import urlparse
 
 from .models import (
-    Product, Category, Brand, ProductImage, Cart, CartItem, Order, OrderItem,
+    Product, ProductVariant, Category, Brand, ProductImage, Cart, CartItem, Order, OrderItem,
     Coupon, ShippingMethod, ShippingRule, PaymentMethod, Payment, ContactMessage, MetricEvent, PromotionalBanner
 )
 from .utils import (
@@ -65,7 +65,11 @@ def home(request):
         stock__gt=0,
         offer_order__gt=0  # Solo productos con orden asignado
     ).select_related('category', 'brand').prefetch_related(
-        Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id'))
+        Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id')),
+        Prefetch(
+            'variants',
+            queryset=ProductVariant.objects.order_by('sort_order', 'name', 'id'),
+        ),
     ).order_by('offer_order', '-created_at')[:3]
 
     # Productos más vendidos (máximo 3, ordenados por featured_order)
@@ -75,7 +79,11 @@ def home(request):
         stock__gt=0,
         featured_order__gt=0  # Solo productos con orden asignado
     ).select_related('category', 'brand').prefetch_related(
-        Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id'))
+        Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id')),
+        Prefetch(
+            'variants',
+            queryset=ProductVariant.objects.order_by('sort_order', 'name', 'id'),
+        ),
     ).order_by('featured_order', '-created_at')[:3]
 
     # Categorías destacadas
@@ -106,7 +114,11 @@ def products_list(request):
     products = Product.objects.filter(is_active=True).select_related(
         'category', 'brand'
     ).prefetch_related(
-        Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id'))
+        Prefetch('images', queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id')),
+        Prefetch(
+            'variants',
+            queryset=ProductVariant.objects.order_by('sort_order', 'name', 'id'),
+        ),
     ).order_by('-created_at')
 
     # Filtro por categoría (soporta múltiples categorías)
@@ -205,7 +217,10 @@ def products_list(request):
 def product_detail(request, slug):
     """Vista de detalle de producto"""
     product = get_object_or_404(
-        Product.objects.select_related('category', 'brand').prefetch_related('images'),
+        Product.objects.select_related('category', 'brand').prefetch_related(
+            'images',
+            'variants',
+        ),
         slug=slug,
         is_active=True
     )
@@ -263,7 +278,7 @@ def add_to_cart(request, product_id):
         messages.error(request, 'El producto no existe o no está disponible.')
         return redirect('shop:products_list')
     
-    if product.stock <= 0:
+    if not product.is_available_for_purchase():
         messages.error(request, f'Lo sentimos, {product.name} no tiene stock disponible en este momento.')
         return redirect('shop:product_detail', slug=product.slug)
     
@@ -273,49 +288,79 @@ def add_to_cart(request, product_id):
         return redirect('shop:product_detail', slug=product.slug)
 
     quantity = form.cleaned_data['quantity']
-    size = form.cleaned_data.get('size', '') or None
-    
-    # Validar talla si el producto requiere tallas
-    if product.has_sizes() and not size:
-        messages.error(request, 'Por favor selecciona una talla.')
-        return redirect('shop:product_detail', slug=product.slug)
-    
-    if quantity > product.stock:
-        messages.error(request, f'No hay suficiente stock. Stock disponible: {product.stock}')
-        return redirect('shop:product_detail', slug=product.slug)
-
     cart = get_or_create_cart(request)
     current_price = product.current_price
 
-    # Obtener o crear item del carrito (con talla si aplica)
-    cart_item, created = CartItem.objects.get_or_create(
-        cart=cart,
-        product=product,
-        size=size,
-        defaults={
-            'quantity': quantity,
-            'unit_price': current_price,
-        }
-    )
+    if product.uses_variant_stock():
+        variant = form.cleaned_data.get('variant')
+        if not variant or variant.product_id != product.id:
+            messages.error(request, 'Selecciona una opción válida (talla/color).')
+            return redirect('shop:product_detail', slug=product.slug)
+        if quantity > variant.stock:
+            messages.error(
+                request,
+                f'No hay suficiente stock para {variant.name}. Disponible: {variant.stock}',
+            )
+            return redirect('shop:product_detail', slug=product.slug)
 
-    if not created:
-        # Actualizar cantidad si ya existe
-        new_quantity = cart_item.quantity + quantity
-        if new_quantity > product.stock:
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            variant=variant,
+            defaults={
+                'product': product,
+                'quantity': quantity,
+                'unit_price': current_price,
+                'size': variant.name,
+            },
+        )
+
+        if not created:
+            new_quantity = cart_item.quantity + quantity
+            if new_quantity > variant.stock:
+                messages.error(
+                    request,
+                    f'No hay suficiente stock para {variant.name}. Disponible: {variant.stock}',
+                )
+                return redirect('shop:product_detail', slug=product.slug)
+            cart_item.quantity = new_quantity
+            cart_item.save()
+
+        size_meta = variant.name
+    else:
+        if quantity > product.stock:
             messages.error(request, f'No hay suficiente stock. Stock disponible: {product.stock}')
             return redirect('shop:product_detail', slug=product.slug)
-        cart_item.quantity = new_quantity
-        cart_item.save()
+
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            product=product,
+            variant=None,
+            defaults={
+                'quantity': quantity,
+                'unit_price': current_price,
+                'size': None,
+            },
+        )
+
+        if not created:
+            new_quantity = cart_item.quantity + quantity
+            if new_quantity > product.stock:
+                messages.error(request, f'No hay suficiente stock. Stock disponible: {product.stock}')
+                return redirect('shop:product_detail', slug=product.slug)
+            cart_item.quantity = new_quantity
+            cart_item.save()
+
+        size_meta = None
 
     # Registrar evento
     MetricEvent.objects.create(
         event_type='add_to_cart',
         user=request.user if request.user.is_authenticated else None,
         session_key=request.session.session_key,
-        metadata={'product_id': product.id, 'quantity': quantity, 'size': size}
+        metadata={'product_id': product.id, 'quantity': quantity, 'size': size_meta},
     )
 
-    size_text = f" - Talla: {size}" if size else ""
+    size_text = f" — {size_meta}" if size_meta else ""
     messages.success(request, f'{product.name}{size_text} agregado al carrito.')
     return redirect('shop:cart')
 
@@ -326,14 +371,16 @@ def cart_view(request):
     if request.user.is_authenticated:
         try:
             cart = Cart.objects.prefetch_related(
-                'items__product__images'
+                'items__product__images',
+                'items__variant',
             ).get(user=request.user)
         except Cart.DoesNotExist:
             cart = None
     elif request.session.session_key:
         try:
             cart = Cart.objects.prefetch_related(
-                'items__product__images'
+                'items__product__images',
+                'items__variant',
             ).get(session_key=request.session.session_key)
         except Cart.DoesNotExist:
             cart = None
@@ -430,7 +477,10 @@ def cart_view(request):
 @require_POST
 def update_cart_item(request, item_id):
     """Actualizar cantidad de item en carrito"""
-    cart_item = get_object_or_404(CartItem, id=item_id)
+    cart_item = get_object_or_404(
+        CartItem.objects.select_related('product', 'variant'),
+        id=item_id,
+    )
     
     # Verificar que el carrito pertenece al usuario/sesión
     cart = cart_item.cart
@@ -456,8 +506,9 @@ def update_cart_item(request, item_id):
 
     quantity = form.cleaned_data['quantity']
     
-    if quantity > cart_item.product.stock:
-        error_msg = f'No hay suficiente stock. Stock disponible: {cart_item.product.stock}'
+    cap = cart_item.get_stock_cap()
+    if quantity > cap:
+        error_msg = f'No hay suficiente stock. Stock disponible: {cap}'
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'error': error_msg}, status=400)
         messages.error(request, error_msg)
@@ -486,7 +537,10 @@ def update_cart_item(request, item_id):
 @require_POST
 def remove_cart_item(request, item_id):
     """Eliminar item del carrito"""
-    cart_item = get_object_or_404(CartItem, id=item_id)
+    cart_item = get_object_or_404(
+        CartItem.objects.select_related('product', 'variant'),
+        id=item_id,
+    )
     
     # Verificar que el carrito pertenece al usuario/sesión
     cart = cart_item.cart
@@ -500,7 +554,8 @@ def remove_cart_item(request, item_id):
             return redirect('shop:cart')
 
     product_name = cart_item.product.name
-    size_text = f" - Talla: {cart_item.size}" if cart_item.size else ""
+    opt = cart_item.variant.name if cart_item.variant_id else cart_item.size
+    size_text = f" — {opt}" if opt else ""
     cart_item.delete()
     messages.success(request, f'{product_name}{size_text} eliminado del carrito.')
     return redirect('shop:cart')
@@ -595,13 +650,13 @@ def checkout(request):
     cart = None
     if request.user.is_authenticated:
         try:
-            cart = Cart.objects.prefetch_related('items__product').get(user=request.user)
+            cart = Cart.objects.prefetch_related('items__product', 'items__variant').get(user=request.user)
         except Cart.DoesNotExist:
             messages.error(request, 'Tu carrito está vacío.')
             return redirect('shop:cart')
     elif request.session.session_key:
         try:
-            cart = Cart.objects.prefetch_related('items__product').get(session_key=request.session.session_key)
+            cart = Cart.objects.prefetch_related('items__product', 'items__variant').get(session_key=request.session.session_key)
         except Cart.DoesNotExist:
             messages.error(request, 'Tu carrito está vacío.')
             return redirect('shop:cart')
@@ -653,7 +708,7 @@ def checkout(request):
             return redirect('shop:cart')
 
     # Reserva de stock atómica (evita carreras y asegura descuento también con Mercado Pago)
-    cart_items = list(cart.items.select_related('product').all())
+    cart_items = list(cart.items.select_related('product', 'variant').all())
     if not cart_items:
         messages.error(request, 'Tu carrito está vacío.')
         return redirect('shop:cart')
@@ -667,14 +722,41 @@ def checkout(request):
         messages.error(request, 'Uno o más productos ya no están disponibles.')
         return redirect('shop:cart')
 
+    variant_ids = sorted({ci.variant_id for ci in cart_items if ci.variant_id})
+    locked_variants = {
+        v.id: v
+        for v in ProductVariant.objects.select_for_update().filter(pk__in=variant_ids)
+    }
+    if len(locked_variants) != len(variant_ids):
+        messages.error(request, 'Una o más variantes ya no están disponibles.')
+        return redirect('shop:cart')
+
     for ci in cart_items:
         product = locked_products[ci.product_id]
-        if ci.quantity > product.stock:
-            messages.error(
-                request,
-                f'No hay suficiente stock para {product.name}. Stock disponible: {product.stock}',
-            )
-            return redirect('shop:cart')
+        if ci.variant_id:
+            variant = locked_variants[ci.variant_id]
+            if variant.product_id != product.id:
+                messages.error(request, 'Error de consistencia en el carrito. Vuelve a agregar el producto.')
+                return redirect('shop:cart')
+            if ci.quantity > variant.stock:
+                messages.error(
+                    request,
+                    f'No hay suficiente stock para {product.name} ({variant.name}). Disponible: {variant.stock}',
+                )
+                return redirect('shop:cart')
+        else:
+            if product.uses_variant_stock():
+                messages.error(
+                    request,
+                    f'El producto {product.name} requiere elegir talla/color. Actualiza el carrito.',
+                )
+                return redirect('shop:cart')
+            if ci.quantity > product.stock:
+                messages.error(
+                    request,
+                    f'No hay suficiente stock para {product.name}. Stock disponible: {product.stock}',
+                )
+                return redirect('shop:cart')
 
     # Aplicar descuento del cupón
     discount_total = 0
@@ -737,16 +819,34 @@ def checkout(request):
     # Crear items del pedido y descontar stock (transferencia y MP: reserva al crear el pedido)
     for cart_item in cart_items:
         product = locked_products[cart_item.product_id]
-        OrderItem.objects.create(
-            order=order,
-            product=product,
-            product_name=product.name,
-            unit_price=cart_item.unit_price,
-            quantity=cart_item.quantity,
-            line_total=cart_item.get_line_total(),
-        )
-        product.stock -= cart_item.quantity
-        product.save(update_fields=['stock'])
+        if cart_item.variant_id:
+            variant = locked_variants[cart_item.variant_id]
+            snapshot_name = f'{product.name} — {variant.name}'
+            variant.stock -= cart_item.quantity
+            variant.save(update_fields=['stock'])
+            ProductVariant.sync_parent_product_stock(product.id)
+            OrderItem.objects.create(
+                order=order,
+                product=product,
+                product_variant=variant,
+                product_name=snapshot_name,
+                variant_label=variant.name,
+                unit_price=cart_item.unit_price,
+                quantity=cart_item.quantity,
+                line_total=cart_item.get_line_total(),
+            )
+        else:
+            product.stock -= cart_item.quantity
+            product.save(update_fields=['stock'])
+            OrderItem.objects.create(
+                order=order,
+                product=product,
+                product_name=product.name,
+                variant_label='',
+                unit_price=cart_item.unit_price,
+                quantity=cart_item.quantity,
+                line_total=cart_item.get_line_total(),
+            )
     order.stock_committed = True
     order.save(update_fields=['stock_committed'])
 
@@ -982,16 +1082,28 @@ def mp_webhook(request: HttpRequest):
             prev_status = order.status
             order.status = 'confirmed'
             if not order.stock_committed:
-                for item in order.items.select_related('product').all():
-                    product = Product.objects.select_for_update().get(id=item.product_id)
-                    if item.quantity > product.stock:
-                        order.status = 'cancelled'
-                        payment_obj.status = 'cancelled'
-                        payment_obj.save()
-                        order.save(update_fields=['mp_payment_id', 'mp_payment_status', 'mp_last_event_at', 'status'])
-                        return HttpResponse(status=200)
-                    product.stock -= item.quantity
-                    product.save(update_fields=['stock'])
+                for item in order.items.select_related('product', 'product_variant').all():
+                    if item.product_variant_id:
+                        pv = ProductVariant.objects.select_for_update().get(pk=item.product_variant_id)
+                        if item.quantity > pv.stock:
+                            order.status = 'cancelled'
+                            payment_obj.status = 'cancelled'
+                            payment_obj.save()
+                            order.save(update_fields=['mp_payment_id', 'mp_payment_status', 'mp_last_event_at', 'status'])
+                            return HttpResponse(status=200)
+                        pv.stock -= item.quantity
+                        pv.save(update_fields=['stock'])
+                        ProductVariant.sync_parent_product_stock(item.product_id)
+                    else:
+                        product = Product.objects.select_for_update().get(id=item.product_id)
+                        if item.quantity > product.stock:
+                            order.status = 'cancelled'
+                            payment_obj.status = 'cancelled'
+                            payment_obj.save()
+                            order.save(update_fields=['mp_payment_id', 'mp_payment_status', 'mp_last_event_at', 'status'])
+                            return HttpResponse(status=200)
+                        product.stock -= item.quantity
+                        product.save(update_fields=['stock'])
                 order.stock_committed = True
 
             if prev_status == 'pending_payment':
@@ -1008,7 +1120,13 @@ def mp_webhook(request: HttpRequest):
             # Devolver stock si el pago nunca se concretó (reserva hecha en checkout)
             if order.stock_committed and order.status == 'pending_payment':
                 for item in order.items.all():
-                    Product.objects.filter(pk=item.product_id).update(stock=F('stock') + item.quantity)
+                    if item.product_variant_id:
+                        ProductVariant.objects.filter(pk=item.product_variant_id).update(
+                            stock=F('stock') + item.quantity
+                        )
+                        ProductVariant.sync_parent_product_stock(item.product_id)
+                    else:
+                        Product.objects.filter(pk=item.product_id).update(stock=F('stock') + item.quantity)
                 order.stock_committed = False
             order.status = 'cancelled'
         else:

@@ -20,7 +20,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.core.files import File
 from django.core.files.images import ImageFile
-from shop.models import Product, Category, Brand, ProductImage, OrderItem
+from shop.models import Product, ProductVariant, Category, Brand, ProductImage, OrderItem
 from pathlib import Path
 import os
 import re
@@ -369,19 +369,10 @@ class Command(BaseCommand):
                     'is_active': True,
                 }
                 
-                # Agregar colores disponibles para trenzas
-                if available_colors:
-                    product_defaults['available_sizes'] = available_colors
-                
                 product, created = Product.objects.get_or_create(
                     name=product_name,
                     defaults=product_defaults
                 )
-                
-                # Si el producto ya existe y es Trenzas, actualizar colores disponibles
-                if not created and product_name == 'Trenzas' and available_colors:
-                    product.available_sizes = available_colors
-                    product.save()
 
                 if not created and not options['force']:
                     self.stdout.write(
@@ -399,6 +390,14 @@ class Command(BaseCommand):
                     ProductImage.objects.filter(product=product).delete()
                 else:
                     created_count += 1
+
+                if available_colors:
+                    ProductVariant.replace_from_available_sizes_csv(
+                        product,
+                        available_colors,
+                        product.stock,
+                    )
+                    product.refresh_from_db()
 
                 # Cargar imágenes del producto
                 # Si se usa --force, ya se eliminaron las imágenes arriba

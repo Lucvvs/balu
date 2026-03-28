@@ -11,7 +11,7 @@ Uso:
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.core.files.images import ImageFile
-from shop.models import Product, Category, Brand, ProductImage, OrderItem
+from shop.models import Product, ProductVariant, Category, Brand, ProductImage, OrderItem
 from pathlib import Path
 import json
 import os
@@ -179,7 +179,6 @@ class Command(BaseCommand):
                     'price': int(product_data['price']),
                     'offer_price': int(product_data['offer_price']) if product_data.get('offer_price') is not None else None,
                     'stock': int(product_data['stock']),
-                    'available_sizes': product_data.get('available_sizes', ''),
                     'is_active': product_data.get('is_active', True),
                     'is_offer': product_data.get('is_offer', False),
                     'is_best_seller': product_data.get('is_best_seller', False),
@@ -209,6 +208,13 @@ class Command(BaseCommand):
                     ProductImage.objects.filter(product=product).delete()
                 else:
                     created_count += 1
+
+                ProductVariant.replace_from_available_sizes_csv(
+                    product,
+                    product_data.get('available_sizes', ''),
+                    int(product_data['stock']),
+                )
+                product.refresh_from_db()
                 
                 # Cargar imágenes
                 images_data = product_data.get('images', [])

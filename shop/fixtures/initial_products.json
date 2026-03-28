@@ -18,7 +18,7 @@
     "stock": 2,
     "_stock_comment": "Cantidad disponible en inventario (número entero)",
     "available_sizes": "M,L",
-    "_available_sizes_comment": "Tallas disponibles separadas por coma. Usa cadena vacía '' si el producto no tiene tallas (ej: candados, accesorios)",
+    "_available_sizes_comment": "Solo para load_products_from_json: opciones separadas por coma → crea ProductVariant (no existe campo en BD).",
     "is_active": true,
     "_is_active_comment": "true = producto visible en la tienda, false = oculto",
     "is_offer": true,

@@ -39,7 +39,9 @@
                                 <div class="cart-item-header">
                                     <div class="cart-item-title-section">
                                         <h5 class="cart-item-title"><a href="{% url 'shop:product_detail' slug=item.product.slug %}" style="text-decoration: none; color: inherit;">{{ item.product.name }}</a></h5>
-                                        {% if item.size %}
+                                        {% if item.variant %}
+                                            <p class="cart-item-size text-muted mb-0"><strong>Opción:</strong> {{ item.variant.name }}</p>
+                                        {% elif item.size %}
                                             <p class="cart-item-size text-muted mb-0"><strong>Talla:</strong> {{ item.size }}</p>
                                         {% endif %}
                                     </div>
@@ -67,16 +69,16 @@
                                                 <button type="button" class="quantity-btn quantity-decrease" 
                                                         data-item-id="{{ item.id }}" 
                                                         data-current-quantity="{{ item.quantity }}"
-                                                        data-max-quantity="{{ item.product.stock }}">
+                                                        data-max-quantity="{{ item.get_stock_cap }}">
                                                     <i class="bi bi-dash-lg"></i>
                                                 </button>
                                                 <input type="number" name="quantity" id="quantity-{{ item.id }}" 
-                                                       value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}" 
+                                                       value="{{ item.quantity }}" min="1" max="{{ item.get_stock_cap }}" 
                                                        class="quantity-input" readonly>
                                                 <button type="button" class="quantity-btn quantity-increase" 
                                                         data-item-id="{{ item.id }}" 
                                                         data-current-quantity="{{ item.quantity }}"
-                                                        data-max-quantity="{{ item.product.stock }}">
+                                                        data-max-quantity="{{ item.get_stock_cap }}">
                                                     <i class="bi bi-plus-lg"></i>
                                                 </button>
                                             </div>

@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from .forms import CustomAdminUserCreationForm, CustomUserChangeForm
 from .models import (
-    CustomUser, Brand, Category, Product, ProductImage, Coupon, ShippingMethod, ShippingRule, PaymentMethod,
+    CustomUser, Brand, Category, Product, ProductVariant, ProductImage, Coupon, ShippingMethod, ShippingRule, PaymentMethod,
     Cart, CartItem, Order, OrderItem, Payment, ContactMessage, MetricEvent, PromotionalBanner
 )
 
@@ -58,6 +58,14 @@ class ProductImageInline(admin.TabularInline):
     fields = ('image', 'is_primary', 'order')
 
 
+class ProductVariantInline(admin.TabularInline):
+    """Stock por talla, color u otra opción (si hay filas, el stock total del producto es la suma)."""
+    model = ProductVariant
+    extra = 0
+    fields = ('name', 'stock', 'sort_order')
+    ordering = ('sort_order', 'name', 'id')
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'category', 'brand', 'current_price_display', 'stock', 'is_active', 'is_offer', 'offer_order', 'is_best_seller', 'featured_order', 'created_at')
@@ -65,7 +73,13 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name', 'short_description', 'description')
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ('created_at', 'updated_at')
-    inlines = [ProductImageInline]
+    inlines = [ProductVariantInline, ProductImageInline]
+
+    def get_readonly_fields(self, request, obj=None):
+        ro = list(self.readonly_fields)
+        if obj and obj.pk and obj.variants.exists():
+            ro.append('stock')
+        return ro
     fieldsets = (
         ('Información básica', {
             'fields': ('name', 'slug', 'short_description', 'description')
@@ -77,7 +91,12 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('price', 'offer_price')
         }),
         ('Stock y Estado', {
-            'fields': ('stock', 'available_sizes', 'is_active', 'is_offer', 'is_best_seller')
+            'fields': ('stock', 'is_active', 'is_offer', 'is_best_seller'),
+            'description': (
+                'Tallas, colores u otras opciones: añádelas en "Variantes de producto" abajo, cada una con su stock. '
+                'El stock del producto es la suma de las variantes (solo lectura si hay variantes). '
+                'Sin variantes, usa solo el stock del producto.'
+            ),
         }),
         ('Orden en Destacados', {
             'fields': ('offer_order', 'featured_order'),
@@ -149,7 +168,7 @@ class CartItemInline(admin.TabularInline):
     """Inline para items del carrito"""
     model = CartItem
     extra = 0
-    readonly_fields = ('product', 'quantity', 'size', 'unit_price', 'get_line_total_display')
+    readonly_fields = ('product', 'variant', 'quantity', 'size', 'unit_price', 'get_line_total_display')
     can_delete = False
 
     def get_line_total_display(self, obj):
@@ -190,7 +209,7 @@ class OrderItemInline(admin.TabularInline):
     """Inline para items de pedido"""
     model = OrderItem
     extra = 0
-    readonly_fields = ('product', 'product_name', 'unit_price', 'quantity', 'line_total')
+    readonly_fields = ('product', 'product_variant', 'product_name', 'variant_label', 'unit_price', 'quantity', 'line_total')
     can_delete = False
 
 

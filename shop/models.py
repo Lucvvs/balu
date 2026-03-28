@@ -1,8 +1,11 @@
+import json
+
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator
 from django.utils import timezone
+from django.db.models import Sum
 
 
 class CustomUserManager(BaseUserManager):
@@ -128,7 +131,6 @@ class Product(models.Model):
     price = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Precio original (CLP)")
     offer_price = models.IntegerField(validators=[MinValueValidator(0)], null=True, blank=True, verbose_name="Precio oferta (CLP)")
     stock = models.IntegerField(validators=[MinValueValidator(0)], default=0, verbose_name="Stock")
-    available_sizes = models.CharField(max_length=50, blank=True, null=True, verbose_name="Tallas disponibles (separadas por coma, ej: S,M,L,XL)", help_text="Dejar vacío si no aplica tallas. Ejemplo: S,M,L,XL")
     is_active = models.BooleanField(default=True, verbose_name="Activo")
     is_offer = models.BooleanField(default=False, verbose_name="En oferta")
     is_best_seller = models.BooleanField(default=False, verbose_name="Más vendido")
@@ -162,15 +164,27 @@ class Product(models.Model):
         """Indica si el producto tiene oferta"""
         return self.offer_price is not None and self.offer_price < self.price
 
-    def get_available_sizes_list(self):
-        """Retorna lista de tallas disponibles"""
-        if not self.available_sizes:
-            return []
-        return [size.strip() for size in self.available_sizes.split(',') if size.strip()]
+    def uses_variant_stock(self):
+        """True si el inventario se controla por filas ProductVariant (talla/color/opción)."""
+        return self.variants.exists()
 
-    def has_sizes(self):
-        """Indica si el producto tiene tallas"""
-        return bool(self.available_sizes)
+    def variants_catalog_json(self):
+        """
+        JSON (UTF-8) con variantes en stock para data-attributes en el catálogo.
+        Lista de objetos: id, name, stock.
+        """
+        rows = list(
+            self.variants.filter(stock__gt=0)
+            .order_by('sort_order', 'name', 'id')
+            .values('id', 'name', 'stock')
+        )
+        return json.dumps(rows, ensure_ascii=False)
+
+    def is_available_for_purchase(self):
+        """Hay al menos una unidad vendible (stock simple o alguna variante con stock)."""
+        if self.uses_variant_stock():
+            return self.variants.filter(stock__gt=0).exists()
+        return self.stock > 0
     
     def get_primary_image(self):
         """Retorna la imagen principal del producto, o la primera si no hay principal"""
@@ -202,6 +216,90 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - Imagen {self.order}"
+
+
+class ProductVariant(models.Model):
+    """
+    Una opción vendible del producto (talla, color, etc.) con stock propio.
+    Si el producto tiene al menos una variante, el stock del producto padre
+    se mantiene como suma de las variantes (sincronizado al guardar/borrar variantes).
+    """
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='variants',
+        verbose_name='Producto',
+    )
+    name = models.CharField(
+        max_length=64,
+        verbose_name='Opción (talla, color, etc.)',
+        help_text='Etiqueta que ve el cliente, ej: S, M, Amarilla.',
+    )
+    stock = models.IntegerField(
+        validators=[MinValueValidator(0)],
+        default=0,
+        verbose_name='Stock',
+    )
+    sort_order = models.IntegerField(
+        default=0,
+        verbose_name='Orden',
+        help_text='Menor número = aparece primero en el selector.',
+    )
+
+    class Meta:
+        verbose_name = 'Variante de producto'
+        verbose_name_plural = 'Variantes de producto'
+        ordering = ['sort_order', 'name', 'id']
+        unique_together = [('product', 'name')]
+
+    def __str__(self):
+        return f'{self.product.name} — {self.name}'
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        ProductVariant.sync_parent_product_stock(self.product_id)
+
+    def delete(self, *args, **kwargs):
+        product_id = self.product_id
+        super().delete(*args, **kwargs)
+        ProductVariant.sync_parent_product_stock(product_id)
+
+    @staticmethod
+    def sync_parent_product_stock(product_id):
+        """Actualiza Product.stock como suma de variantes; no hace nada si no hay variantes."""
+        agg = ProductVariant.objects.filter(product_id=product_id).aggregate(t=Sum('stock'))
+        total = agg['t']
+        if total is None:
+            return
+        Product.objects.filter(pk=product_id).update(stock=total or 0)
+
+    @classmethod
+    def replace_from_available_sizes_csv(cls, product, available_sizes_raw, total_stock: int):
+        """
+        Elimina variantes actuales y las recrea desde una cadena tipo "S,M,L" o colores.
+        Reparte total_stock entre las opciones. Sin opciones, deja solo el stock del producto.
+        """
+        raw = (available_sizes_raw or '').strip()
+        cls.objects.filter(product=product).delete()
+        total_stock = max(0, int(total_stock))
+        if not raw:
+            Product.objects.filter(pk=product.pk).update(stock=total_stock)
+            return
+        names = [s.strip() for s in raw.split(',') if s.strip()]
+        if not names:
+            Product.objects.filter(pk=product.pk).update(stock=total_stock)
+            return
+        n = len(names)
+        base = total_stock // n
+        rem = total_stock % n
+        for i, name in enumerate(names):
+            stock = base + (1 if i < rem else 0)
+            cls.objects.create(
+                product=product,
+                name=name[:64],
+                stock=stock,
+                sort_order=i,
+            )
 
 
 class Coupon(models.Model):
@@ -394,6 +492,14 @@ class CartItem(models.Model):
     """Modelo para items del carrito"""
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items', verbose_name="Carrito")
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Producto")
+    variant = models.ForeignKey(
+        'ProductVariant',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name='Variante',
+        related_name='cart_items',
+    )
     quantity = models.IntegerField(validators=[MinValueValidator(1)], default=1, verbose_name="Cantidad")
     unit_price = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Precio unitario al agregar")
     size = models.CharField(max_length=10, blank=True, null=True, verbose_name="Talla")
@@ -401,15 +507,33 @@ class CartItem(models.Model):
     class Meta:
         verbose_name = "Item de carrito"
         verbose_name_plural = "Items de carrito"
-        unique_together = ['cart', 'product', 'size']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['cart', 'variant'],
+                condition=models.Q(variant__isnull=False),
+                name='unique_cartitem_cart_variant',
+            ),
+            models.UniqueConstraint(
+                fields=['cart', 'product'],
+                condition=models.Q(variant__isnull=True),
+                name='unique_cartitem_cart_product_simple',
+            ),
+        ]
 
     def __str__(self):
-        size_text = f" - Talla: {self.size}" if self.size else ""
+        opt = self.variant.name if self.variant_id else self.size
+        size_text = f" — {opt}" if opt else ""
         return f"{self.product.name} x {self.quantity}{size_text}"
 
     def get_line_total(self):
         """Retorna el total de la línea (cantidad * precio unitario)"""
         return self.quantity * self.unit_price
+
+    def get_stock_cap(self):
+        """Tope de cantidad según inventario (variante o producto simple)."""
+        if self.variant_id:
+            return self.variant.stock
+        return self.product.stock
 
 
 class Order(models.Model):
@@ -587,7 +711,22 @@ class OrderItem(models.Model):
     """Modelo para items de pedido"""
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', verbose_name="Pedido")
     product = models.ForeignKey(Product, on_delete=models.PROTECT, verbose_name="Producto")
+    product_variant = models.ForeignKey(
+        'ProductVariant',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Variante (referencia)',
+        related_name='order_items',
+    )
     product_name = models.CharField(max_length=200, verbose_name="Nombre del producto (snapshot)")
+    variant_label = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        verbose_name='Opción (snapshot)',
+        help_text='Talla, color u otra opción al momento de la compra.',
+    )
     unit_price = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Precio unitario")
     quantity = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="Cantidad")
     line_total = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Total línea")

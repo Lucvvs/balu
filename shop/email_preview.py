@@ -39,11 +39,12 @@ def get_mock_order_email_context():
             return MockPrimaryImage(self._image_url)
 
     class MockOrderItem:
-        def __init__(self, product_name, quantity, unit_price, line_total, image_url):
+        def __init__(self, product_name, quantity, unit_price, line_total, image_url, variant_label=''):
             self.product_name = product_name
             self.quantity = quantity
             self.unit_price = unit_price
             self.line_total = line_total
+            self.variant_label = variant_label
             self.product = MockProduct(image_url)
 
     class MockOrder:
