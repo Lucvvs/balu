@@ -156,7 +156,7 @@ class AddToCartForm(forms.Form):
         if product and product.uses_variant_stock():
             qs = product.variants.all().order_by('sort_order', 'name', 'id')
             stocks = {str(v.id): v.stock for v in qs}
-            self.fields['variant'].empty_label = 'Seleccione talla / color'
+            self.fields['variant'].empty_label = 'Seleccione una opción'
             self.fields['variant'].label = 'Talla / color'
             self.fields['variant'].label_from_instance = lambda obj: obj.name
             # El widget debe asignarse ANTES que queryset: si no, el setter de queryset
