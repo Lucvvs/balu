@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, F
 
 
 class CustomUserManager(BaseUserManager):
@@ -708,6 +708,24 @@ class Order(models.Model):
     def get_latest_payment(self):
         """Retorna el último pago creado"""
         return self.payments.order_by('-created_at').first()
+
+    def restore_committed_stock(self):
+        """
+        Devuelve al inventario las unidades reservadas al crear el pedido.
+        Idempotente: si stock_committed es False, no hace nada.
+        """
+        if not self.stock_committed:
+            return
+        for item in self.items.select_related('product').all():
+            if item.product_variant_id:
+                ProductVariant.objects.filter(pk=item.product_variant_id).update(
+                    stock=F('stock') + item.quantity
+                )
+                ProductVariant.sync_parent_product_stock(item.product_id)
+            else:
+                Product.objects.filter(pk=item.product_id).update(stock=F('stock') + item.quantity)
+        self.stock_committed = False
+        self.save(update_fields=['stock_committed'])
 
 
 class OrderItem(models.Model):

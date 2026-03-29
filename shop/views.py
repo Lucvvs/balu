@@ -1109,16 +1109,8 @@ def mp_webhook(request: HttpRequest):
 
         elif status in ('rejected', 'cancelled', 'charged_back', 'refunded'):
             # Devolver stock si el pago nunca se concretó (reserva hecha en checkout)
-            if order.stock_committed and order.status == 'pending_payment':
-                for item in order.items.all():
-                    if item.product_variant_id:
-                        ProductVariant.objects.filter(pk=item.product_variant_id).update(
-                            stock=F('stock') + item.quantity
-                        )
-                        ProductVariant.sync_parent_product_stock(item.product_id)
-                    else:
-                        Product.objects.filter(pk=item.product_id).update(stock=F('stock') + item.quantity)
-                order.stock_committed = False
+            if order.status == 'pending_payment':
+                order.restore_committed_stock()
             order.status = 'cancelled'
         else:
             # in_process / pending / etc.

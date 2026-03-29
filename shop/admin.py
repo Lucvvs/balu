@@ -295,8 +295,29 @@ class OrderAdmin(admin.ModelAdmin):
 
     @admin.action(description='Marcar como cancelado')
     def mark_as_cancelled(self, request, queryset):
-        queryset.update(status='cancelled')
-        self.message_user(request, f'{queryset.count()} pedido(s) marcado(s) como cancelado(s).')
+        for order in queryset:
+            order.restore_committed_stock()
+        updated = queryset.update(status='cancelled')
+        self.message_user(request, f'{updated} pedido(s) marcado(s) como cancelado(s); stock restaurado si aplicaba.')
+
+    def save_model(self, request, obj, form, change):
+        if (
+            change
+            and getattr(form, 'changed_data', None)
+            and 'status' in form.changed_data
+            and obj.status == 'cancelled'
+        ):
+            previous = Order.objects.filter(pk=obj.pk).first()
+            if previous and previous.status != 'cancelled':
+                previous.restore_committed_stock()
+                obj.stock_committed = False
+        super().save_model(request, obj, form, change)
+
+    def delete_queryset(self, request, queryset):
+        """QuerySet.delete() no emite pre_delete por fila; restaurar stock antes."""
+        for order in queryset:
+            order.restore_committed_stock()
+        super().delete_queryset(request, queryset)
 
 
 @admin.register(ContactMessage)
