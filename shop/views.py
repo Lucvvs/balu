@@ -880,16 +880,15 @@ def checkout(request):
         metadata={'order_id': order.id, 'total': total}
     )
 
-    # Enviar emails solo si NO es Mercado Pago (en MP se envía al aprobar vía webhook)
-    if not is_mp:
-        try:
-            send_order_confirmation_email(order)
-        except Exception as e:
-            print(f'Error al enviar email de confirmación: {str(e)}')
-        try:
-            send_order_notification_to_admin(order)
-        except Exception as e:
-            print(f'Error al enviar notificación al admin: {str(e)}')
+    # Correos al crear el pedido (todos los métodos de pago, incl. MP antes de ir al checkout MP)
+    try:
+        send_order_confirmation_email(order)
+    except Exception as e:
+        print(f'Error al enviar email de confirmación: {str(e)}')
+    try:
+        send_order_notification_to_admin(order)
+    except Exception as e:
+        print(f'Error al enviar notificación al admin: {str(e)}')
 
     if is_mp:
         base_url = (settings.MP_BASE_URL or '').strip().rstrip('/')
@@ -1082,7 +1081,6 @@ def mp_webhook(request: HttpRequest):
         # Si se aprobó: confirmar pedido. Stock ya se descontó en checkout (pedidos nuevos);
         # pedidos antiguos MP pueden tener stock_committed=False hasta este webhook.
         if status == 'approved':
-            prev_status = order.status
             order.status = 'confirmed'
             if not order.stock_committed:
                 for item in order.items.select_related('product', 'product_variant').all():
@@ -1108,16 +1106,6 @@ def mp_webhook(request: HttpRequest):
                         product.stock -= item.quantity
                         product.save(update_fields=['stock'])
                 order.stock_committed = True
-
-            if prev_status == 'pending_payment':
-                try:
-                    send_order_confirmation_email(order)
-                except Exception as e:
-                    print(f'Error al enviar email de confirmación (MP): {str(e)}')
-                try:
-                    send_order_notification_to_admin(order)
-                except Exception as e:
-                    print(f'Error al enviar notificación al admin (MP): {str(e)}')
 
         elif status in ('rejected', 'cancelled', 'charged_back', 'refunded'):
             # Devolver stock si el pago nunca se concretó (reserva hecha en checkout)
