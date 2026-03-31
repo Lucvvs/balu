@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q, Prefetch, F, Case, When, IntegerField
+from collections import defaultdict, deque
+
+from django.db.models import Q, Prefetch, F, Case, When, IntegerField, Exists, OuterRef, Value
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST, require_GET
 from django.http import JsonResponse, HttpResponse, HttpRequest, Http404
@@ -109,6 +111,64 @@ def home(request):
     return render(request, 'shop/home.html', context)
 
 
+def _annotate_catalog_stock_sort(queryset):
+    """0 = con stock vendible, 1 = agotado (alinea con is_available_for_purchase)."""
+    variant_in_stock = Exists(
+        ProductVariant.objects.filter(product_id=OuterRef('pk'), stock__gt=0)
+    )
+    has_variants = Exists(ProductVariant.objects.filter(product_id=OuterRef('pk')))
+    return queryset.annotate(
+        _cat_has_variants=has_variants,
+        _cat_variant_in_stock=variant_in_stock,
+    ).annotate(
+        catalog_stock_sort=Case(
+            When(
+                _cat_has_variants=True,
+                then=Case(
+                    When(_cat_variant_in_stock=True, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                ),
+            ),
+            When(stock__gt=0, then=Value(0)),
+            default=Value(1),
+            output_field=IntegerField(),
+        ),
+    )
+
+
+def _interleaved_catalog_product_ids(queryset):
+    """
+    Orden round-robin por categoría (mismo orden que Category: name).
+    En cada categoría: primero con stock, luego agotados; dentro de cada bloque por -created_at.
+    """
+    qs = queryset.order_by('category_id', 'catalog_stock_sort', '-created_at')
+    by_category = defaultdict(list)
+    for row in qs.values('id', 'category_id'):
+        by_category[row['category_id']].append(row['id'])
+
+    category_order = list(
+        Category.objects.filter(is_active=True).order_by('name').values_list('id', flat=True)
+    )
+    deques = {cid: deque(by_category[cid]) for cid in by_category}
+    round_cats = [cid for cid in category_order if cid in deques]
+    extra = sorted(set(by_category.keys()) - set(round_cats))
+    round_cats.extend(extra)
+
+    result = []
+    active = list(round_cats)
+    while active:
+        nxt = []
+        for cid in active:
+            dq = deques.get(cid)
+            if dq:
+                result.append(dq.popleft())
+            if dq:
+                nxt.append(cid)
+        active = nxt
+    return result
+
+
 def products_list(request):
     """Vista de lista de productos con filtros"""
     products = Product.objects.filter(is_active=True).select_related(
@@ -160,33 +220,67 @@ def products_list(request):
             Q(brand__name__icontains=search_query)
         )
 
-    # Ordenamiento
+    # Ordenamiento y paginación
     sort_by = request.GET.get('sort', 'newest')
-    if sort_by == 'price_asc':
-        # Ordenar por el precio efectivo (offer_price si existe, sino price)
-        products = products.annotate(
-            effective_price=Case(
-                When(offer_price__isnull=False, then=F('offer_price')),
-                default=F('price'),
-                output_field=IntegerField()
-            )
-        ).order_by('effective_price', 'price')
-    elif sort_by == 'price_desc':
-        # Ordenar por el precio efectivo (offer_price si existe, sino price) descendente
-        products = products.annotate(
-            effective_price=Case(
-                When(offer_price__isnull=False, then=F('offer_price')),
-                default=F('price'),
-                output_field=IntegerField()
-            )
-        ).order_by('-effective_price', '-price')
-    elif sort_by == 'name':
-        products = products.order_by('name')
-
-    # Paginación
-    paginator = Paginator(products, 12)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    use_catalog_mix = (
+        sort_by == 'newest'
+        and not selected_categories
+        and not search_query
+    )
+
+    if use_catalog_mix:
+        mix_qs = _annotate_catalog_stock_sort(products)
+        ordered_ids = _interleaved_catalog_product_ids(mix_qs)
+        paginator = Paginator(ordered_ids, 12)
+        page_obj = paginator.get_page(page_number)
+        page_ids = list(page_obj.object_list)
+        if page_ids:
+            order_case = Case(
+                *[When(pk=pk, then=pos) for pos, pk in enumerate(page_ids)],
+                output_field=IntegerField(),
+            )
+            page_obj.object_list = list(
+                Product.objects.filter(pk__in=page_ids)
+                .select_related('category', 'brand')
+                .prefetch_related(
+                    Prefetch(
+                        'images',
+                        queryset=ProductImage.objects.all().order_by('-is_primary', 'order', 'id'),
+                    ),
+                    Prefetch(
+                        'variants',
+                        queryset=ProductVariant.objects.order_by('sort_order', 'name', 'id'),
+                    ),
+                )
+                .order_by(order_case)
+            )
+        else:
+            page_obj.object_list = []
+    else:
+        if sort_by == 'price_asc':
+            products = products.annotate(
+                effective_price=Case(
+                    When(offer_price__isnull=False, then=F('offer_price')),
+                    default=F('price'),
+                    output_field=IntegerField(),
+                )
+            ).order_by('effective_price', 'price')
+        elif sort_by == 'price_desc':
+            products = products.annotate(
+                effective_price=Case(
+                    When(offer_price__isnull=False, then=F('offer_price')),
+                    default=F('price'),
+                    output_field=IntegerField(),
+                )
+            ).order_by('-effective_price', '-price')
+        elif sort_by == 'name':
+            products = products.order_by('name')
+        else:
+            products = products.order_by('-created_at')
+
+        paginator = Paginator(products, 12)
+        page_obj = paginator.get_page(page_number)
 
     # Categorías para el filtro
     categories = Category.objects.filter(is_active=True)
