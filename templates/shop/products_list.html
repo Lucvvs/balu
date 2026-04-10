@@ -62,7 +62,7 @@
                                              loading="lazy" decoding="async"
                                              onerror="if(this.src!='{% static 'img/placeholder.webp' %}'){this.src='{% static 'img/placeholder.webp' %}';}else{this.style.display='none';}">
                                     {% endfor %}
-                                    {% if product.stock <= 2 and product.stock > 0 %}
+                                    {% if product.stock == 1 %}
                                         <span class="stock-alert-badge">
                                             <i class="bi bi-exclamation-triangle-fill"></i>
                                         </span>
@@ -71,7 +71,7 @@
                             {% else %}
                                 <div class="product-card-image-container" style="position: relative;">
                                     <img src="{% static 'img/placeholder.webp' %}" alt="{{ product.name }}" class="product-card-img" loading="lazy" decoding="async" onerror="this.style.display='none';">
-                                    {% if product.stock <= 2 and product.stock > 0 %}
+                                    {% if product.stock == 1 %}
                                         <span class="stock-alert-badge">
                                             <i class="bi bi-exclamation-triangle-fill"></i>
                                         </span>

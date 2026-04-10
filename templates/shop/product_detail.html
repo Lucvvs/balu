@@ -68,7 +68,7 @@
             </div>
             
             <!-- Stock Info -->
-            {% if product.stock <= 2 and product.stock > 0 %}
+            {% if product.stock == 1 %}
                 <div class="stock-alert mb-3">
                     <i class="bi bi-exclamation-triangle"></i> ¡Pocas unidades disponibles!
                 </div>
