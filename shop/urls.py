@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from . import views
 
 app_name = 'shop'
@@ -37,7 +38,11 @@ urlpatterns = [
     path('iniciar-sesion/', views.login_view, name='login'),
     path('cerrar-sesion/', views.logout_view, name='logout'),
     path('perfil/', views.profile, name='profile'),
-    path('perfil/actualizar/', views.update_profile, name='update_profile'),
+    path(
+        'perfil/actualizar/',
+        RedirectView.as_view(pattern_name='shop:profile', permanent=True),
+        name='update_profile_redirect',
+    ),
     
     # Contacto
     path('contacto/', views.contact_view, name='contact'),

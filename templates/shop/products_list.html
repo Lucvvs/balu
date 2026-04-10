@@ -12,18 +12,18 @@
     <div class="filter-bar-compact mb-4">
         <div class="filter-row">
             <div class="filter-categories">
-                <a href="{% url 'shop:products_list' %}{% if current_sort %}?sort={{ current_sort }}{% endif %}{% if current_offers %}{% if current_sort %}&{% else %}?{% endif %}offers=true{% endif %}" class="filter-btn {% if not current_categories_param and not current_offers %}active{% endif %}">
+                <a href="{% url 'shop:products_list' %}{% if current_sort %}?sort={{ current_sort }}{% endif %}{% if current_offers %}{% if current_sort %}&{% else %}?{% endif %}offers=true{% endif %}" class="filter-btn {% if not current_category and not current_offers %}active{% endif %}">
                     <i class="bi bi-grid"></i>
                     <span>Todos</span>
                 </a>
-                <a href="{% if current_offers %}{% url 'shop:products_list' %}{% if current_categories_param %}?categories={{ current_categories_param }}{% endif %}{% if current_sort %}{% if current_categories_param %}&{% else %}?{% endif %}sort={{ current_sort }}{% endif %}{% else %}{% url 'shop:products_list' %}?offers=true{% if current_categories_param %}&categories={{ current_categories_param }}{% endif %}{% if current_sort %}{% if current_categories_param %}&{% else %}?{% endif %}sort={{ current_sort }}{% endif %}{% endif %}" class="filter-btn filter-offer {% if current_offers %}active{% endif %}">
+                <a href="{% if current_offers %}{% url 'shop:products_list' %}{% if current_category or current_sort %}?{% endif %}{% if current_category %}category={{ current_category }}{% endif %}{% if current_sort %}{% if current_category %}&{% endif %}sort={{ current_sort }}{% endif %}{% else %}{% url 'shop:products_list' %}?offers=true{% if current_category %}&category={{ current_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% endif %}" class="filter-btn filter-offer {% if current_offers %}active{% endif %}">
                     <i class="bi bi-lightning-fill"></i>
                     <span>Ofertas</span>
                 </a>
                 {% for category in categories %}
                     <a href="#" 
                        data-category-slug="{{ category.slug }}"
-                       onclick="toggleCategory('{{ category.slug }}'); return false;"
+                       onclick="selectCategory('{{ category.slug }}'); return false;"
                        class="filter-btn {% if category.slug in current_categories %}active{% endif %}">
                         <i class="bi bi-circle-fill"></i>
                         <span>{{ category.name }}</span>
@@ -34,10 +34,10 @@
             <div class="filter-sort">
                 <i class="bi bi-arrow-down-up sort-icon" onclick="resetAllFilters()" style="cursor: pointer;" title="Reiniciar todos los filtros"></i>
                 <select name="sort" class="sort-select" onchange="updateSort(this.value)">
-                    <option value="{% url 'shop:products_list' %}{% if current_categories_param %}?categories={{ current_categories_param }}{% elif current_category %}?category={{ current_category }}{% endif %}{% if current_offers %}{% if current_categories_param or current_category %}&{% else %}?{% endif %}offers=true{% endif %}">Ordenar por...</option>
-                    <option value="{% url 'shop:products_list' %}?sort=name{% if current_categories_param %}&categories={{ current_categories_param }}{% elif current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'name' %}selected{% endif %}>Nombre A-Z</option>
-                    <option value="{% url 'shop:products_list' %}?sort=price_asc{% if current_categories_param %}&categories={{ current_categories_param }}{% elif current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'price_asc' %}selected{% endif %}>Precio: Menor a Mayor</option>
-                    <option value="{% url 'shop:products_list' %}?sort=price_desc{% if current_categories_param %}&categories={{ current_categories_param }}{% elif current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'price_desc' %}selected{% endif %}>Precio: Mayor a Menor</option>
+                    <option value="{% url 'shop:products_list' %}{% if current_category %}?category={{ current_category }}{% endif %}{% if current_offers %}{% if current_category %}&{% else %}?{% endif %}offers=true{% endif %}">Ordenar por...</option>
+                    <option value="{% url 'shop:products_list' %}?sort=name{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'name' %}selected{% endif %}>Nombre A-Z</option>
+                    <option value="{% url 'shop:products_list' %}?sort=price_asc{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'price_asc' %}selected{% endif %}>Precio: Menor a Mayor</option>
+                    <option value="{% url 'shop:products_list' %}?sort=price_desc{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'price_desc' %}selected{% endif %}>Precio: Mayor a Menor</option>
                 </select>
             </div>
         </div>
@@ -132,7 +132,7 @@
             <ul class="pagination">
                 {% if products.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ products.previous_page_number }}{% if current_categories_param %}&categories={{ current_categories_param }}{% elif current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">Anterior</a>
+                        <a class="page-link" href="?page={{ products.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">Anterior</a>
                     </li>
                 {% endif %}
                 
@@ -143,14 +143,14 @@
                         </li>
                     {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ num }}{% if current_categories_param %}&categories={{ current_categories_param }}{% elif current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ num }}</a>
+                            <a class="page-link" href="?page={{ num }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ num }}</a>
                         </li>
                     {% endif %}
                 {% endfor %}
                 
                 {% if products.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ products.next_page_number }}{% if current_categories_param %}&categories={{ current_categories_param }}{% elif current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">Siguiente</a>
+                        <a class="page-link" href="?page={{ products.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">Siguiente</a>
                     </li>
                 {% endif %}
             </ul>
@@ -216,54 +216,24 @@ function resetAllFilters() {
     window.location.href = '{% url "shop:products_list" %}';
 }
 
-// Función para toggle de categorías (selección múltiple)
-function toggleCategory(categorySlug) {
+// Una sola categoría activa; al elegir otra se reemplaza. Misma categoría otra vez = quitar filtro (Todos).
+function selectCategory(categorySlug) {
     const urlParams = new URLSearchParams(window.location.search);
-    const currentCategories = urlParams.get('categories') ? urlParams.get('categories').split(',') : [];
-    
-    // Toggle: si la categoría está seleccionada, la quitamos; si no, la agregamos
-    const index = currentCategories.indexOf(categorySlug);
-    if (index > -1) {
-        currentCategories.splice(index, 1);
+    const fromCategory = urlParams.get('category');
+    const fromLegacy = urlParams.get('categories');
+    const effective = (fromCategory || (fromLegacy ? fromLegacy.split(',')[0].trim() : '')) || '';
+
+    if (effective === categorySlug) {
+        urlParams.delete('category');
     } else {
-        currentCategories.push(categorySlug);
+        urlParams.set('category', categorySlug);
     }
-    
-    // Construir nueva URL
-    if (currentCategories.length > 0) {
-        urlParams.set('categories', currentCategories.join(','));
-    } else {
-        urlParams.delete('categories');
-    }
-    
-    // Eliminar el parámetro 'category' si existe (usamos solo 'categories')
-    urlParams.delete('category');
-    
-    // Mantener otros parámetros
-    const offers = urlParams.get('offers');
-    const sort = urlParams.get('sort');
-    
-    // Construir URL final
-    let newUrl = '{% url "shop:products_list" %}?';
-    const params = [];
-    
-    if (currentCategories.length > 0) {
-        params.push('categories=' + currentCategories.join(','));
-    }
-    if (offers === 'true') {
-        params.push('offers=true');
-    }
-    if (sort) {
-        params.push('sort=' + sort);
-    }
-    
-    if (params.length > 0) {
-        newUrl += params.join('&');
-    } else {
-        newUrl = '{% url "shop:products_list" %}';
-    }
-    
-    window.location.href = newUrl;
+    urlParams.delete('categories');
+    urlParams.delete('page');
+
+    const qs = urlParams.toString();
+    const base = '{% url "shop:products_list" %}';
+    window.location.href = qs ? base + '?' + qs : base;
 }
 
 function openSizeModal(button) {

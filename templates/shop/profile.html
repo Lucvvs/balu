@@ -5,104 +5,179 @@
 {% block title %}Mi Perfil - MotoMoto{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1 class="mb-4">
-        <i class="bi bi-person-circle"></i> Mi Perfil
-    </h1>
-    
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-person"></i> Información Personal</h5>
-                </div>
-                <div class="card-body">
-                    <form method="post" action="{% url 'shop:update_profile' %}" id="profile-form">
-                        {% csrf_token %}
-                        <input type="hidden" name="confirm" id="confirm-field" value="no">
-                        
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Nombre</strong></label>
-                            <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}" required>
+<section class="profile-page-section py-4 py-lg-5">
+    <div class="container">
+        <div class="profile-page-hero text-center text-lg-start mb-4 mb-lg-5">
+            <p class="profile-page-badge mb-2">
+                <i class="bi bi-shield-check"></i> Tu cuenta MotoMoto
+            </p>
+            <h1 class="profile-page-title mb-2">
+                <i class="bi bi-person-badge profile-page-title-icon"></i>
+                Mi perfil
+            </h1>
+            <p class="profile-page-lead text-muted mb-0">
+                Actualiza tus datos y revisa el historial de tus pedidos.
+            </p>
+        </div>
+
+        <div class="row g-4 g-lg-5 align-items-stretch">
+            <!-- Información personal -->
+            <div class="col-lg-5">
+                <div class="profile-card profile-card--personal h-100">
+                    <div class="profile-card__header">
+                        <div class="profile-avatar" aria-hidden="true">
+                            {% if user.first_name or user.last_name %}
+                                {{ user.first_name|slice:":1"|default:""|upper }}{{ user.last_name|slice:":1"|default:""|upper }}
+                            {% else %}
+                                {{ user.email|slice:":1"|upper }}
+                            {% endif %}
                         </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Apellido</strong></label>
-                            <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}" required>
+                        <div>
+                            <h2 class="profile-card__title mb-0">Información personal</h2>
+                            <p class="profile-card__subtitle mb-0">Datos de contacto de tu cuenta</p>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Email</strong></label>
-                            <input type="email" name="email" class="form-control" value="{{ user.email }}" readonly required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label"><strong>Teléfono</strong></label>
-                            <input type="text" name="phone" class="form-control" value="{{ user.phone|default:'' }}">
-                        </div>
-                        
-                        
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle"></i> Guardar Cambios
-                        </button>
-                    </form>
+                    </div>
+                    <div class="profile-card__body">
+                        <form method="post" action="{% url 'shop:profile' %}" id="profile-form" novalidate>
+                            {% csrf_token %}
+
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger profile-alert" role="alert">
+                                    {% for err in form.non_field_errors %}
+                                        <div>{{ err }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            <div class="profile-field mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label profile-form-label">
+                                    <i class="bi bi-person"></i> {{ form.first_name.label }}
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.first_name.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text profile-field-hint">Solo letras, espacios, guiones o apóstrofos.</small>
+                            </div>
+
+                            <div class="profile-field mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label profile-form-label">
+                                    <i class="bi bi-person-lines-fill"></i> {{ form.last_name.label }}
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.last_name.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text profile-field-hint">Solo letras, espacios, guiones o apóstrofos.</small>
+                            </div>
+
+                            <div class="profile-field mb-3">
+                                <label class="form-label profile-form-label">
+                                    <i class="bi bi-envelope-at"></i> Correo electrónico
+                                </label>
+                                <input type="email" class="form-control profile-form-input profile-form-input--readonly" value="{{ user.email }}" readonly autocomplete="email">
+                                <small class="form-text profile-field-hint">El correo no se puede cambiar desde aquí.</small>
+                            </div>
+
+                            <div class="profile-field mb-4">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label profile-form-label">
+                                    <i class="bi bi-phone"></i> {{ form.phone.label }}
+                                </label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.phone.errors.0 }}</div>
+                                {% endif %}
+                                <small class="form-text profile-field-hint">Solo números, sin espacios (ej. 56912345678).</small>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger profile-save-btn w-100">
+                                <i class="bi bi-check-lg me-2"></i> Guardar cambios
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0"><i class="bi bi-bag-check"></i> Mis Pedidos</h5>
-                </div>
-                <div class="card-body">
-                    {% if orders %}
-                        <div class="list-group">
-                            {% for order in orders %}
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <h6 class="mb-1">Pedido #{{ order.order_number }}</h6>
-                                            <p class="mb-1 text-muted">
-                                                <i class="bi bi-calendar"></i> {{ order.created_at|date:"d/m/Y H:i" }}
+
+            <!-- Pedidos -->
+            <div class="col-lg-7">
+                <div class="profile-card profile-card--orders h-100">
+                    <div class="profile-card__header profile-card__header--orders">
+                        <div class="profile-card__header-icon-wrap" aria-hidden="true">
+                            <i class="bi bi-bag-heart-fill"></i>
+                        </div>
+                        <div>
+                            <h2 class="profile-card__title mb-0">Mis pedidos</h2>
+                            <p class="profile-card__subtitle mb-0">Estado y detalle de cada compra</p>
+                        </div>
+                    </div>
+                    <div class="profile-card__body profile-card__body--orders">
+                        {% if orders %}
+                            <ul class="list-unstyled profile-orders-list mb-0">
+                                {% for order in orders %}
+                                    <li class="profile-order-item">
+                                        <div class="profile-order-item__main">
+                                            <div class="profile-order-item__top">
+                                                <span class="profile-order-number">
+                                                    <i class="bi bi-receipt"></i> Pedido #{{ order.order_number }}
+                                                </span>
+                                                <span class="badge profile-order-badge profile-order-badge--{{ order.status }}">
+                                                    {{ order.get_status_display }}
+                                                </span>
+                                            </div>
+                                            <p class="profile-order-date text-muted mb-0">
+                                                <i class="bi bi-calendar3"></i> {{ order.created_at|date:"d/m/Y H:i" }}
                                             </p>
-                                            <span class="badge bg-{% if order.status == 'realized' %}secondary{% elif order.status == 'pending_payment' %}warning{% elif order.status == 'confirmed' %}info{% elif order.status == 'shipped' or order.status == 'ready_for_pickup' %}primary{% elif order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}secondary{% endif %}">
-                                                {{ order.get_status_display }}
-                                            </span>
                                         </div>
-                                        <div class="text-end">
-                                            <strong class="d-block mb-2">{{ order.total|currency_clp }}</strong>
-                                            <a href="{% url 'shop:order_confirmation' order_id=order.id %}" class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-eye"></i> Ver Detalle
+                                        <div class="profile-order-item__side">
+                                            <strong class="profile-order-total">{{ order.total|currency_clp }}</strong>
+                                            <a href="{% url 'shop:order_confirmation' order_id=order.id %}" class="btn btn-sm btn-outline-danger profile-order-link">
+                                                Ver detalle <i class="bi bi-arrow-right-short"></i>
                                             </a>
                                         </div>
-                                    </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="profile-orders-empty text-center py-5">
+                                <div class="profile-orders-empty-icon mb-3">
+                                    <i class="bi bi-inbox"></i>
                                 </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-                            <p class="text-muted mt-3">No has realizado ningún pedido aún.</p>
-                            <a href="{% url 'shop:products_list' %}" class="btn btn-primary">
-                                <i class="bi bi-cart"></i> Comenzar a Comprar
-                            </a>
-                        </div>
-                    {% endif %}
+                                <p class="text-muted mb-4">Aún no tienes pedidos registrados.</p>
+                                <a href="{% url 'shop:products_list' %}" class="btn btn-danger">
+                                    <i class="bi bi-grid me-2"></i> Ir al catálogo
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
 <script>
-document.getElementById('profile-form').addEventListener('submit', function(e) {
-    if (confirm('¿Confirmas los cambios en tu perfil?')) {
-        document.getElementById('confirm-field').value = 'yes';
-    } else {
-        e.preventDefault();
+(function () {
+    var form = document.getElementById('profile-form');
+    if (!form) return;
+
+    var phone = form.querySelector('input[name="phone"]');
+    if (phone) {
+        phone.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '');
+        });
     }
-});
+
+    function stripDigitsFromName(el) {
+        if (!el) return;
+        el.addEventListener('input', function () {
+            var s = this.value;
+            var t = s.replace(/[0-9]/g, '');
+            if (t !== s) this.value = t;
+        });
+    }
+
+    stripDigitsFromName(form.querySelector('input[name="first_name"]'));
+    stripDigitsFromName(form.querySelector('input[name="last_name"]'));
+})();
 </script>
 {% endblock %}
-

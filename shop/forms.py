@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.contrib.auth.forms import (
     BaseUserCreationForm,
@@ -281,6 +283,110 @@ class CheckoutForm(forms.Form):
                 raise forms.ValidationError("Debe ingresar la dirección para envío a domicilio.")
 
         return cleaned_data
+
+
+def _validate_person_name(value: str, field_label: str) -> str:
+    """Letras (incl. acentos), espacios y guiones/apóstrofos; sin números ni símbolos raros."""
+    value = (value or "").strip()
+    if not value:
+        raise ValidationError(_("Este campo es obligatorio."), code="required")
+    allowed_extra = set("-'.´")
+    for ch in value:
+        if ch.isdigit():
+            raise ValidationError(
+                _("No se permiten números en %(label)s."),
+                params={"label": field_label},
+                code="no_digits",
+            )
+        if ch.isalpha():
+            continue
+        if ch in allowed_extra or ch.isspace():
+            continue
+        raise ValidationError(
+            _("En %(label)s use solo letras, espacios, guiones o apóstrofos."),
+            params={"label": field_label},
+            code="invalid_chars",
+        )
+    return value
+
+
+class ProfileUpdateForm(forms.ModelForm):
+    """Edición de perfil: validación estricta de nombre, apellido y teléfono."""
+
+    class Meta:
+        model = CustomUser
+        fields = ("first_name", "last_name", "phone")
+        labels = {
+            "first_name": _("Nombre"),
+            "last_name": _("Apellido"),
+            "phone": _("Teléfono"),
+        }
+        widgets = {
+            "first_name": forms.TextInput(
+                attrs={
+                    "class": "form-control profile-form-input",
+                    "autocomplete": "given-name",
+                    "maxlength": "30",
+                    "inputmode": "text",
+                }
+            ),
+            "last_name": forms.TextInput(
+                attrs={
+                    "class": "form-control profile-form-input",
+                    "autocomplete": "family-name",
+                    "maxlength": "30",
+                    "inputmode": "text",
+                }
+            ),
+            "phone": forms.TextInput(
+                attrs={
+                    "class": "form-control profile-form-input",
+                    "autocomplete": "tel",
+                    "maxlength": "15",
+                    "placeholder": "56912345678",
+                    "inputmode": "numeric",
+                    "pattern": "[0-9]*",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.is_bound and self.errors:
+            for name in self.errors:
+                if name not in self.fields:
+                    continue
+                w = self.fields[name].widget
+                cls = (w.attrs.get("class") or "").strip()
+                if "is-invalid" not in cls:
+                    w.attrs["class"] = f"{cls} is-invalid".strip()
+
+    def clean_first_name(self):
+        return _validate_person_name(self.cleaned_data.get("first_name", ""), _("el nombre"))
+
+    def clean_last_name(self):
+        return _validate_person_name(self.cleaned_data.get("last_name", ""), _("el apellido"))
+
+    def clean_phone(self):
+        phone = (self.cleaned_data.get("phone") or "").strip()
+        if not phone:
+            return ""
+        if not re.fullmatch(r"\d+", phone):
+            raise ValidationError(
+                _("El teléfono solo puede contener números (sin espacios ni símbolos)."),
+                code="phone_digits",
+            )
+        if len(phone) < 8:
+            raise ValidationError(
+                _("Ingresa un teléfono válido (mínimo 8 dígitos)."),
+                code="phone_short",
+            )
+        if len(phone) > 15:
+            raise ValidationError(
+                _("El teléfono no puede superar 15 dígitos."),
+                code="phone_long",
+            )
+        return phone
 
 
 class ContactForm(forms.ModelForm):

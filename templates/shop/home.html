@@ -25,7 +25,7 @@
 
 <!-- Category Banner -->
 <section class="category-banner">
-    <a href="{% url 'shop:products_list' %}?categories=cascos,equipamiento" class="category-item"
+    <a href="{% url 'shop:products_list' %}?category=equipamiento" class="category-item"
         style="background-image: url('{% static 'img/banner1.webp' %}');">
         <div class="overlay">
             <span style="color: white; font-size: 2rem; font-weight: bold;">Equipamiento</span>
@@ -37,7 +37,7 @@
             <span style="color: white; font-size: 2rem; font-weight: bold;">Accesorios</span>
         </div>
     </a>
-    <a href="{% url 'shop:products_list' %}?categories=seguridad,maletas" class="category-item"
+    <a href="{% url 'shop:products_list' %}?category=maletas" class="category-item"
         style="background-image: url('{% static 'img/banner2.webp' %}');">
         <div class="overlay">
             <span style="color: white; font-size: 2rem; font-weight: bold;">Para la Moto</span>
@@ -58,18 +58,21 @@
         </h3>
         <div class="security-images-container">
             <div class="security-image-item">
+                <img src="{% static 'img/seguridad2.webp' %}" alt="Seguridad 2" class="security-image" loading="lazy" decoding="async"
+                    onerror="this.style.display='none'">
+            </div>
+            <div class="security-image-item">
                 <img src="{% static 'img/seguridad1.webp' %}" alt="Seguridad 1" class="security-image" loading="lazy" decoding="async"
+                    onerror="this.style.display='none'">
+            </div>
+            <div class="security-image-item">
+                <img src="{% static 'img/seguridad5.webp' %}" alt="Seguridad 5" class="security-image" loading="lazy" decoding="async"
                     onerror="this.style.display='none'">
             </div>
             <div class="security-image-item">
                 <img src="{% static 'img/seguridad3.webp' %}" alt="Seguridad 3" class="security-image" loading="lazy" decoding="async"
                     onerror="this.style.display='none'">
             </div>
-            <div class="security-image-item">
-                <img src="{% static 'img/seguridad2.webp' %}" alt="Seguridad 2" class="security-image" loading="lazy" decoding="async"
-                    onerror="this.style.display='none'">
-            </div>
-            
             <div class="security-image-item">
                 <img src="{% static 'img/seguridad4.webp' %}" alt="Seguridad 4" class="security-image" loading="lazy" decoding="async"
                     onerror="this.style.display='none'">
@@ -566,6 +569,80 @@ function submitSizeForm() {
     document.querySelectorAll('.carousel-main').forEach(img => {
         img.style.transition = 'opacity 0.3s ease-in-out';
     });
+
+    // Carrusel de marcas (≤768px): la marca cuyo centro está más cerca del centro de pantalla a color
+    function initBrandsCenter() {
+        const mq = window.matchMedia('(max-width: 768px)');
+        const banner = document.querySelector('.brands-banner');
+        const scrollEl = document.querySelector('.brands-scroll');
+        if (!banner || !scrollEl) return;
+
+        let rafId = null;
+
+        function cleanup() {
+            banner.classList.remove('brands-center-focus');
+            scrollEl.querySelectorAll('.brand-logo-link.is-near-center').forEach(function (el) {
+                el.classList.remove('is-near-center');
+            });
+        }
+
+        function tick() {
+            if (!mq.matches) {
+                rafId = null;
+                cleanup();
+                return;
+            }
+
+            banner.classList.add('brands-center-focus');
+            const links = scrollEl.querySelectorAll('.brand-logo-link');
+            const cx = window.innerWidth / 2;
+            let best = null;
+            let bestDist = Infinity;
+
+            links.forEach(function (link) {
+                const r = link.getBoundingClientRect();
+                const mid = r.left + r.width / 2;
+                const d = Math.abs(mid - cx);
+                if (d < bestDist) {
+                    bestDist = d;
+                    best = link;
+                }
+            });
+
+            links.forEach(function (link) {
+                link.classList.toggle('is-near-center', link === best);
+            });
+
+            rafId = requestAnimationFrame(tick);
+        }
+
+        function start() {
+            if (rafId !== null) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+            if (!mq.matches) {
+                cleanup();
+                return;
+            }
+            rafId = requestAnimationFrame(tick);
+        }
+
+        function onResize() {
+            start();
+        }
+
+        mq.addEventListener('change', start);
+        window.addEventListener('resize', onResize);
+        window.addEventListener('orientationchange', onResize);
+        start();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBrandsCenter);
+    } else {
+        initBrandsCenter();
+    }
 </script>
 
 

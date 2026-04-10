@@ -1,0 +1,434 @@
+/*
+ * =============================================================================
+ * theme-base.css — Base global (todas las páginas, base.html)
+ * -----------------------------------------------------------------------------
+ * :root — paleta y tokens de color
+ * * — reset box model · html/body — scroll y tipografía base
+ * body.navbar-scrolled — compensación de altura con navbar compacto
+ * .navbar-motomoto — barra superior fija, marca, enlaces, dropdown desktop
+ * .cart-badge / .cart-mobile — ícono carrito y contador animado
+ * @keyframes cartPulse, cartShake, badgeBlink — animaciones del carrito
+ * @keyframes dropdownFadeIn, dropdownFadeOut — menú usuario (≥992px)
+ * =============================================================================
+ */
+
+:root {
+    --primary-color: #dc3545; /* Rojo */
+    --secondary-color: #212529; /* Oscuro */
+    --accent-color: #ff6b35; /* Naranja */
+    --success-color: #28a745; /* Verde */
+    --light-bg: #f8f9fa;
+    --dark-bg: #343a40;
+    --border-color: #dee2e6;
+    --text-color: #212529;
+    --text-muted: #6c757d;
+    --white: #ffffff;
+}
+
+/* Reset y Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Acelerar transiciones de Bootstrap collapse para el navbar */
+@media (max-width: 991.98px) {
+    .navbar-motomoto .collapse {
+        transition: none !important;
+        transition-duration: 0s !important;
+    }
+    
+    .navbar-motomoto .collapsing {
+        transition: none !important;
+        transition-duration: 0s !important;
+        transition-property: none !important;
+    }
+}
+
+html {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-color);
+    background-color: var(--light-bg);
+    line-height: 1.6;
+    padding-top: 80px; /* Espacio exacto para el navbar fijo inicial */
+    transition: padding-top 0.3s ease;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* En móvil, sin transición del padding al cambiar navbar: menos saltos visibles si el scroll cruza el umbral */
+@media (max-width: 991.98px) {
+    body {
+        transition: padding-top 0s;
+    }
+}
+
+/* Ajustar padding cuando el navbar está scrolled */
+body.navbar-scrolled {
+    padding-top: 60px; /* Espacio exacto para el navbar scrolled */
+}
+
+/* Ajustar margin-top de hero section cuando el navbar está scrolled */
+body.navbar-scrolled .hero-section {
+    margin-top: 0; /* Sin margen negativo cuando navbar está scrolled */
+}
+
+/* Navbar */
+.navbar-motomoto {
+    background-color: var(--dark-bg);
+    padding: 1rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+    overflow-y: visible !important; /* Allow dropdown to show below navbar */
+    max-height: none !important; /* No height restriction */
+    height: auto !important; /* Auto height */
+}
+
+/* Navbar cuando se hace scroll */
+.navbar-motomoto.scrolled {
+    padding: 0.5rem 0;
+    background-color: rgba(33, 37, 41, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.navbar-motomoto .navbar-brand {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--primary-color) !important;
+    transition: font-size 0.3s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.navbar-motomoto.scrolled .navbar-brand {
+    font-size: 1.5rem;
+}
+
+.navbar-motomoto .navbar-nav.me-auto {
+    margin-left: 1.5rem !important;
+}
+
+.navbar-motomoto .navbar-nav {
+    overflow: visible; /* Allow dropdown to show outside nav */
+}
+
+.navbar-motomoto .nav-link {
+    color: var(--white) !important;
+    margin: 0 0.75rem;
+    transition: all 0.3s;
+    font-size: 1.15rem;
+    font-weight: 500;
+    position: relative;
+    padding: 0.5rem 0.75rem !important;
+}
+
+.navbar-motomoto.scrolled .nav-link {
+    font-size: 1rem;
+    padding: 0.4rem 0.6rem !important;
+}
+
+.navbar-motomoto .nav-link:hover {
+    color: var(--primary-color) !important;
+}
+
+/* Eliminar outline azul del botón dropdown */
+.navbar-motomoto .nav-link.dropdown-toggle,
+.navbar-motomoto .nav-link.dropdown-toggle:hover,
+.navbar-motomoto .nav-link.dropdown-toggle:focus,
+.navbar-motomoto .nav-link.dropdown-toggle:active {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.navbar-motomoto .nav-link.dropdown-toggle:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.navbar-motomoto .nav-link.active {
+    color: var(--primary-color) !important;
+}
+
+.navbar-motomoto .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--primary-color);
+    border-radius: 2px;
+}
+
+/* Carrito con animación */
+.navbar-motomoto .nav-link[href*="cart"] {
+    position: relative;
+    animation: cartPulse 3s ease-in-out infinite;
+}
+
+@keyframes cartPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.navbar-motomoto .nav-link[href*="cart"]:hover {
+    animation: cartShake 0.5s ease-in-out;
+}
+
+@keyframes cartShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px) rotate(-5deg);
+    }
+    75% {
+        transform: translateX(5px) rotate(5deg);
+    }
+}
+
+.cart-badge {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-radius: 50%;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+    animation: badgeBlink 2s ease-in-out infinite;
+}
+
+@keyframes badgeBlink {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+/* Carrito móvil - visible solo en pantallas pequeñas */
+.cart-mobile {
+    position: relative;
+    color: var(--white) !important;
+    font-size: 1.5rem;
+    padding: 0.5rem 0.75rem !important;
+    margin-right: 0.5rem;
+    animation: cartPulse 3s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    order: 2;
+}
+
+.cart-mobile:hover {
+    color: var(--primary-color) !important;
+    animation: cartShake 0.5s ease-in-out;
+}
+
+.cart-mobile .cart-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translate(25%, -25%);
+}
+
+/* Asegurar que el navbar container use flexbox */
+.navbar-motomoto .container {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+    max-width: 100%;
+    overflow-x: hidden !important;
+    overflow-y: visible !important; /* Allow dropdown to show below navbar */
+    position: relative;
+    max-height: none !important; /* No height restriction */
+    height: auto !important; /* Auto height */
+}
+
+/* Ajustar orden de elementos en móvil */
+.navbar-motomoto .navbar-brand {
+    order: 0;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.navbar-motomoto .navbar-toggler {
+    order: 3;
+    margin-left: 0;
+    flex-shrink: 0;
+}
+
+.navbar-motomoto .navbar-collapse {
+    order: 4;
+    width: 100%;
+    flex-basis: 100%;
+    overflow: visible !important; /* Allow dropdown to show outside collapse */
+    max-height: none !important; /* No height restriction */
+    height: auto !important; /* Auto height */
+}
+
+/* Dropdown Menu - Desktop (Large Screens) */
+@media (min-width: 992px) {
+    /* Prevent navbar from creating scroll */
+    .navbar-motomoto {
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+
+    .navbar-motomoto .container {
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+
+    .navbar-motomoto .navbar-collapse {
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+
+    .navbar-motomoto .navbar-nav {
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+
+    .navbar-motomoto .nav-item {
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+
+    .navbar-motomoto .nav-item.dropdown {
+        position: relative !important;
+        overflow: visible !important;
+    }
+
+    /* Eliminar outline azul del botón dropdown en desktop */
+    .navbar-motomoto .nav-link.dropdown-toggle,
+    .navbar-motomoto .nav-link.dropdown-toggle:hover,
+    .navbar-motomoto .nav-link.dropdown-toggle:focus,
+    .navbar-motomoto .nav-link.dropdown-toggle:active,
+    .navbar-motomoto .nav-link.dropdown-toggle:focus-visible {
+        outline: none !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    .navbar-motomoto .dropdown-menu {
+        position: absolute !important;
+        top: 100% !important;
+        right: 0 !important;
+        left: auto !important;
+        z-index: 1050 !important;
+        min-width: 200px;
+        margin-top: 0.125rem;
+        background-color: #ffffff !important;
+        border: 1px solid rgba(0, 0, 0, 0.15) !important;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+        transform-origin: top right;
+        transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+        display: block !important;
+        visibility: hidden;
+    }
+
+    .navbar-motomoto .dropdown-menu.show {
+        opacity: 1 !important;
+        transform: translateY(0) scale(1) !important;
+        pointer-events: auto !important;
+        visibility: visible !important;
+    }
+
+    /* Animación de entrada más fluida */
+    @keyframes dropdownFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* Animación de salida más fluida */
+    @keyframes dropdownFadeOut {
+        from {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+        }
+    }
+
+    /* Aplicar animación cuando se muestra */
+    .navbar-motomoto .dropdown-menu.show {
+        animation: dropdownFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    /* Ocultar cuando no está mostrado, con animación de salida */
+    .navbar-motomoto .dropdown-menu:not(.show) {
+        animation: dropdownFadeOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+}
+
+.navbar-motomoto .dropdown-item {
+    color: var(--text-color) !important;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.navbar-motomoto .dropdown-item:hover,
+.navbar-motomoto .dropdown-item:focus {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: var(--primary-color) !important;
+}
+
+.navbar-motomoto .dropdown-divider {
+    border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+    margin: 0.5rem 0;
+}
+
+

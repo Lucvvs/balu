@@ -2,383 +2,336 @@
 {% load static %}
 {% load shop_filters %}
 
-{% block title %}Confirmación de Pedido - MotoMoto{% endblock %}
+{% block title %}Pedido #{{ order.order_number }} - MotoMoto{% endblock %}
 
 {% block content %}
-<div class="container mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                {% with pm=order.payment_method.name|default:'' %}
-                {% if 'mercado' in pm|lower %}
-                    {% if order.mp_payment_status == 'approved' or order.status == 'confirmed' %}
-                        <div class="card-header bg-success text-white text-center">
-                            <h2 class="mb-0">
-                                <i class="bi bi-check-circle"></i> ¡Pago Aprobado!
-                            </h2>
-                        </div>
-                    {% elif order.mp_payment_status == 'rejected' or order.status == 'cancelled' %}
-                        <div class="card-header bg-danger text-white text-center">
-                            <h2 class="mb-0">
-                                <i class="bi bi-x-circle"></i> Pago Rechazado / Cancelado
-                            </h2>
-                        </div>
+<section class="order-confirm-page py-4 py-lg-5">
+    <div class="container order-confirm-container">
+        <div class="order-confirm-page-hero">
+            <p class="order-confirm-badge mb-0">
+                <i class="bi bi-receipt-cutoff"></i> Resumen de compra
+            </p>
+            <h1 class="order-confirm-page-title mb-2">
+                <i class="bi bi-bag-check-fill"></i>
+                {% if is_mercadopago %}
+                    {% if mp_approved %}
+                        ¡Gracias! Tu pago está confirmado
+                    {% elif mp_rejected %}
+                        Estado de tu pedido
                     {% else %}
-                        <div class="card-header bg-warning text-dark text-center">
-                            <h2 class="mb-0">
-                                <i class="bi bi-hourglass-split"></i> Pago Pendiente
-                            </h2>
-                        </div>
+                        Estamos procesando tu pago
                     {% endif %}
                 {% else %}
-                    <div class="card-header bg-success text-white text-center">
-                        <h2 class="mb-0">
-                            <i class="bi bi-check-circle"></i> ¡Pedido Confirmado!
-                        </h2>
-                    </div>
+                    ¡Pedido registrado!
                 {% endif %}
-                {% endwith %}
-                <div class="card-body p-4">
-                    {% with pm=order.payment_method.name|default:'' %}
-                    {% if 'mercado' in pm|lower %}
-                        {% if order.mp_payment_status == 'approved' or order.status == 'confirmed' %}
-                            <div class="alert alert-success border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
-                        {% elif order.mp_payment_status == 'rejected' or order.status == 'cancelled' %}
-                            <div class="alert alert-danger border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); color: white;">
+            </h1>
+            <p class="order-confirm-meta mb-0">
+                <i class="bi bi-calendar3"></i> {{ order.created_at|date:"d/m/Y" }} · <i class="bi bi-clock"></i> {{ order.created_at|date:"H:i" }}
+                · <span class="badge profile-order-badge profile-order-badge--{{ order.status }} ms-1">{{ order.get_status_display }}</span>
+            </p>
+        </div>
+
+        <!-- Tarjeta de estado principal -->
+        <div class="order-confirm-status-card order-confirm-status-card--{{ order_confirm_tone }}">
+            <div class="order-confirm-status-card__head">
+                {% if is_mercadopago %}
+                    {% if mp_approved %}
+                        <i class="bi bi-check-circle-fill"></i> Pago aprobado
+                    {% elif mp_rejected %}
+                        <i class="bi bi-x-circle-fill"></i> Pago rechazado o pedido cancelado
+                    {% else %}
+                        <i class="bi bi-hourglass-split"></i> Pago pendiente
+                    {% endif %}
+                {% else %}
+                    <i class="bi bi-check2-circle"></i> Pedido confirmado
+                {% endif %}
+            </div>
+            <div class="order-confirm-status-card__body">
+                <div class="order-confirm-status-card__body-inner">
+                    <div class="order-confirm-status-icon">
+                        {% if order_confirm_tone == 'success' %}
+                            <i class="bi bi-check-circle-fill"></i>
+                        {% elif order_confirm_tone == 'danger' %}
+                            <i class="bi bi-exclamation-octagon-fill"></i>
                         {% else %}
-                            <div class="alert alert-warning border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); color: #111;">
+                            <i class="bi bi-hourglass-top"></i>
+                        {% endif %}
+                    </div>
+                    <h2 class="order-confirm-status-title">
+                        {% if is_mercadopago %}
+                            {% if mp_approved %}
+                                Tu pago fue aprobado y el pedido quedó confirmado.
+                            {% elif mp_rejected %}
+                                No pudimos completar el pago. Puedes intentar de nuevo cuando quieras.
+                            {% else %}
+                                Esperando confirmación del pago. Si ya pagaste, puede tardar unos segundos.
+                            {% endif %}
+                        {% else %}
+                            Tu pedido fue creado correctamente. Te contactaremos pronto.
+                        {% endif %}
+                    </h2>
+                    <div class="order-confirm-order-pill">#{{ order.order_number }}</div>
+                    {% if is_mercadopago %}
+                        {% if mp_approved %}
+                            <p class="order-confirm-status-lead mb-0">Gracias por confiar en MotoMoto.</p>
+                        {% elif mp_rejected %}
+                            <p class="order-confirm-status-lead mb-0">Si necesitas ayuda, contáctanos con tu número de pedido.</p>
+                        {% else %}
+                            <p class="order-confirm-status-lead mb-0">Usa el botón de abajo si aún debes pagar con Mercado Pago.</p>
                         {% endif %}
                     {% else %}
-                        <div class="alert alert-success border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                        <p class="order-confirm-status-lead mb-0">Un vendedor te contactará para coordinar el siguiente paso.</p>
                     {% endif %}
-                        <div class="text-center">
-                            <h2 class="mb-3" style="color: white; font-weight: bold;">
-                                <i class="bi bi-check-circle-fill" style="font-size: 2.5rem;"></i>
-                                {% if 'mercado' in pm|lower %}
-                                    {% if order.mp_payment_status == 'approved' or order.status == 'confirmed' %}
-                                        ¡Pago confirmado!
-                                    {% elif order.mp_payment_status == 'rejected' or order.status == 'cancelled' %}
-                                        Tu pago no se pudo procesar
-                                    {% else %}
-                                        Estamos esperando tu pago
-                                    {% endif %}
+                    <p class="order-confirm-status-hint">
+                        <i class="bi bi-info-circle"></i> En cualquier consulta indica el número <strong>#{{ order.order_number }}</strong>
+                    </p>
+                    {% if is_mercadopago and order.mp_init_point %}
+                        <div class="order-confirm-mp-btn">
+                            <a class="btn btn-dark btn-lg px-4" href="{{ order.mp_init_point }}">
+                                <i class="bi bi-credit-card-2-front"></i>
+                                {% if mp_approved %}
+                                    Ver comprobante en Mercado Pago
                                 {% else %}
-                                    ¡Pedido Creado Exitosamente!
+                                    Pagar con Mercado Pago
                                 {% endif %}
-                            </h2>
-                            <div class="bg-white rounded p-3 mb-3" style="display: inline-block;">
-                                <h3 class="text-danger mb-0" style="font-weight: bold; font-size: 2rem;">
-                                    #{{ order.order_number }}
-                                </h3>
-                            </div>
-                            {% if 'mercado' in pm|lower %}
-                                {% if order.mp_payment_status == 'approved' or order.status == 'confirmed' %}
-                                    <p class="mb-2" style="font-size: 1.1rem; color: white;">
-                                        <strong>¡Gracias! Tu pago fue aprobado y tu pedido está confirmado.</strong>
-                                    </p>
-                                {% elif order.mp_payment_status == 'rejected' or order.status == 'cancelled' %}
-                                    <p class="mb-2" style="font-size: 1.1rem; color: white;">
-                                        <strong>Puedes reintentar el pago cuando quieras.</strong>
-                                    </p>
-                                {% else %}
-                                    <p class="mb-2" style="font-size: 1.1rem; color: #111;">
-                                        <strong>Si ya pagaste, espera unos segundos: la confirmación llega por webhook.</strong>
-                                    </p>
-                                {% endif %}
-                            {% else %}
-                                <p class="mb-2" style="font-size: 1.1rem; color: white;">
-                                    <strong>Serás contactado por uno de nuestros vendedores en breve.</strong>
-                                </p>
-                            {% endif %}
-                            <p class="mb-0" style="font-size: 1rem; color: rgba(255,255,255,0.9);">
-                                <i class="bi bi-info-circle"></i> Puedes contactarnos indicando tu número de pedido: <strong>#{{ order.order_number }}</strong>
-                            </p>
-
-                            {% if 'mercado' in pm|lower and order.mp_init_point %}
-                                <div class="mt-3">
-                                    <a class="btn btn-dark btn-lg" href="{{ order.mp_init_point }}">
-                                        <i class="bi bi-credit-card"></i>
-                                        {% if order.mp_payment_status == 'approved' or order.status == 'confirmed' %}
-                                            Ver comprobante / volver a Mercado Pago
-                                        {% else %}
-                                            Pagar con tarjeta (Mercado Pago)
-                                        {% endif %}
-                                    </a>
-                                </div>
-                            {% endif %}
+                            </a>
                         </div>
-                    </div>
-                    {% endwith %}
-                    
-                    <h4 class="mb-3">Detalles del Pedido</h4>
-                    
-                    <div class="mb-4">
-                        <h5>Productos:</h5>
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Producto</th>
-                                    <th>Cantidad</th>
-                                    <th>Precio Unitario</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in order.items.all %}
-                                    <tr>
-                                        <td>{{ item.product_name }}</td>
-                                        <td>{{ item.quantity }}</td>
-                                        <td>{{ item.unit_price|currency_clp }}</td>
-                                        <td>{{ item.line_total|currency_clp }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h5>Método de Entrega</h5>
-                            <p>{{ order.shipping_method.name }}</p>
-                            {% if order.shipping_address %}
-                                <p><strong>Dirección:</strong><br>
-                                {{ order.shipping_address }}<br>
-                                {{ order.shipping_comuna }}, {{ order.shipping_region }}</p>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Método de Pago</h5>
-                            <p>{{ order.payment_method.name }}</p>
-                        </div>
-                    </div>
-                    
-                    {% with pm=order.payment_method.name|default:'' %}
-                    {% if 'transferencia' in pm|lower %}
-                    <div class="card border-primary mb-3">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0">
-                                <i class="bi bi-bank"></i> Datos para Transferencia Bancaria
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="alert alert-info mb-3">
-                                <i class="bi bi-info-circle"></i> 
-                                <strong>Importante:</strong> Realiza la transferencia por el monto exacto de <strong class="text-danger fs-5">{{ order.total|currency_clp }}</strong> 
-                                e incluye el número de pedido <strong>#{{ order.order_number }}</strong> en el concepto o asunto de la transferencia.
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-primary"><i class="bi bi-building"></i> Banco</h6>
-                                    <p class="mb-0 fs-5"><strong>Mercado Pago</strong></p>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-primary"><i class="bi bi-person-badge"></i> Tipo de Cuenta</h6>
-                                    <p class="mb-0 fs-5"><strong>Cuenta Vista</strong></p>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-primary"><i class="bi bi-123"></i> Número de Cuenta</h6>
-                                    <p class="mb-0 fs-4"><strong class="text-danger">1075414152</strong></p>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-primary"><i class="bi bi-person"></i> Titular</h6>
-                                    <p class="mb-0 fs-5"><strong>Lucas Sánchez</strong></p>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-primary"><i class="bi bi-envelope"></i> Email para Envío de Comprobante</h6>
-                                    <p class="mb-0">
-                                        <a href="mailto:contacto@motomoto.cl" class="text-decoration-none">
-                                            <strong>contacto@motomoto.cl</strong>
-                                        </a>
-                                    </p>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-primary"><i class="bi bi-whatsapp"></i> WhatsApp</h6>
-                                    <p class="mb-0">
-                                        <a href="https://wa.me/56982177468" target="_blank" class="text-decoration-none">
-                                            <strong>+569 8217 7468</strong>
-                                        </a>
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="alert alert-warning mt-3 mb-0">
-                                <i class="bi bi-exclamation-triangle"></i> 
-                                <strong>Recuerda:</strong> Una vez realizada la transferencia, envía el comprobante por WhatsApp o email 
-                                con el número de pedido <strong>#{{ order.order_number }}</strong> para agilizar la confirmación de tu pago.
-                            </div>
-                        </div>
-                    </div>
                     {% endif %}
-                    {% endwith %}
-                    
-                    <div class="card bg-light mb-3">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p class="mb-1"><strong>Subtotal:</strong></p>
-                                    {% if order.coupon %}
-                                        <p class="mb-1"><strong>Descuento ({{ order.coupon.code }}):</strong></p>
-                                    {% endif %}
-                                    <p class="mb-1"><strong>Envío:</strong></p>
-                                    <p class="mb-0"><strong class="text-danger fs-5">Total:</strong></p>
-                                </div>
-                                <div class="col-md-6 text-end">
-                                    <p class="mb-1">{{ order.subtotal|currency_clp }}</p>
-                                    {% if order.coupon %}
-                                        <p class="mb-1 text-success">-{{ order.discount_total|currency_clp }}</p>
-                                    {% endif %}
-                                    <p class="mb-1">{{ order.shipping_cost|currency_clp }}</p>
-                                    <p class="mb-0"><strong class="text-danger fs-5">{{ order.total|currency_clp }}</strong></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    {% if user.is_staff %}
-                    <div class="card border-warning mb-4">
-                        <div class="card-header bg-warning text-dark">
-                            <h5 class="mb-0">
-                                <i class="bi bi-gear"></i> Panel de Administración
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row align-items-center">
-                                <div class="col-md-6">
-                                    <label class="form-label"><strong>Cambiar Estado del Pedido:</strong></label>
-                                    <form method="post" action="{% url 'shop:admin_update_order_status' order.id %}" class="d-inline" id="statusChangeForm" onsubmit="return confirmStatusChangeDetail(this);">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="from_detail" value="1">
-                                        <select name="status" class="form-select" id="orderStatusSelect">
-                                            {% for status_code, status_name in order.STATUS_CHOICES %}
-                                                <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
-                                                    {{ status_name }}
-                                                </option>
-                                            {% endfor %}
-                                        </select>
-                                    </form>
-                                </div>
-                                <div class="col-md-6 text-end">
-                                    <p class="mb-1"><strong>Estado Actual:</strong></p>
-                                    <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% elif order.status == 'pending_payment' %}warning{% else %}info{% endif %} fs-6">
-                                        {{ order.get_status_display }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="mt-3">
-                                <button type="submit" form="statusChangeForm" class="btn btn-warning">
-                                    <i class="bi bi-arrow-repeat"></i> Actualizar Estado
-                                </button>
-                                <a href="{% url 'shop:admin_dashboard' %}" class="btn btn-outline-secondary">
-                                    <i class="bi bi-speedometer2"></i> Ir al Dashboard
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="text-center">
-                        <a href="{% url 'shop:home' %}" class="btn btn-primary me-2">
-                            <i class="bi bi-house"></i> Volver al Inicio
-                        </a>
-                        <a href="{% url 'shop:products_list' %}" class="btn btn-outline-primary">
-                            <i class="bi bi-box-seam"></i> Seguir Comprando
-                        </a>
-                    </div>
-                    
-                    {% comment %} Barra de Progreso de Estados del Pedido {% endcomment %}
-                    {% with progress=order.get_status_progress %}
-                        {% if progress %}
-                            <div class="mt-5 mb-4">
-                                <h5 class="text-center mb-4">
-                                    <i class="bi bi-truck"></i> Estado de tu Pedido
-                                </h5>
-                                <div class="order-progress-container" style="position: relative; padding: 20px 0;">
-                                    <div class="progress-track" style="position: relative; height: 80px; margin: 0 40px;">
-                                        <!-- Línea de progreso -->
-                                        <div class="progress-line" style="position: absolute; top: 50%; left: 0; right: 0; height: 4px; background: linear-gradient(to right, #28a745 0%, #28a745 {{ progress.progress_percentage }}%, #e0e0e0 {{ progress.progress_percentage }}%, #e0e0e0 100%); transform: translateY(-50%); border-radius: 2px;"></div>
-                                        
-                                        <!-- Estados -->
-                                        {% for status_code, status_name in progress.statuses %}
-                                            <div class="status-point" style="position: absolute; top: 50%; left: calc({{ forloop.counter0 }} * (100% / {{ progress.statuses|length|add:-1 }})); transform: translate(-50%, -50%); text-align: center; width: 100px;">
-                                                <!-- Círculo del estado -->
-                                                <div class="status-circle" style="width: 50px; height: 50px; border-radius: 50%; background: {% if forloop.counter0 <= progress.current_index %}#28a745{% else %}#e0e0e0{% endif %}; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; border: 3px solid {% if forloop.counter0 <= progress.current_index %}#28a745{% else %}#e0e0e0{% endif %}; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                                                    {% if forloop.counter0 < progress.current_index %}
-                                                        <i class="bi bi-check-circle-fill" style="color: white; font-size: 24px;"></i>
-                                                    {% elif forloop.counter0 == progress.current_index %}
-                                                        <!-- Imagen de moto en el estado actual -->
-                                                        <img src="{% static 'img/motoestado.webp' %}" alt="Estado actual" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%; padding: 5px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                        <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center;">
-                                                            <i class="bi bi-bicycle" style="color: white; font-size: 28px;"></i>
-                                                        </div>
-                                                    {% else %}
-                                                        <i class="bi bi-circle" style="color: #999; font-size: 24px;"></i>
-                                                    {% endif %}
-                                                </div>
-                                                <!-- Nombre del estado -->
-                                                <div class="status-label" style="font-size: 11px; color: {% if forloop.counter0 <= progress.current_index %}#28a745{% else %}#999{% endif %}; font-weight: {% if forloop.counter0 == progress.current_index %}bold{% else %}normal{% endif %};">
-                                                    {{ status_name }}
-                                                </div>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                
-                                <!-- Estado actual destacado -->
-                                <div class="text-center mt-3">
-                                    <p class="mb-0">
-                                        <strong style="color: #28a745; font-size: 1.1rem;">
-                                            Estado Actual: {{ progress.current_status_display }}
-                                        </strong>
-                                    </p>
-                                </div>
-                            </div>
-                        {% elif order.status == 'cancelled' %}
-                            <div class="mt-5 mb-4">
-                                <div class="alert alert-danger text-center">
-                                    <i class="bi bi-x-circle"></i> <strong>Pedido Cancelado</strong>
-                                </div>
-                            </div>
-                        {% endif %}
-                    {% endwith %}
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<style>
-    @media (max-width: 768px) {
-        .order-progress-container .progress-track {
-            margin: 0 20px !important;
-        }
-        .order-progress-container .status-point {
-            width: 70px !important;
-        }
-        .order-progress-container .status-circle {
-            width: 40px !important;
-            height: 40px !important;
-        }
-        .order-progress-container .status-label {
-            font-size: 9px !important;
-        }
-    }
-</style>
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-8">
+                <div class="order-confirm-card mb-3">
+                    <div class="order-confirm-card__head order-confirm-card__head--light">
+                        <i class="bi bi-box-seam"></i> Productos
+                    </div>
+                    <div class="order-confirm-card__body p-0">
+                        <div class="order-confirm-items-table-wrap">
+                            <table class="table order-confirm-items-table mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-center">Cant.</th>
+                                        <th class="text-end">Unitario</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order.items.all %}
+                                        <tr>
+                                            <td class="order-confirm-item-name">{{ item.product_name }}</td>
+                                            <td class="text-center order-confirm-item-qty">{{ item.quantity }}</td>
+                                            <td class="text-end">{{ item.unit_price|currency_clp }}</td>
+                                            <td class="text-end fw-semibold">{{ item.line_total|currency_clp }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-confirm-info-grid mb-2">
+                    <div class="order-confirm-info-block">
+                        <h3><i class="bi bi-truck"></i> Entrega</h3>
+                        <p><strong>{{ order.shipping_method.name }}</strong></p>
+                        {% if order.shipping_address %}
+                            <p class="mt-2 mb-0 text-muted small">
+                                {{ order.shipping_address }}<br>
+                                {{ order.shipping_comuna }}{% if order.shipping_region %}, {{ order.shipping_region }}{% endif %}
+                            </p>
+                        {% endif %}
+                    </div>
+                    <div class="order-confirm-info-block">
+                        <h3><i class="bi bi-wallet2"></i> Pago</h3>
+                        <p><strong>{{ order.payment_method.name }}</strong></p>
+                    </div>
+                </div>
+
+                {% if is_transfer %}
+                    <div class="order-confirm-card order-confirm-transfer-card mb-3">
+                        <div class="order-confirm-card__head">
+                            <i class="bi bi-bank"></i> Datos para transferencia
+                        </div>
+                        <div class="order-confirm-card__body">
+                            <div class="alert alert-info order-confirm-transfer-alert mb-4" role="alert">
+                                <i class="bi bi-info-circle-fill me-1"></i>
+                                Transfiere el monto exacto de <strong>{{ order.total|currency_clp }}</strong> e indica el pedido
+                                <strong>#{{ order.order_number }}</strong> en el asunto o mensaje.
+                            </div>
+                            <div class="order-confirm-transfer-grid">
+                                <div>
+                                    <h4><i class="bi bi-building"></i> Banco</h4>
+                                    <p><strong>Mercado Pago</strong></p>
+                                </div>
+                                <div>
+                                    <h4><i class="bi bi-credit-card"></i> Tipo</h4>
+                                    <p><strong>Cuenta vista</strong></p>
+                                </div>
+                                <div>
+                                    <h4><i class="bi bi-hash"></i> Número de cuenta</h4>
+                                    <p class="fs-5 text-danger"><strong>1075414152</strong></p>
+                                </div>
+                                <div>
+                                    <h4><i class="bi bi-person-badge"></i> Titular</h4>
+                                    <p><strong>Lucas Sánchez</strong></p>
+                                </div>
+                                <div>
+                                    <h4><i class="bi bi-envelope"></i> Comprobante</h4>
+                                    <p><a href="mailto:contacto@motomoto.cl" class="text-decoration-none">contacto@motomoto.cl</a></p>
+                                </div>
+                                <div>
+                                    <h4><i class="bi bi-whatsapp"></i> WhatsApp</h4>
+                                    <p><a href="https://wa.me/56982177468" target="_blank" rel="noopener" class="text-decoration-none"><strong>+569 8217 7468</strong></a></p>
+                                </div>
+                            </div>
+                            <div class="alert alert-warning mt-3 mb-0 small" role="alert">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                Envía el comprobante por WhatsApp o correo con el número de pedido para acelerar la confirmación.
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-lg-4">
+                <div class="order-confirm-side-card">
+                    <div class="order-confirm-card">
+                        <div class="order-confirm-card__head">
+                            <i class="bi bi-calculator"></i> Totales
+                        </div>
+                        <div class="order-confirm-card__body">
+                            <div class="order-confirm-summary-row">
+                                <span class="order-confirm-summary-label">Subtotal</span>
+                                <span class="order-confirm-summary-value">{{ order.subtotal|currency_clp }}</span>
+                            </div>
+                            {% if order.coupon %}
+                                <div class="order-confirm-summary-row">
+                                    <span class="order-confirm-summary-label">Descuento ({{ order.coupon.code }})</span>
+                                    <span class="order-confirm-summary-value text-success">-{{ order.discount_total|currency_clp }}</span>
+                                </div>
+                            {% endif %}
+                            <div class="order-confirm-summary-row">
+                                <span class="order-confirm-summary-label">Envío</span>
+                                <span class="order-confirm-summary-value">{{ order.shipping_cost|currency_clp }}</span>
+                            </div>
+                            <div class="order-confirm-summary-row">
+                                <span class="order-confirm-summary-label">Total</span>
+                                <span class="order-confirm-summary-value">{{ order.total|currency_clp }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if user.is_staff %}
+            <div class="order-confirm-card order-confirm-admin-card mt-4">
+                <div class="order-confirm-card__head">
+                    <i class="bi bi-gear-fill"></i> Administración
+                </div>
+                <div class="order-confirm-card__body">
+                    <div class="row align-items-center g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold mb-2" for="orderStatusSelect">Cambiar estado del pedido</label>
+                            <form method="post" action="{% url 'shop:admin_update_order_status' order.id %}" id="statusChangeForm" onsubmit="return confirmStatusChangeDetail(this);">
+                                {% csrf_token %}
+                                <input type="hidden" name="from_detail" value="1">
+                                <select name="status" class="form-select" id="orderStatusSelect">
+                                    {% for status_code, status_name in order.STATUS_CHOICES %}
+                                        <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>{{ status_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <p class="mb-1 text-muted small">Estado actual</p>
+                            <span class="badge profile-order-badge profile-order-badge--{{ order.status }} fs-6">{{ order.get_status_display }}</span>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button type="submit" form="statusChangeForm" class="btn btn-warning">
+                            <i class="bi bi-arrow-repeat"></i> Actualizar estado
+                        </button>
+                        <a href="{% url 'shop:admin_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="order-confirm-actions">
+            <a href="{% url 'shop:home' %}" class="btn btn-danger">
+                <i class="bi bi-house-door"></i> Inicio
+            </a>
+            <a href="{% url 'shop:products_list' %}" class="btn btn-outline-danger">
+                <i class="bi bi-grid"></i> Seguir comprando
+            </a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'shop:profile' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-person"></i> Mi perfil
+                </a>
+            {% endif %}
+        </div>
+
+        {% with progress=order.get_status_progress %}
+            {% if progress %}
+                <div class="order-confirm-progress-section">
+                    <h3 class="order-confirm-progress-title">
+                        <i class="bi bi-signpost-split"></i> Seguimiento del pedido
+                    </h3>
+                    <div class="order-progress-container">
+                        <div class="order-progress-track">
+                            <div class="order-progress-line">
+                                <div class="order-progress-line-fill" style="width: {{ progress.progress_percentage }}%;"></div>
+                            </div>
+                            {% for status_code, status_name in progress.statuses %}
+                                <div class="order-progress-point" style="left: calc({{ forloop.counter0 }} * (100% / {{ progress.statuses|length|add:'-1' }}));">
+                                    <div class="order-progress-circle {% if forloop.counter0 < progress.current_index %}is-done{% elif forloop.counter0 == progress.current_index %}is-current{% else %}is-todo{% endif %}">
+                                        {% if forloop.counter0 < progress.current_index %}
+                                            <i class="bi bi-check-lg"></i>
+                                        {% elif forloop.counter0 == progress.current_index %}
+                                            <img src="{% static 'img/motoestado.webp' %}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');">
+                                            <i class="bi bi-bicycle text-success fs-3 d-none" aria-hidden="true"></i>
+                                        {% else %}
+                                            <i class="bi bi-circle"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="order-progress-label {% if forloop.counter0 == progress.current_index %}is-active{% endif %}">{{ status_name }}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="order-progress-current-msg">
+                        <p class="mb-0">
+                            <strong>Estado actual: {{ progress.current_status_display }}</strong>
+                        </p>
+                    </div>
+                </div>
+            {% elif order.status == 'cancelled' %}
+                <div class="alert alert-danger order-confirm-cancelled-alert mt-4" role="alert">
+                    <i class="bi bi-x-circle me-1"></i> Este pedido fue <strong>cancelado</strong>.
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+</section>
 
 {% if user.is_staff %}
 <script>
 function confirmStatusChangeDetail(form) {
     const select = document.getElementById('orderStatusSelect');
-    const currentStatus = '{{ order.get_status_display }}';
+    const currentStatus = '{{ order.get_status_display|escapejs }}';
     const newStatus = select.options[select.selectedIndex].text;
-    
     if (currentStatus === newStatus) {
         alert('El estado seleccionado es el mismo que el actual.');
         return false;
     }
-    
-    return confirm(`¿Estás seguro de cambiar el estado del pedido #{{ order.id }} de "${currentStatus}" a "${newStatus}"?`);
+    return confirm('¿Cambiar el pedido #{{ order.id }} de "' + currentStatus + '" a "' + newStatus + '"?');
 }
 </script>
 {% endif %}
-</style>
 {% endblock %}
-

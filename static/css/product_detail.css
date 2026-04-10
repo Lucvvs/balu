@@ -1,0 +1,435 @@
+/*
+ * =============================================================================
+ * product_detail.css — Ficha de producto (product_detail.html)
+ * -----------------------------------------------------------------------------
+ * Badges de categoría/marca (.category-badge-animated, .brand-badge-animated)
+ * Productos relacionados (.related-products-section, .related-product-*)
+ * Zoom de imagen en escritorio (.product-image-zoom-wrapper)
+ * @keyframes categoryPulse, categoryShine, categoryIconBounce, brandPulse, …
+ * =============================================================================
+ */
+
+/* ============================================
+   Product Detail - Category Badge & Brand Logo
+   ============================================ */
+
+/* Categoría animada y destacada — chip con brillo y rebote de ícono */
+.category-badge-animated {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.6rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #c82333 100%);
+    color: var(--white);
+    font-weight: 600;
+    font-size: 0.6rem;
+    border-radius: 50px;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+    position: relative;
+    overflow: hidden;
+    animation: categoryPulse 2s ease-in-out infinite;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.15px;
+    text-decoration: none;
+    min-width: 70px;
+    height: 22px;
+}
+
+.category-badge-animated::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    transform: rotate(45deg);
+    animation: categoryShine 3s infinite;
+}
+
+.category-badge-animated i {
+    font-size: 0.65rem;
+    animation: categoryIconBounce 1.5s ease-in-out infinite;
+}
+
+.category-badge-animated:hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 3px 12px rgba(220, 53, 69, 0.6);
+    color: var(--white);
+    text-decoration: none;
+}
+
+@keyframes categoryPulse {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+    }
+    50% {
+        box-shadow: 0 3px 12px rgba(220, 53, 69, 0.6);
+    }
+}
+
+@keyframes categoryShine {
+    0% {
+        left: -50%;
+        top: -50%;
+    }
+    100% {
+        left: 150%;
+        top: 150%;
+    }
+}
+
+@keyframes categoryIconBounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+/* Marca animada y destacada */
+.brand-badge-animated {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.6rem;
+    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+    color: var(--white);
+    font-weight: 600;
+    font-size: 0.6rem;
+    border-radius: 50px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+    animation: brandPulse 2s ease-in-out infinite;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.15px;
+    text-decoration: none;
+    min-width: 70px;
+    height: 22px;
+}
+
+.brand-badge-animated::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    transform: rotate(45deg);
+    animation: brandShine 3s infinite;
+}
+
+.brand-badge-animated i {
+    font-size: 0.65rem;
+    animation: brandIconBounce 1.5s ease-in-out infinite;
+}
+
+.brand-badge-animated:hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
+    color: var(--white);
+    text-decoration: none;
+}
+
+@keyframes brandPulse {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+    50% {
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
+    }
+}
+
+@keyframes brandShine {
+    0% {
+        left: -50%;
+        top: -50%;
+    }
+    100% {
+        left: 150%;
+        top: 150%;
+    }
+}
+
+@keyframes brandIconBounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .category-badge-animated {
+        font-size: 0.55rem;
+        padding: 0.2rem 0.5rem;
+        min-width: 65px;
+        height: 20px;
+    }
+    
+    .category-badge-animated i {
+        font-size: 0.6rem;
+    }
+    
+    .brand-badge-animated {
+        font-size: 0.55rem;
+        padding: 0.2rem 0.5rem;
+        min-width: 65px;
+        height: 20px;
+    }
+    
+    .brand-badge-animated i {
+        font-size: 0.6rem;
+    }
+}
+
+/* ============================================
+   Product Detail - Related Products
+   ============================================ */
+
+/* Contenedor de productos relacionados */
+.related-products-section .product-card {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0 !important;
+}
+
+/* Body de tarjetas relacionadas - altura fija para consistencia */
+.related-product-card-body {
+    padding: 0.5rem 0.75rem 0.5rem 0.75rem !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    min-height: calc(2.34rem + 0.4rem + 1.32rem + 1rem) !important; /* título + margin + precio + padding */
+    height: auto !important;
+    margin: 0 !important;
+}
+
+/* Título de productos relacionados - altura fija para 2 líneas */
+.related-product-title {
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    margin: 0 0 0.4rem 0 !important;
+    padding: 0 !important;
+    color: var(--text-color) !important;
+    cursor: pointer;
+    line-height: 1.3 !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 2.34rem !important; /* 0.9rem * 1.3 * 2 líneas = 2.34rem */
+    height: 2.34rem !important;
+    max-height: 2.34rem !important;
+    transition: color 0.2s ease;
+}
+
+.related-product-title:hover {
+    color: var(--primary-color);
+}
+
+/* Precio de productos relacionados - centrado y clickeable */
+.related-product-price {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: var(--primary-color) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: center !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    line-height: 1.2 !important;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.related-product-price:hover {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+/* Ajustar altura de imagen en productos relacionados */
+.related-products-section .product-card-image-container {
+    height: 200px;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.related-products-section .product-card-img {
+    height: 200px;
+    width: 100%;
+    object-fit: contain;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Eliminar cualquier espacio adicional en productos relacionados */
+.related-products-section .product-card > a {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block;
+}
+
+/* Responsive para productos relacionados */
+@media (max-width: 768px) {
+    /* Centrar productos relacionados en móvil */
+    .related-products-section .row {
+        justify-content: center !important;
+    }
+    
+    .related-products-section .col-sm-6 {
+        display: flex;
+        justify-content: center;
+    }
+    
+    .related-products-section .product-card {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    /* Agrandar texto 30%: 0.85rem * 1.3 = 1.105rem */
+    .related-product-title {
+        font-size: 1.105rem !important;
+        -webkit-line-clamp: 2;
+        min-height: 2.873rem !important; /* 1.105rem * 1.3 * 2 líneas = 2.873rem */
+        height: 2.873rem !important;
+        max-height: 2.873rem !important;
+    }
+    
+    /* Agrandar precio 30%: 1rem * 1.3 = 1.3rem */
+    .related-product-price {
+        font-size: 1.3rem !important;
+    }
+    
+    .related-products-section .product-card-image-container,
+    .related-products-section .product-card-img {
+        height: 180px;
+    }
+    
+    .related-product-card-body {
+        min-height: calc(2.873rem + 0.4rem + 1.56rem + 1rem) !important;
+    }
+}
+
+/* ============================================
+   Product Detail - Image Zoom Effect (Desktop Only)
+   ============================================ */
+
+/* Zoom wrapper - solo en escritorio */
+@media (min-width: 769px) {
+    .product-image-zoom-wrapper {
+        position: relative;
+        overflow: hidden;
+        cursor: zoom-in;
+        border-radius: 8px;
+        background: #f8f9fa;
+        display: inline-block;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .product-image-zoom-wrapper .main-product-image {
+        transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        will-change: transform;
+        transform-origin: center center;
+        display: block;
+        margin: 0 auto;
+    }
+    
+    .product-image-zoom-wrapper.zoom-active {
+        cursor: zoom-out;
+    }
+    
+    .product-image-zoom-wrapper.zoom-active .main-product-image {
+        transition: transform 0.1s ease-out;
+    }
+    
+    /* Indicador visual sutil al hacer hover */
+    .product-image-zoom-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 10;
+        pointer-events: none;
+    }
+    
+    .product-image-zoom-wrapper::after {
+        content: '🔍';
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 11;
+        pointer-events: none;
+    }
+    
+    .product-image-zoom-wrapper:hover::before,
+    .product-image-zoom-wrapper:hover::after {
+        opacity: 1;
+    }
+    
+    .product-image-zoom-wrapper.zoom-active::before,
+    .product-image-zoom-wrapper.zoom-active::after {
+        opacity: 0;
+    }
+}
+
+/* En móvil, desactivar completamente el zoom */
+@media (max-width: 768px) {
+    .product-image-zoom-wrapper {
+        cursor: default;
+    }
+    
+    .product-image-zoom-wrapper .main-product-image {
+        transform: none !important;
+        transition: none !important;
+    }
+}
+

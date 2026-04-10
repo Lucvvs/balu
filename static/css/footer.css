@@ -1,0 +1,38 @@
+/*
+ * =============================================================================
+ * footer.css — Pie de página (_footer.html en todas las vistas)
+ * -----------------------------------------------------------------------------
+ * .footer — fondo oscuro, enlaces · .footer-copyright — franja inferior
+ * =============================================================================
+ */
+
+/* Footer — contenedor principal del pie */
+.footer {
+    background-color: var(--dark-bg);
+    color: var(--white);
+    padding: 3rem 0 1rem;
+    margin-top: 4rem;
+}
+
+.footer h5 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.footer a {
+    color: var(--white);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.footer a:hover {
+    color: var(--primary-color);
+}
+
+.footer-copyright {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: 2rem;
+}
+

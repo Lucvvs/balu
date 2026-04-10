@@ -28,7 +28,7 @@ from .utils import (
 )
 from .forms import (
     UserRegistrationForm, AddToCartForm, UpdateCartItemForm, CouponForm,
-    CheckoutForm, ContactForm
+    CheckoutForm, ContactForm, ProfileUpdateForm,
 )
 from .utils import send_order_confirmation_email, send_order_notification_to_admin
 from .mercadopago_client import create_checkout_pro_preference, get_payment
@@ -181,22 +181,20 @@ def products_list(request):
         ),
     ).order_by('-created_at')
 
-    # Filtro por categoría (soporta múltiples categorías)
+    # Filtro por una sola categoría
     category_slug = request.GET.get('category')
-    categories_param = request.GET.get('categories')  # Múltiples categorías separadas por coma
-    
-    # Determinar categorías seleccionadas
-    selected_categories = []
-    if categories_param:
-        # Si hay parámetro 'categories', usar esas categorías
-        selected_categories = [slug.strip() for slug in categories_param.split(',') if slug.strip()]
-    elif category_slug:
-        # Si solo hay 'category', convertir a lista para consistencia
-        selected_categories = [category_slug]
-    
-    # Aplicar filtro de categorías si hay alguna seleccionada
-    if selected_categories:
-        products = products.filter(category__slug__in=selected_categories)
+    categories_param = request.GET.get('categories')  # Legado: se usa solo el primer slug
+
+    selected_category_slug = None
+    if category_slug:
+        selected_category_slug = category_slug.strip()
+    elif categories_param:
+        parts = [s.strip() for s in categories_param.split(',') if s.strip()]
+        if parts:
+            selected_category_slug = parts[0]
+
+    if selected_category_slug:
+        products = products.filter(category__slug=selected_category_slug)
 
     # Filtro por marca (insensible a mayúsculas/minúsculas)
     brand_slug = request.GET.get('brand')
@@ -225,7 +223,7 @@ def products_list(request):
     page_number = request.GET.get('page')
     use_catalog_mix = (
         sort_by == 'newest'
-        and not selected_categories
+        and not selected_category_slug
         and not search_query
     )
 
@@ -288,18 +286,13 @@ def products_list(request):
     # Estado de filtro de ofertas
     current_offers = request.GET.get('offers') == 'true'
     
-    # Determinar categorías actuales para el contexto
-    current_categories = selected_categories.copy() if selected_categories else []
-    
-    # Construir el parámetro de categorías para URLs (siempre usar 'categories' para múltiples)
-    current_categories_param = ','.join(current_categories) if current_categories else None
+    current_categories = [selected_category_slug] if selected_category_slug else []
 
     context = {
         'products': page_obj,
         'categories': categories,
-        'current_category': category_slug,  # Mantener para compatibilidad
-        'current_categories': current_categories,  # Lista de slugs de categorías seleccionadas
-        'current_categories_param': current_categories_param,  # Parámetro para preservar en URLs
+        'current_category': selected_category_slug,
+        'current_categories': current_categories,
         'current_brand': brand_slug,
         'current_search': search_query,
         'current_sort': sort_by,
@@ -1224,8 +1217,13 @@ def mp_webhook(request: HttpRequest):
 
 def order_confirmation(request, order_id):
     """Vista de confirmación de pedido"""
-    order = get_object_or_404(Order, id=order_id)
-    
+    order = get_object_or_404(
+        Order.objects.select_related(
+            'shipping_method', 'payment_method', 'user', 'coupon'
+        ).prefetch_related('items'),
+        id=order_id,
+    )
+
     # Permitir ver el pedido si:
     # - El usuario está autenticado y es el dueño o es staff
     # - O si es usuario anónimo (no verificamos permisos, solo mostramos el pedido)
@@ -1234,8 +1232,31 @@ def order_confirmation(request, order_id):
             # Si no es el dueño ni staff, redirigir sin mensaje de error
             return redirect('shop:home')
 
+    pm_raw = (order.payment_method.name or '') if order.payment_method_id else ''
+    pm_lower = pm_raw.lower()
+    is_mercadopago = 'mercado' in pm_lower
+    mp_approved = order.mp_payment_status == 'approved' or order.status == 'confirmed'
+    mp_rejected = order.mp_payment_status == 'rejected' or order.status == 'cancelled'
+    is_transfer = 'transferencia' in pm_lower
+
+    if is_mercadopago:
+        if mp_approved:
+            order_confirm_tone = 'success'
+        elif mp_rejected:
+            order_confirm_tone = 'danger'
+        else:
+            order_confirm_tone = 'warning'
+    else:
+        order_confirm_tone = 'success'
+
     context = {
         'order': order,
+        'pm_lower': pm_lower,
+        'is_mercadopago': is_mercadopago,
+        'mp_approved': mp_approved,
+        'mp_rejected': mp_rejected,
+        'is_transfer': is_transfer,
+        'order_confirm_tone': order_confirm_tone,
     }
     return render(request, 'shop/order_confirmation.html', context)
 
@@ -1310,35 +1331,23 @@ def contact_view(request):
 
 @login_required
 def profile(request):
-    """Vista de perfil del usuario"""
+    """Perfil del usuario: datos personales y pedidos (POST = guardar cambios con validación)."""
     orders = Order.objects.filter(user=request.user).order_by('-created_at')
-    
-    context = {
-        'orders': orders,
-    }
-    return render(request, 'shop/profile.html', context)
 
+    if request.method == 'POST':
+        form = ProfileUpdateForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Perfil actualizado correctamente.')
+            return redirect('shop:profile')
+    else:
+        form = ProfileUpdateForm(instance=request.user)
 
-@login_required
-@require_POST
-def update_profile(request):
-    """Actualizar perfil del usuario"""
-    user = request.user
-    
-    # Confirmar con el usuario
-    if request.POST.get('confirm') != 'yes':
-        messages.error(request, 'Debes confirmar los cambios.')
-        return redirect('shop:profile')
-    
-    # Actualizar datos
-    user.first_name = request.POST.get('first_name', user.first_name)
-    user.last_name = request.POST.get('last_name', user.last_name)
-    # El email es inmodificable desde el frontend.
-    user.phone = request.POST.get('phone', user.phone)
-    user.save()
-    
-    messages.success(request, 'Perfil actualizado correctamente.')
-    return redirect('shop:profile')
+    return render(
+        request,
+        'shop/profile.html',
+        {'form': form, 'orders': orders},
+    )
 
 
 def get_comunas(request):
