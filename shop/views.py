@@ -137,24 +137,20 @@ def _annotate_catalog_stock_sort(queryset):
     )
 
 
-def _interleaved_catalog_product_ids(queryset):
+def _round_robin_catalog_by_category(by_category):
     """
-    Orden round-robin por categoría (mismo orden que Category: name).
-    En cada categoría: primero con stock, luego agotados; dentro de cada bloque por -created_at.
+    by_category: {category_id: [product_id, ...]} ya ordenados dentro de la categoría.
+    Devuelve IDs en round-robin según el orden alfabético de categorías activas.
     """
-    qs = queryset.order_by('category_id', 'catalog_stock_sort', '-created_at')
-    by_category = defaultdict(list)
-    for row in qs.values('id', 'category_id'):
-        by_category[row['category_id']].append(row['id'])
-
+    if not by_category:
+        return []
     category_order = list(
         Category.objects.filter(is_active=True).order_by('name').values_list('id', flat=True)
     )
-    deques = {cid: deque(by_category[cid]) for cid in by_category}
-    round_cats = [cid for cid in category_order if cid in deques]
+    round_cats = [cid for cid in category_order if cid in by_category]
     extra = sorted(set(by_category.keys()) - set(round_cats))
     round_cats.extend(extra)
-
+    deques = {cid: deque(by_category[cid]) for cid in by_category}
     result = []
     active = list(round_cats)
     while active:
@@ -167,6 +163,28 @@ def _interleaved_catalog_product_ids(queryset):
                 nxt.append(cid)
         active = nxt
     return result
+
+
+def _interleaved_catalog_product_ids(queryset):
+    """
+    Orden round-robin por categoría (mismo orden que Category: name).
+    Primero todos los productos con stock (intercalados por categoría); luego todos los agotados,
+    para que sin stock queden al final del catálogo. Dentro de cada bloque, por -created_at.
+    """
+    qs = queryset.order_by('category_id', 'catalog_stock_sort', '-created_at')
+    by_in_stock = defaultdict(list)
+    by_out_stock = defaultdict(list)
+    for row in qs.values('id', 'category_id', 'catalog_stock_sort'):
+        cid = row['category_id']
+        if row['catalog_stock_sort'] == 0:
+            by_in_stock[cid].append(row['id'])
+        else:
+            by_out_stock[cid].append(row['id'])
+
+    return (
+        _round_robin_catalog_by_category(by_in_stock)
+        + _round_robin_catalog_by_category(by_out_stock)
+    )
 
 
 def products_list(request):
@@ -256,6 +274,8 @@ def products_list(request):
         else:
             page_obj.object_list = []
     else:
+        # Mismo criterio que is_available_for_purchase: sin stock al final (tras el criterio de orden elegido).
+        products = _annotate_catalog_stock_sort(products)
         if sort_by == 'price_asc':
             products = products.annotate(
                 effective_price=Case(
@@ -263,7 +283,7 @@ def products_list(request):
                     default=F('price'),
                     output_field=IntegerField(),
                 )
-            ).order_by('effective_price', 'price')
+            ).order_by('catalog_stock_sort', 'effective_price', 'price')
         elif sort_by == 'price_desc':
             products = products.annotate(
                 effective_price=Case(
@@ -271,11 +291,11 @@ def products_list(request):
                     default=F('price'),
                     output_field=IntegerField(),
                 )
-            ).order_by('-effective_price', '-price')
+            ).order_by('catalog_stock_sort', '-effective_price', '-price')
         elif sort_by == 'name':
-            products = products.order_by('name')
+            products = products.order_by('catalog_stock_sort', 'name')
         else:
-            products = products.order_by('-created_at')
+            products = products.order_by('catalog_stock_sort', '-created_at')
 
         paginator = Paginator(products, 12)
         page_obj = paginator.get_page(page_number)
