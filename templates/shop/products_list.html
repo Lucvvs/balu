@@ -4,6 +4,10 @@
 
 {% block title %}Catálogo MotoMoto - Productos{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/products-list.css' %}?v={{ timestamp|default:'1.0' }}">
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <h1 class="text-center mb-4">CATÁLOGO 2026</h1>
@@ -21,9 +25,8 @@
                     <span>Ofertas</span>
                 </a>
                 {% for category in categories %}
-                    <a href="#" 
+                    <a href="#"
                        data-category-slug="{{ category.slug }}"
-                       onclick="selectCategory('{{ category.slug }}'); return false;"
                        class="filter-btn {% if category.slug in current_categories %}active{% endif %}">
                         <i class="bi bi-circle-fill"></i>
                         <span>{{ category.name }}</span>
@@ -32,8 +35,8 @@
             </div>
             
             <div class="filter-sort">
-                <i class="bi bi-arrow-down-up sort-icon" onclick="resetAllFilters()" style="cursor: pointer;" title="Reiniciar todos los filtros"></i>
-                <select name="sort" class="sort-select" onchange="updateSort(this.value)">
+                <i class="bi bi-arrow-down-up sort-icon js-reset-filters" role="button" tabindex="0" title="Reiniciar todos los filtros" aria-label="Reiniciar todos los filtros"></i>
+                <select name="sort" class="sort-select js-sort-select">
                     <option value="{% url 'shop:products_list' %}{% if current_category %}?category={{ current_category }}{% endif %}{% if current_offers %}{% if current_category %}&{% else %}?{% endif %}offers=true{% endif %}">Ordenar por...</option>
                     <option value="{% url 'shop:products_list' %}?sort=name{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'name' %}selected{% endif %}>Nombre A-Z</option>
                     <option value="{% url 'shop:products_list' %}?sort=price_asc{% if current_category %}&category={{ current_category }}{% endif %}{% if current_offers %}&offers=true{% endif %}" {% if current_sort == 'price_asc' %}selected{% endif %}>Precio: Menor a Mayor</option>
@@ -57,10 +60,10 @@
                                 <div class="product-card-image-container" data-product-id="{{ product.id }}">
                                     {% for image in images %}
                                         <img src="{{ image.image.url }}" alt="{{ product.name }}" 
-                                             class="product-card-img {% if forloop.first %}active{% endif %}" 
+                                             class="product-card-img js-img-fallback {% if forloop.first %}active{% endif %}" 
                                              data-image-index="{{ forloop.counter0 }}"
                                              loading="lazy" decoding="async"
-                                             onerror="if(this.src!='{% static 'img/placeholder.webp' %}'){this.src='{% static 'img/placeholder.webp' %}';}else{this.style.display='none';}">
+                                             data-fallback-src="{% static 'img/placeholder.webp' %}">
                                     {% endfor %}
                                     {% if product.stock == 1 %}
                                         <span class="stock-alert-badge">
@@ -69,8 +72,8 @@
                                     {% endif %}
                                 </div>
                             {% else %}
-                                <div class="product-card-image-container" style="position: relative;">
-                                    <img src="{% static 'img/placeholder.webp' %}" alt="{{ product.name }}" class="product-card-img" loading="lazy" decoding="async" onerror="this.style.display='none';">
+                                <div class="product-card-image-container product-card-image-container--placeholder">
+                                    <img src="{% static 'img/placeholder.webp' %}" alt="{{ product.name }}" class="product-card-img js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
                                     {% if product.stock == 1 %}
                                         <span class="stock-alert-badge">
                                             <i class="bi bi-exclamation-triangle-fill"></i>
@@ -93,24 +96,23 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="product-card-actions">
-                            <a href="{% url 'shop:product_detail' slug=product.slug %}" class="btn btn-view-detail" onclick="event.stopPropagation();">
+                        <div class="product-card-actions js-stop-propagation">
+                            <a href="{% url 'shop:product_detail' slug=product.slug %}" class="btn btn-view-detail">
                                 Ver Detalle
                             </a>
                             {% if product.is_available_for_purchase and product.uses_variant_stock %}
-                                <button type="button" class="btn btn-add-cart" 
+                                <button type="button" class="btn btn-add-cart js-open-size-modal" 
                                         title="Agregar al carrito" 
                                         data-product-id="{{ product.id }}"
                                         data-product-name="{{ product.name|escapejs }}"
-                                        data-product-variants="{{ product.variants_catalog_json|escape }}"
-                                        onclick="event.stopPropagation(); openSizeModal(this);">
+                                        data-product-variants="{{ product.variants_catalog_json|escape }}">
                                     <i class="bi bi-cart-plus"></i>
                                 </button>
                             {% elif product.is_available_for_purchase %}
-                                <form method="post" action="{% url 'shop:add_to_cart' product_id=product.id %}" class="d-inline" onclick="event.stopPropagation();">
+                                <form method="post" action="{% url 'shop:add_to_cart' product_id=product.id %}" class="d-inline">
                                     {% csrf_token %}
                                     <input type="hidden" name="quantity" value="1">
-                                    <button type="submit" class="btn btn-add-cart" title="Agregar al carrito" onclick="event.stopPropagation();">
+                                    <button type="submit" class="btn btn-add-cart" title="Agregar al carrito">
                                         <i class="bi bi-cart-plus"></i>
                                     </button>
                                 </form>
@@ -158,13 +160,7 @@
     {% endif %}
 </div>
 
-<!-- Como Comprar y Canales -->
-{% include 'partials/_como_comprar_y_canales.html' %}
-
-{% endblock %}
-
-{% block extra_js %}
-<!-- Modal para seleccionar talla/color -->
+<!-- Modal talla/color (catálogo) -->
 <div class="modal fade" id="sizeModal" tabindex="-1" aria-labelledby="sizeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -191,14 +187,14 @@
                         </select>
                     </div>
                     <div class="alert alert-info mb-0">
-                        <i class="bi bi-info-circle"></i> 
+                        <i class="bi bi-info-circle"></i>
                         <small>Este producto requiere seleccionar una talla/color antes de agregarlo al carrito.</small>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" onclick="submitSizeForm();">
+                <button type="button" class="btn btn-danger" id="js-size-modal-submit">
                     <i class="bi bi-cart-plus"></i> Agregar al Carrito
                 </button>
             </div>
@@ -206,217 +202,15 @@
     </div>
 </div>
 
-<script>
-function updateSort(url) {
-    window.location.href = url;
-}
+<!-- Como Comprar y Canales -->
+{% include 'partials/_como_comprar_y_canales.html' %}
 
-// Función para reiniciar todos los filtros
-function resetAllFilters() {
-    window.location.href = '{% url "shop:products_list" %}';
-}
+{% endblock %}
 
-// Una sola categoría activa; al elegir otra se reemplaza. Misma categoría otra vez = quitar filtro (Todos).
-function selectCategory(categorySlug) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const fromCategory = urlParams.get('category');
-    const fromLegacy = urlParams.get('categories');
-    const effective = (fromCategory || (fromLegacy ? fromLegacy.split(',')[0].trim() : '')) || '';
-
-    if (effective === categorySlug) {
-        urlParams.delete('category');
-    } else {
-        urlParams.set('category', categorySlug);
-    }
-    urlParams.delete('categories');
-    urlParams.delete('page');
-
-    const qs = urlParams.toString();
-    const base = '{% url "shop:products_list" %}';
-    window.location.href = qs ? base + '?' + qs : base;
-}
-
-function openSizeModal(button) {
-    const productId = button.getAttribute('data-product-id');
-    const productName = button.getAttribute('data-product-name');
-    const raw = button.getAttribute('data-product-variants') || '[]';
-    let items = [];
-    try {
-        items = JSON.parse(raw);
-    } catch (e) {
-        items = [];
-    }
-    const modal = new bootstrap.Modal(document.getElementById('sizeModal'));
-    document.getElementById('modalProductId').value = productId;
-    document.getElementById('modalProductName').textContent = productName;
-    const sel = document.getElementById('modalVariantSelect');
-    sel.innerHTML = '<option value="">-- Seleccione una opción --</option>';
-    items.forEach(function (row) {
-        const opt = document.createElement('option');
-        opt.value = String(row.id);
-        opt.textContent = row.name;
-        opt.setAttribute('data-stock', String(row.stock));
-        sel.appendChild(opt);
-    });
-    document.getElementById('sizeModalForm').reset();
-    document.getElementById('modalProductId').value = productId;
-    document.getElementById('sizeModalForm').querySelector('input[name="quantity"]').value = 1;
-    modal.show();
-}
-
-function submitSizeForm() {
-    const form = document.getElementById('sizeModalForm');
-    const sel = document.getElementById('modalVariantSelect');
-    const productId = document.getElementById('modalProductId').value;
-    if (!sel.value) {
-        alert('Por favor, selecciona una talla/color antes de agregar al carrito.');
-        sel.focus();
-        return;
-    }
-    form.action = '/carrito/agregar/' + productId + '/';
-    form.submit();
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Animar filtros al cargar
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    filterBtns.forEach((btn, index) => {
-        btn.style.opacity = '0';
-        btn.style.transform = 'translateY(-10px)';
-        setTimeout(() => {
-            btn.style.transition = 'all 0.3s ease';
-            btn.style.opacity = '1';
-            btn.style.transform = 'translateY(0)';
-        }, index * 50);
-    });
-    
-    // Product cards image rotation y hacer toda la tarjeta clickeable
-    const productCards = document.querySelectorAll('.product-card');
-    const imageIntervals = new Map();
-    
-    productCards.forEach(card => {
-        const imageContainer = card.querySelector('.product-card-image-container');
-        let intervalId = null;
-        let timeoutId = null;
-        /** Invalida animaciones en curso (hover o nextImage) al salir o al hacer clic */
-        let animCycle = 0;
-        let resetCardImagesToFirst = null;
-
-        if (imageContainer) {
-            const images = imageContainer.querySelectorAll('.product-card-img');
-            let currentIndex = 0;
-
-            resetCardImagesToFirst = function() {
-                currentIndex = 0;
-                images.forEach((img, index) => {
-                    img.classList.remove('active', 'flip-in', 'flip-out');
-                    if (index === 0) {
-                        img.classList.add('active');
-                    }
-                });
-            };
-
-            if (images.length > 1) {
-                function nextImage() {
-                    const cycleAtStart = animCycle;
-                    const currentImg = images[currentIndex];
-                    currentImg.classList.remove('active', 'flip-in');
-                    currentImg.classList.add('flip-out');
-
-                    currentIndex = (currentIndex + 1) % images.length;
-
-                    setTimeout(() => {
-                        if (cycleAtStart !== animCycle) return;
-                        currentImg.classList.remove('flip-out');
-                        const nextImg = images[currentIndex];
-                        nextImg.classList.remove('flip-out');
-                        nextImg.classList.add('flip-in', 'active');
-
-                        setTimeout(() => {
-                            if (cycleAtStart !== animCycle) return;
-                            images.forEach(img => {
-                                img.classList.remove('flip-in', 'flip-out');
-                                if (img !== nextImg) {
-                                    img.classList.remove('active');
-                                }
-                            });
-                        }, 500);
-                    }, 50);
-                }
-
-                card.addEventListener('mouseenter', function() {
-                    const enterCycle = animCycle;
-                    timeoutId = setTimeout(() => {
-                        if (enterCycle !== animCycle) return;
-                        nextImage();
-                        intervalId = setInterval(nextImage, 2000);
-                        imageIntervals.set(card, intervalId);
-                    }, 300);
-                });
-
-                card.addEventListener('mouseleave', function() {
-                    animCycle += 1;
-                    if (timeoutId) {
-                        clearTimeout(timeoutId);
-                        timeoutId = null;
-                    }
-                    if (intervalId) {
-                        clearInterval(intervalId);
-                        intervalId = null;
-                        imageIntervals.delete(card);
-                    }
-                    resetCardImagesToFirst();
-                });
-            }
-        }
-
-        // Hacer toda la tarjeta clickeable para redirigir al detalle
-        card.addEventListener('click', function(e) {
-            animCycle += 1;
-            if (timeoutId) {
-                clearTimeout(timeoutId);
-                timeoutId = null;
-            }
-            const currentCard = e.currentTarget;
-            if (imageIntervals.has(currentCard)) {
-                clearInterval(imageIntervals.get(currentCard));
-                imageIntervals.delete(currentCard);
-            }
-            if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = null;
-            }
-            if (typeof resetCardImagesToFirst === 'function') {
-                resetCardImagesToFirst();
-            }
-            
-            // Si el clic fue en un botón, enlace, form o elemento interactivo, no hacer nada
-            const clickedElement = e.target;
-            const isInteractive = clickedElement.closest('a, button, form, .btn, .offer-badge, .stock-alert-badge, input');
-            
-            if (isInteractive) {
-                // Si es un enlace o botón, dejar que funcione normalmente
-                if (clickedElement.closest('a, button')) {
-                    return true;
-                }
-                // Si es un form, dejar que se envíe
-                if (clickedElement.closest('form')) {
-                    return true;
-                }
-                return true;
-            }
-            
-            // Si el clic fue en cualquier otra parte de la tarjeta, redirigir al detalle
-            const productUrl = currentCard.getAttribute('data-product-url');
-            if (productUrl) {
-                e.preventDefault();
-                e.stopPropagation();
-                window.location.href = productUrl;
-                return false;
-            }
-        }, true); // Usar capture phase
-    });
-});
+{% block extra_js %}
+<script id="products-list-page-data" type="application/json">
+{"page":"products-list","productsListUrl":"{% url 'shop:products_list' %}","addToCartUrlTemplate":"{% url 'shop:add_to_cart' product_id=999999999 %}"}
 </script>
+<script type="module" src="{% static 'js/pages/products_list.js' %}?v={{ timestamp|default:'1.0' }}"></script>
 {% endblock %}
 

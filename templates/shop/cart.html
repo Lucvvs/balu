@@ -4,6 +4,12 @@
 
 {% block title %}Carrito de Compras - MotoMoto{% endblock %}
 
+{% block extra_css %}
+{% if cart and cart.items.count > 0 %}
+<link rel="stylesheet" href="{% static 'css/pages/cart.css' %}?v={{ timestamp|default:'1.0' }}">
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4 cart-page-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -26,11 +32,11 @@
                                 <a href="{% url 'shop:product_detail' slug=item.product.slug %}">
                                     {% with primary_image=item.product.get_primary_image %}
                                         {% if primary_image %}
-                                            <img src="{{ primary_image.image.url }}" alt="{{ item.product.name }}" class="cart-item-image"
-                                                 onerror="if(this.src!='{% static 'img/placeholder.webp' %}'){this.src='{% static 'img/placeholder.webp' %}';}else{this.style.display='none';}">
+                                            <img src="{{ primary_image.image.url }}" alt="{{ item.product.name }}" class="cart-item-image js-img-fallback"
+                                                 data-fallback-src="{% static 'img/placeholder.webp' %}">
                                         {% else %}
-                                            <img src="{% static 'img/placeholder.webp' %}" alt="{{ item.product.name }}" class="cart-item-image"
-                                                 onerror="this.style.display='none';">
+                                            <img src="{% static 'img/placeholder.webp' %}" alt="{{ item.product.name }}" class="cart-item-image js-img-fallback"
+                                                 data-fallback-src="{% static 'img/placeholder.webp' %}">
                                         {% endif %}
                                     {% endwith %}
                                 </a>
@@ -38,16 +44,16 @@
                             <div class="cart-item-details">
                                 <div class="cart-item-header">
                                     <div class="cart-item-title-section">
-                                        <h5 class="cart-item-title"><a href="{% url 'shop:product_detail' slug=item.product.slug %}" style="text-decoration: none; color: inherit;">{{ item.product.name }}</a></h5>
+                                        <h5 class="cart-item-title"><a href="{% url 'shop:product_detail' slug=item.product.slug %}" class="cart-item-title-link">{{ item.product.name }}</a></h5>
                                         {% if item.variant %}
                                             <p class="cart-item-size text-muted mb-0"><strong>Opción:</strong> {{ item.variant.name }}</p>
                                         {% elif item.size %}
                                             <p class="cart-item-size text-muted mb-0"><strong>Talla:</strong> {{ item.size }}</p>
                                         {% endif %}
                                     </div>
-                                    <form method="post" action="{% url 'shop:remove_cart_item' item_id=item.id %}" class="cart-item-delete-form">
+                                    <form method="post" action="{% url 'shop:remove_cart_item' item_id=item.id %}" class="cart-item-delete-form js-confirm-submit" data-confirm-message="¿Eliminar este producto del carrito?">
                                         {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-danger cart-item-delete-btn" onclick="return confirm('¿Eliminar este producto del carrito?')" title="Eliminar">
+                                        <button type="submit" class="btn btn-sm btn-danger cart-item-delete-btn" title="Eliminar">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
@@ -115,7 +121,7 @@
                     </div>
                     
                     <!-- Shipping cost will be shown after selection -->
-                    <div class="summary-row" id="shipping-row" style="display: none;">
+                    <div class="summary-row is-hidden" id="shipping-row">
                         <span>Envío:</span>
                         <span id="shipping-cost">$0</span>
                     </div>
@@ -127,7 +133,7 @@
                         <span id="discount-amount" class="text-success">-{{ discount_amount|currency_clp }}</span>
                     </div>
                     {% else %}
-                    <div class="summary-row" id="discount-row" style="display: none;">
+                    <div class="summary-row is-hidden" id="discount-row">
                         <span>Descuento:</span>
                         <span id="discount-amount" class="text-success">-$0</span>
                     </div>
@@ -150,7 +156,7 @@
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <h6 class="mb-0">¿Tienes un cupón de descuento?</h6>
                                 {% if applied_coupon %}
-                                    <span class="badge bg-success" style="font-size: 0.7rem;">
+                                    <span class="badge bg-success cart-coupon-badge">
                                         <i class="bi bi-check-circle"></i> {{ applied_coupon.code }}
                                     </span>
                                 {% endif %}
@@ -167,8 +173,8 @@
                             {% else %}
                                 <form method="post" action="{% url 'shop:apply_coupon' %}" class="d-flex gap-2">
                                     {% csrf_token %}
-                                    <input type="text" name="code" class="form-control form-control-sm" 
-                                           placeholder="Ej: CUPON2025" style="text-transform: uppercase;">
+                                    <input type="text" name="code" class="form-control form-control-sm coupon-code-input" 
+                                           placeholder="Ej: CUPON2025">
                                     <button type="submit" class="btn btn-danger btn-sm">Aplicar</button>
                                 </form>
                             {% endif %}
@@ -181,7 +187,7 @@
                     {% csrf_token %}
                     
                     <!-- Shipping Method -->
-                    <div class="checkout-section" style="margin-top: 2rem;">
+                    <div class="checkout-section checkout-section--spaced">
                         <h5>Método de entrega</h5>
                         <div class="row g-2 mb-3">
                             {% for shipping in shipping_methods %}
@@ -208,7 +214,7 @@
                                         </span>
                                     </label>
                                     {% if shipping.base_price > 0 %}
-                                        <div id="shipping-fields-{{ shipping.id }}" style="display: none;" class="mt-3">
+                                        <div id="shipping-fields-{{ shipping.id }}" class="mt-3 shipping-fields-panel is-hidden">
                                             <div class="row g-2">
                                                 <div class="col-12 col-md-6 mb-2">
                                                     <label class="form-label"><strong>Región</strong></label>
@@ -216,7 +222,7 @@
                                                 </div>
                                                 <div class="col-12 col-md-6 mb-2">
                                                     <label class="form-label"><strong>Comuna</strong></label>
-                                                    <select name="shipping_comuna" id="shipping-comuna" class="form-control form-select" style="max-height: 200px; overflow-y: auto;">
+                                                    <select name="shipping_comuna" id="shipping-comuna" class="form-control form-select shipping-comuna-select">
                                                         <option value="">Seleccione una comuna</option>
                                                     </select>
                                                 </div>
@@ -265,7 +271,7 @@
                                 </div>
                             {% endfor %}
                         </div>
-                        <div id="mercado-pago-message" class="mercado-pago-message" style="display: none;">
+                        <div id="mercado-pago-message" class="mercado-pago-message is-hidden">
                             <i class="bi bi-info-circle"></i>
                             <span>Al finalizar la compra serás redireccionado a MercadoPago para realizar tu pago seguro</span>
                         </div>
@@ -302,10 +308,9 @@
                     </button>
                 </form>
                 
-                <form method="post" action="{% url 'shop:clear_cart' %}" class="mb-2">
+                <form method="post" action="{% url 'shop:clear_cart' %}" class="mb-2 js-confirm-submit" data-confirm-message="¿Estás seguro de limpiar todo el carrito?">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-secondary w-100" 
-                            onclick="return confirm('¿Estás seguro de limpiar todo el carrito?')">
+                    <button type="submit" class="btn btn-outline-secondary w-100">
                         Limpiar Carrito
                     </button>
                 </form>
@@ -327,520 +332,30 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    window.MOTO_SHIPPING = {
-        domesticId: {% if domestic_shipping_method_id %}{{ domestic_shipping_method_id }}{% else %}null{% endif %},
-        metroRegion: "{{ shipping_metro_region_name|default:''|escapejs }}",
-        priceMetro: {{ shipping_price_metro|default:3000 }},
-        priceOther: {{ shipping_price_other|default:5000 }},
-        regionPrices: {{ shipping_region_prices_json|default:'{}'|safe }}
-    };
-    // Funcionalidad de botones de cantidad + y -
-    document.addEventListener('DOMContentLoaded', function() {
-        // Botón de aumentar cantidad
-        document.querySelectorAll('.quantity-increase').forEach(button => {
-            button.addEventListener('click', function() {
-                const itemId = this.getAttribute('data-item-id');
-                const input = document.getElementById('quantity-' + itemId);
-                const currentValue = parseInt(input.value);
-                const maxValue = parseInt(this.getAttribute('data-max-quantity'));
-                
-                if (currentValue < maxValue) {
-                    input.value = currentValue + 1;
-                    updateCartItem(itemId, input.value);
-                } else {
-                    // Mostrar toast de error
-                    if (typeof showToast === 'function') {
-                        showToast('No hay suficiente stock disponible.', 'warning');
-                    }
-                }
-            });
-        });
-        
-        // Botón de disminuir cantidad
-        document.querySelectorAll('.quantity-decrease').forEach(button => {
-            button.addEventListener('click', function() {
-                const itemId = this.getAttribute('data-item-id');
-                const input = document.getElementById('quantity-' + itemId);
-                const currentValue = parseInt(input.value);
-                
-                if (currentValue > 1) {
-                    input.value = currentValue - 1;
-                    updateCartItem(itemId, input.value);
-                }
-            });
-        });
-    });
-    
-    // Función para actualizar el carrito mediante AJAX
-    function updateCartItem(itemId, quantity) {
-        const form = document.getElementById('quantity-form-' + itemId);
-        const formData = new FormData(form);
-        const itemTotalElement = document.getElementById('item-total-' + itemId);
-        
-        // Mostrar indicador de carga
-        if (itemTotalElement) {
-            const originalText = itemTotalElement.textContent;
-            itemTotalElement.innerHTML = '<span class="spinner-border spinner-border-sm" style="width: 1rem; height: 1rem;"></span>';
-        }
-        
-        // Deshabilitar botones temporalmente
-        const quantityButtons = form.querySelectorAll('.quantity-btn');
-        quantityButtons.forEach(btn => btn.disabled = true);
-        
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        })
-        .then(response => {
-            // Si hay redirección, recargar la página
-            if (response.redirected) {
-                window.location.href = response.url;
-                return null;
-            }
-            
-            // Verificar si la respuesta es JSON
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return response.json().then(data => {
-                    if (data.error) {
-                        // Mostrar error con toast
-                        if (typeof showToast === 'function') {
-                            showToast(data.error, 'warning');
-                        }
-                        throw new Error(data.error);
-                    }
-                    return data;
-                });
-            } else {
-                // Si no es JSON, recargar la página
-                window.location.reload();
-                return null;
-            }
-        })
-        .then(data => {
-            if (data) {
-                // Si el item fue eliminado, recargar la página
-                if (data.deleted) {
-                    window.location.reload();
-                    return;
-                }
-                
-                // Actualizar total del item
-                if (data.item_total && itemTotalElement) {
-                    itemTotalElement.textContent = data.item_total;
-                }
-                
-                // Actualizar subtotal y total en el resumen
-                if (data.cart_subtotal) {
-                    const subtotalElement = document.querySelector('.summary-row:first-of-type span:last-child');
-                    const totalAmount = document.getElementById('total-amount');
-                    
-                    if (subtotalElement) {
-                        subtotalElement.textContent = data.cart_subtotal;
-                    }
-                    if (totalAmount) {
-                        // Obtener el costo de envío actual
-                        const shippingRow = document.getElementById('shipping-row');
-                        let shippingCost = 0;
-                        if (shippingRow && shippingRow.style.display !== 'none') {
-                            const shippingCostText = document.getElementById('shipping-cost').textContent;
-                            shippingCost = parseInt(shippingCostText.replace(/[$.]/g, '')) || 0;
-                        }
-                        
-                        // Calcular nuevo total (subtotal + envío - descuento)
-                        const subtotalValue = parseInt(data.cart_subtotal.replace(/[$.]/g, '')) || 0;
-                        const discountRow = document.getElementById('discount-row');
-                        let discount = 0;
-                        if (discountRow && discountRow.style.display !== 'none') {
-                            const discountText = document.getElementById('discount-amount').textContent;
-                            discount = parseInt(discountText.replace(/[$.]/g, '')) || 0;
-                        }
-                        
-                        const newTotal = subtotalValue + shippingCost - discount;
-                        totalAmount.textContent = new Intl.NumberFormat('es-CL', {
-                            style: 'currency',
-                            currency: 'CLP',
-                            minimumFractionDigits: 0
-                        }).format(newTotal).replace('CLP', '$');
-                    }
-                }
-            }
-            
-            // Rehabilitar botones
-            quantityButtons.forEach(btn => btn.disabled = false);
-        })
-        .catch(error => {
-            console.error('Error al actualizar item del carrito:', error);
-            // Rehabilitar botones
-            quantityButtons.forEach(btn => btn.disabled = false);
-            
-            // Mostrar mensaje de error con toast
-            if (error.message) {
-                if (typeof showToast === 'function') {
-                    showToast(error.message, 'error');
-                }
-            }
-            
-            // Recargar página en caso de error
-            window.location.reload();
-        });
-    }
-    
-    function formatMoneyClp(n) {
-        return new Intl.NumberFormat('es-CL', {
-            style: 'currency',
-            currency: 'CLP',
-            minimumFractionDigits: 0
-        }).format(n).replace('CLP', '$');
-    }
-
-    function getDomesticShippingCost() {
-        const cfg = window.MOTO_SHIPPING;
-        if (!cfg || cfg.domesticId == null) return cfg ? cfg.priceOther : 5000;
-        const regionEl = document.getElementById('shipping-region');
-        const r = regionEl ? regionEl.value : '';
-        if (!r) return cfg.priceOther;
-        const rp = cfg.regionPrices || {};
-        if (Object.prototype.hasOwnProperty.call(rp, r)) {
-            return rp[r];
-        }
-        return cfg.priceOther;
-    }
-
-    function isDomesticShippingSelected() {
-        const cfg = window.MOTO_SHIPPING;
-        if (!cfg || cfg.domesticId == null) return false;
-        const sel = document.querySelector('input[name="shipping_method"]:checked');
-        return !!(sel && String(sel.value) === String(cfg.domesticId));
-    }
-
-    function updateShippingCost(cost, opts) {
-        opts = opts || {};
-        if (opts.skipFieldReset && isDomesticShippingSelected()) {
-            const shippingRow = document.getElementById('shipping-row');
-            const shippingCost = document.getElementById('shipping-cost');
-            const totalAmount = document.getElementById('total-amount');
-            const subtotal = {{ cart.get_subtotal|default:0 }};
-            const discount = {{ discount_amount|default:0 }};
-            const c = getDomesticShippingCost();
-            shippingRow.style.display = 'flex';
-            shippingCost.textContent = formatMoneyClp(c);
-            totalAmount.textContent = formatMoneyClp(subtotal + c - discount);
-            return;
-        }
-
-        const cfg = window.MOTO_SHIPPING;
-        const shippingRow = document.getElementById('shipping-row');
-        const shippingCost = document.getElementById('shipping-cost');
-        const totalAmount = document.getElementById('total-amount');
-
-        document.querySelectorAll('[id^="shipping-fields-"]').forEach(field => {
-            field.style.display = 'none';
-            const regionSelect = field.querySelector('#shipping-region');
-            const comunaSelect = field.querySelector('#shipping-comuna');
-            const addressTextarea = field.querySelector('textarea[name="shipping_address"]');
-            const notesTextarea = field.querySelector('textarea[name="shipping_notes"]');
-
-            if (regionSelect) {
-                regionSelect.removeAttribute('required');
-                regionSelect.value = '';
-                const firstOption = regionSelect.querySelector('option[value=""]');
-                if (firstOption) firstOption.disabled = false;
-            }
-            if (comunaSelect) {
-                comunaSelect.removeAttribute('required');
-                comunaSelect.innerHTML = '<option value="">Seleccione una comuna</option>';
-            }
-            if (addressTextarea) {
-                addressTextarea.removeAttribute('required');
-                addressTextarea.value = '';
-            }
-            if (notesTextarea) notesTextarea.value = '';
-        });
-
-        const selectedShipping = document.querySelector('input[name="shipping_method"]:checked');
-        let resolved = cost;
-        if (cfg && selectedShipping && String(selectedShipping.value) === String(cfg.domesticId)) {
-            resolved = getDomesticShippingCost();
-        }
-
-        if (resolved > 0) {
-            shippingRow.style.display = 'flex';
-            shippingCost.textContent = formatMoneyClp(resolved);
-
-            if (selectedShipping) {
-                const fieldsId = 'shipping-fields-' + selectedShipping.value;
-                const fields = document.getElementById(fieldsId);
-                if (fields) {
-                    fields.style.display = 'block';
-                    const regionSelect = fields.querySelector('#shipping-region');
-                    const comunaSelect = fields.querySelector('#shipping-comuna');
-                    const addressTextarea = fields.querySelector('textarea[name="shipping_address"]');
-                    if (regionSelect) {
-                        regionSelect.setAttribute('required', 'required');
-                        const firstOption = regionSelect.querySelector('option[value=""]');
-                        if (firstOption) firstOption.disabled = true;
-                    }
-                    if (comunaSelect) {
-                        comunaSelect.setAttribute('required', 'required');
-                        const firstComunaOption = comunaSelect.querySelector('option[value=""]');
-                        if (firstComunaOption) firstComunaOption.disabled = true;
-                    }
-                    if (addressTextarea) addressTextarea.setAttribute('required', 'required');
-                }
-            }
-        } else {
-            shippingRow.style.display = 'none';
-        }
-
-        const subtotal = {{ cart.get_subtotal|default:0 }};
-        const discount = {{ discount_amount|default:0 }};
-        totalAmount.textContent = formatMoneyClp(subtotal + resolved - discount);
-    }
-
-    function syncShippingFromMethodChange(radioInput) {
-        const cfg = window.MOTO_SHIPPING;
-        const isDomestic = cfg && String(radioInput.value) === String(cfg.domesticId);
-        if (isDomestic) {
-            updateShippingCost(0, {});
-            return;
-        }
-        const shippingOption = radioInput.closest('.checkout-option');
-        const costText = shippingOption.textContent;
-        const cost = costText.includes('Gratis') ? 0 :
-            parseInt(costText.match(/\$[\d.]+/)?.[0].replace(/[$.]/g, '') || '0');
-        updateShippingCost(cost, {});
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const selectedShipping = document.querySelector('input[name="shipping_method"]:checked');
-        if (selectedShipping) syncShippingFromMethodChange(selectedShipping);
-    });
-    
-    // Cargar comunas dinámicamente cuando se selecciona una región
-    const regionSelect = document.getElementById('shipping-region');
-    const comunaSelect = document.getElementById('shipping-comuna');
-    
-    if (regionSelect) {
-        regionSelect.addEventListener('change', function() {
-            const region = this.value;
-            if (isDomesticShippingSelected()) {
-                updateShippingCost(0, { skipFieldReset: true });
-            }
-            comunaSelect.innerHTML = '<option value="">Seleccione una comuna</option>';
-            
-            if (region) {
-                // Hacer petición AJAX para obtener las comunas
-                fetch(`{% url 'shop:get_comunas' %}?region=${encodeURIComponent(region)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.comunas && data.comunas.length > 0) {
-                            data.comunas.forEach(comuna => {
-                                const option = document.createElement('option');
-                                option.value = comuna[0];
-                                option.textContent = comuna[1];
-                                comunaSelect.appendChild(option);
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error al cargar comunas:', error);
-                        if (typeof showToast === 'function') {
-                            showToast('Error al cargar las comunas. Por favor, intente nuevamente.', 'error');
-                        }
-                    });
-            }
-        });
-    }
-    
-    // Validación antes de enviar el formulario
-    const checkoutForm = document.getElementById('checkout-form');
-    const submitBtn = document.getElementById('checkout-submit-btn');
-    
-    if (checkoutForm && submitBtn) {
-        checkoutForm.addEventListener('submit', function(e) {
-            const selectedShipping = document.querySelector('input[name="shipping_method"]:checked');
-            
-            if (selectedShipping) {
-                const shippingId = selectedShipping.value;
-                const shippingFields = document.getElementById('shipping-fields-' + shippingId);
-                
-                // Si el método de envío tiene costo (envío a domicilio)
-                if (shippingFields && shippingFields.style.display !== 'none') {
-                    const regionSelect = shippingFields.querySelector('#shipping-region');
-                    const comunaSelect = shippingFields.querySelector('#shipping-comuna');
-                    const addressTextarea = shippingFields.querySelector('textarea[name="shipping_address"]');
-                    
-                    let errors = [];
-                    
-                    if (!regionSelect || !regionSelect.value || regionSelect.value === '') {
-                        errors.push('• Debe seleccionar una región');
-                    }
-                    if (!comunaSelect || !comunaSelect.value || comunaSelect.value === '') {
-                        errors.push('• Debe seleccionar una comuna');
-                    }
-                    if (!addressTextarea || !addressTextarea.value || addressTextarea.value.trim() === '') {
-                        errors.push('• Debe ingresar la dirección');
-                    }
-                    
-                    if (errors.length > 0) {
-                        e.preventDefault();
-                        if (typeof showToast === 'function') {
-                            showToast('Por favor complete los siguientes campos para envío a domicilio:\n\n' + errors.join('\n'), 'warning');
-                        }
-                        return false;
-                    }
-                }
-            }
-            
-            // Validar información de contacto
-            const customerName = document.getElementById('customer_name');
-            const customerEmail = document.getElementById('customer_email');
-            
-            if (customerName && (!customerName.value || customerName.value.trim() === '')) {
-                e.preventDefault();
-                if (typeof showToast === 'function') {
-                    showToast('Debe ingresar su nombre completo', 'warning');
-                }
-                return false;
-            }
-            
-            if (customerEmail && (!customerEmail.value || customerEmail.value.trim() === '')) {
-                e.preventDefault();
-                if (typeof showToast === 'function') {
-                    showToast('Debe ingresar su email', 'warning');
-                }
-                return false;
-            }
-            
-            // Validar email formato
-            if (customerEmail && customerEmail.value) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(customerEmail.value)) {
-                    e.preventDefault();
-                    if (typeof showToast === 'function') {
-                        showToast('El email ingresado no es válido', 'warning');
-                    }
-                    return false;
-                }
-            }
-        });
-    }
-    
-    // Hacer que toda la tarjeta de método de envío sea clickeable
-    document.addEventListener('DOMContentLoaded', function() {
-        // Agregar clase 'selected' cuando un método de envío está seleccionado
-        function updateShippingMethodStyles() {
-            document.querySelectorAll('.checkout-option-shipping input[type="radio"]').forEach(radio => {
-                const label = radio.closest('.checkout-option-shipping');
-                if (radio.checked) {
-                    label.classList.add('selected');
-                } else {
-                    label.classList.remove('selected');
-                }
-            });
-        }
-        
-        // Actualizar estilos al cargar la página
-        updateShippingMethodStyles();
-        
-        // Actualizar estilos cuando cambia la selección
-        document.querySelectorAll('.checkout-option-shipping input[type="radio"]').forEach(radio => {
-                radio.addEventListener('change', function() {
-                updateShippingMethodStyles();
-                if (typeof syncShippingFromMethodChange === 'function') {
-                    syncShippingFromMethodChange(this);
-                }
-            });
-        });
-        
-        // Asegurar que hacer click en cualquier parte de la tarjeta seleccione el radio
-        document.querySelectorAll('.checkout-option-shipping').forEach(label => {
-            label.addEventListener('click', function(e) {
-                // Si el click no fue directamente en el input, activarlo
-                if (e.target !== label.querySelector('input[type="radio"]')) {
-                    const radio = label.querySelector('input[type="radio"]');
-                    if (radio) {
-                        radio.checked = true;
-                        updateShippingMethodStyles();
-                        // Disparar el evento change para actualizar el costo
-                        radio.dispatchEvent(new Event('change'));
-                    }
-                }
-            });
-        });
-    });
-    
-    // Hacer que toda la tarjeta de método de pago sea clickeable
-    document.addEventListener('DOMContentLoaded', function() {
-        // Agregar clase 'selected' cuando un método de pago está seleccionado
-        function updatePaymentMethodStyles() {
-            document.querySelectorAll('.checkout-option-payment input[type="radio"]').forEach(radio => {
-                const label = radio.closest('.checkout-option-payment');
-                if (radio.checked) {
-                    label.classList.add('selected');
-                } else {
-                    label.classList.remove('selected');
-                }
-            });
-        }
-        
-        // Actualizar estilos al cargar la página
-        updatePaymentMethodStyles();
-        
-        // Actualizar estilos cuando cambia la selección
-        document.querySelectorAll('.checkout-option-payment input[type="radio"]').forEach(radio => {
-            radio.addEventListener('change', updatePaymentMethodStyles);
-        });
-        
-        // Asegurar que hacer click en cualquier parte de la tarjeta seleccione el radio
-        document.querySelectorAll('.checkout-option-payment').forEach(label => {
-            label.addEventListener('click', function(e) {
-                // Si el click no fue directamente en el input, activarlo
-                if (e.target !== label.querySelector('input[type="radio"]')) {
-                    const radio = label.querySelector('input[type="radio"]');
-                    if (radio) {
-                        radio.checked = true;
-                        updatePaymentMethodStyles();
-                        updateMercadoPagoMessage();
-                    }
-                }
-            });
-        });
-        
-        // Función para mostrar/ocultar mensaje de MercadoPago
-        function updateMercadoPagoMessage() {
-            const mercadoPagoMessage = document.getElementById('mercado-pago-message');
-            if (!mercadoPagoMessage) return;
-            
-            const selectedRadio = document.querySelector('input[name="payment_method"]:checked');
-            if (selectedRadio) {
-                const label = selectedRadio.closest('.checkout-option-payment');
-                const paymentName = label.querySelector('.payment-name').textContent.trim();
-                
-                // Mostrar mensaje solo para Tarjeta de Crédito o Tarjeta de Débito
-                if (paymentName === 'Tarjeta de Crédito' || paymentName === 'Tarjeta de Débito') {
-                    mercadoPagoMessage.style.display = 'inline';
-                } else {
-                    mercadoPagoMessage.style.display = 'none';
-                }
-            } else {
-                mercadoPagoMessage.style.display = 'none';
-            }
-        }
-        
-        // Actualizar mensaje cuando cambia la selección
-        document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
-            radio.addEventListener('change', updateMercadoPagoMessage);
-        });
-        
-        // Actualizar mensaje al cargar la página
-        updateMercadoPagoMessage();
-    });
+{% if cart and cart.items.count > 0 %}
+<script id="cart-page-data" type="application/json">
+{
+  "page": "cart",
+  "urls": {
+    "comunas": "{% url 'shop:get_comunas' %}"
+  },
+  "shipping": {
+    "domesticId": {% if domestic_shipping_method_id %}{{ domestic_shipping_method_id }}{% else %}null{% endif %},
+    "metroRegion": "{{ shipping_metro_region_name|default:''|escapejs }}",
+    "priceMetro": {{ shipping_price_metro|default:3000 }},
+    "priceOther": {{ shipping_price_other|default:5000 }},
+    "regionPrices": {{ shipping_region_prices_json|default:'{}'|safe }}
+  },
+  "money": {
+    "subtotalClp": {{ cart.get_subtotal|default:0 }},
+    "discountClp": {{ discount_amount|default:0 }}
+  },
+  "payment": {
+    "mercadoPagoNames": ["Tarjeta de Crédito", "Tarjeta de Débito"]
+  }
+}
 </script>
+<script type="module" src="{% static 'js/pages/cart.js' %}?v={{ timestamp|default:'1.0' }}"></script>
+{% endif %}
 {% endblock %}
 

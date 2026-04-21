@@ -2,6 +2,7 @@
  * MotoMoto — Punto de entrada CSS (solo @import; el orden replica el theme monolítico).
  */
 @import url("theme-base.css");
+@import url("components/toasts.css");
 @import url("home.css");
 @import url("cart.css");
 @import url("forms-global.css");

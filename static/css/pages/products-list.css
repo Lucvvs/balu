@@ -1,0 +1,20 @@
+/* templates/shop/products_list.html */
+
+.filter-categories .filter-btn {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.filter-categories .filter-btn.is-filter-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.sort-icon.js-reset-filters {
+  cursor: pointer;
+}
+
+.product-card-image-container--placeholder {
+  position: relative;
+}

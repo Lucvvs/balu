@@ -4,6 +4,10 @@
 
 {% block title %}{{ product.name }} - MotoMoto{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/product-detail.css' %}?v={{ timestamp|default:'1.0' }}">
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="row">
@@ -15,13 +19,11 @@
                     <div class="product-image-zoom-wrapper">
                         {% if images %}
                             <img src="{{ primary_image.image.url|default:images.0.image.url }}" alt="{{ product.name }}" 
-                                 class="img-fluid main-product-image" id="main-product-image" 
-                                 style="max-height: 405px; object-fit: contain;"
-                                 onerror="if(this.src!='{% static 'img/placeholder.webp' %}'){this.src='{% static 'img/placeholder.webp' %}';}else{this.style.display='none';}">
+                                 class="img-fluid main-product-image js-img-fallback" id="main-product-image" 
+                                 data-fallback-src="{% static 'img/placeholder.webp' %}">
                         {% else %}
                             <img src="{% static 'img/placeholder.webp' %}" alt="{{ product.name }}" 
-                                 class="img-fluid main-product-image" id="main-product-image" style="max-height: 405px; object-fit: contain;"
-                                 onerror="this.style.display='none';">
+                                 class="img-fluid main-product-image js-img-fallback" id="main-product-image" data-fallback-src="">
                         {% endif %}
                     </div>
                 </div>
@@ -29,10 +31,10 @@
                 <!-- Navigation Arrows -->
                 {% if images|length > 1 %}
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <button class="btn btn-outline-secondary" onclick="previousImage()">
+                        <button type="button" class="btn btn-outline-secondary js-product-gallery-prev">
                             <i class="bi bi-chevron-left"></i> Anterior
                         </button>
-                        <button class="btn btn-outline-secondary" onclick="nextImage()">
+                        <button type="button" class="btn btn-outline-secondary js-product-gallery-next">
                             Siguiente <i class="bi bi-chevron-right"></i>
                         </button>
                     </div>
@@ -41,9 +43,8 @@
                     <div class="thumbnails-container d-flex gap-2 justify-content-center flex-wrap">
                         {% for image in images %}
                             <img src="{{ image.image.url }}" alt="{{ product.name }}" 
-                                 class="product-thumbnail {% if forloop.first %}active{% endif %}" 
-                                 onclick="changeMainImage('{{ image.image.url }}', this)"
-                                 style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; border: 2px solid transparent; border-radius: 4px;">
+                                 class="product-thumbnail js-img-fallback {% if forloop.first %}active{% endif %}" 
+                                 data-fallback-src="{% static 'img/placeholder.webp' %}">
                         {% endfor %}
                     </div>
                 {% endif %}
@@ -168,32 +169,28 @@
                 {% for related_product in related_products %}
                     <div class="col-md-3 col-sm-6 mb-4">
                         <div class="product-card">
-                            <a href="{% url 'shop:product_detail' slug=related_product.slug %}" style="display: block; position: relative;">
+                            <a href="{% url 'shop:product_detail' slug=related_product.slug %}" class="product-card-image-link">
                                 {% with images=related_product.images.all %}
                                 {% if images|length > 0 %}
                                 <div class="product-card-image-container">
                                     {% for image in images %}
                                     <img src="{{ image.image.url }}" alt="{{ related_product.name }}" 
-                                         class="product-card-img {% if forloop.first %}active{% endif %}" 
-                                         style="cursor: pointer;"
-                                         onerror="if(this.src!='{% static 'img/placeholder.webp' %}'){this.src='{% static 'img/placeholder.webp' %}';}else{this.style.display='none';}">
+                                         class="product-card-img js-img-fallback {% if forloop.first %}active{% endif %}" 
+                                         data-fallback-src="{% static 'img/placeholder.webp' %}">
                                     {% endfor %}
                                 </div>
                                 {% else %}
                                 <img src="{% static 'img/placeholder.webp' %}" alt="{{ related_product.name }}" 
-                                     class="product-card-img" style="cursor: pointer;"
-                                     onerror="this.style.display='none';">
+                                     class="product-card-img js-img-fallback" data-fallback-src="">
                                 {% endif %}
                                 {% endwith %}
                             </a>
                             <div class="product-card-body related-product-card-body">
-                                <h6 class="related-product-title"
-                                    onclick="window.location.href='{% url 'shop:product_detail' slug=related_product.slug %}'">
-                                    {{ related_product.name }}
+                                <h6 class="related-product-title">
+                                    <a href="{% url 'shop:product_detail' slug=related_product.slug %}">{{ related_product.name }}</a>
                                 </h6>
-                                <p class="related-product-price"
-                                   onclick="window.location.href='{% url 'shop:product_detail' slug=related_product.slug %}'">
-                                    {{ related_product.current_price|currency_clp }}
+                                <p class="related-product-price mb-0">
+                                    <a href="{% url 'shop:product_detail' slug=related_product.slug %}">{{ related_product.current_price|currency_clp }}</a>
                                 </p>
                             </div>
                         </div>
@@ -210,130 +207,9 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    let currentImageIndex = 0;
-    const images = [
-        {% for image in images %}
-            '{{ image.image.url }}',
-        {% endfor %}
-    ];
-    
-    function changeMainImage(imageUrl, thumbnail) {
-        document.getElementById('main-product-image').src = imageUrl;
-        
-        // Update active thumbnail
-        document.querySelectorAll('.product-thumbnail').forEach(thumb => {
-            thumb.classList.remove('active');
-            thumb.style.borderColor = 'transparent';
-        });
-        
-        if (thumbnail) {
-            thumbnail.classList.add('active');
-            thumbnail.style.borderColor = '#dc3545';
-        }
-        
-        // Update current index
-        currentImageIndex = images.indexOf(imageUrl);
-    }
-    
-    function nextImage() {
-        if (images.length > 0) {
-            currentImageIndex = (currentImageIndex + 1) % images.length;
-            const thumbnail = document.querySelectorAll('.product-thumbnail')[currentImageIndex];
-            changeMainImage(images[currentImageIndex], thumbnail);
-        }
-    }
-    
-    function previousImage() {
-        if (images.length > 0) {
-            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
-            const thumbnail = document.querySelectorAll('.product-thumbnail')[currentImageIndex];
-            changeMainImage(images[currentImageIndex], thumbnail);
-        }
-    }
-    
-    // Keyboard navigation
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'ArrowLeft') {
-            previousImage();
-        } else if (e.key === 'ArrowRight') {
-            nextImage();
-        }
-    });
-    
-    // Image zoom effect (desktop only)
-    function initImageZoom() {
-        // Only enable on desktop (screen width > 768px)
-        if (window.innerWidth <= 768) {
-            return;
-        }
-        
-        const zoomWrapper = document.querySelector('.product-image-zoom-wrapper');
-        const mainImage = document.getElementById('main-product-image');
-        
-        if (!zoomWrapper || !mainImage) {
-            return;
-        }
-        
-        let isZooming = false;
-        
-        zoomWrapper.addEventListener('mouseenter', function() {
-            isZooming = true;
-            zoomWrapper.classList.add('zoom-active');
-        });
-        
-        zoomWrapper.addEventListener('mouseleave', function() {
-            isZooming = false;
-            zoomWrapper.classList.remove('zoom-active');
-            mainImage.style.transform = 'scale(1)';
-            mainImage.style.transformOrigin = 'center center';
-        });
-        
-        zoomWrapper.addEventListener('mousemove', function(e) {
-            if (!isZooming) return;
-            
-            const rect = zoomWrapper.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            // Calculate percentage position
-            const xPercent = (x / rect.width) * 100;
-            const yPercent = (y / rect.height) * 100;
-            
-            // Set transform origin based on mouse position
-            mainImage.style.transformOrigin = `${xPercent}% ${yPercent}%`;
-            mainImage.style.transform = 'scale(2)';
-        });
-    }
-    
-    // Initialize zoom on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        initImageZoom();
-        (function syncVariantQuantityCap() {
-            var sel = document.getElementById('id_variant');
-            var qty = document.getElementById('id_quantity');
-            if (!sel || !qty) return;
-            function apply() {
-                var opt = sel.options[sel.selectedIndex];
-                var cap = (opt && opt.dataset && opt.dataset.stock) ? parseInt(opt.dataset.stock, 10) : parseInt(qty.getAttribute('max'), 10) || 1;
-                if (isNaN(cap) || cap < 1) cap = 1;
-                qty.setAttribute('max', cap);
-                var v = parseInt(qty.value, 10);
-                if (v > cap) qty.value = String(cap);
-            }
-            sel.addEventListener('change', apply);
-            apply();
-        })();
-    });
-    
-    // Re-initialize on window resize (in case user resizes window)
-    let resizeTimer;
-    window.addEventListener('resize', function() {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function() {
-            initImageZoom();
-        }, 250);
-    });
+<script id="product-detail-page-data" type="application/json">
+{"page":"product_detail"}
 </script>
+<script type="module" src="{% static 'js/pages/product_detail.js' %}?v={{ timestamp|default:'1.0' }}"></script>
 {% endblock %}
 

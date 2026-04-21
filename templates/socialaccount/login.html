@@ -10,7 +10,7 @@
             <div class="card shadow">
                 <div class="card-body p-4 text-center">
                     <div class="mb-4">
-                        <div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem;">
+                        <div class="spinner-border text-danger socialaccount-oauth-spinner" role="status">
                             <span class="visually-hidden">Cargando...</span>
                         </div>
                     </div>
@@ -24,17 +24,21 @@
     </div>
 </div>
 
-<form id="google-login-form" method="post" style="display: none;">
+<form id="google-login-form" class="d-none" method="post" data-auto-submit-on-load>
     {% csrf_token %}
     {% if redirect_field_value %}
         <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
     {% endif %}
 </form>
+{% endblock %}
 
-<script>
-    // Enviar el formulario automáticamente al cargar la página
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('google-login-form').submit();
-    });
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/socialaccount-oauth-redirect.css' %}?v={{ timestamp|default:'1.0' }}">
+{% endblock %}
+
+{% block extra_js %}
+<script id="socialaccount-oauth-page-data" type="application/json">
+{"page":"socialaccount-oauth-redirect"}
 </script>
+<script type="module" src="{% static 'js/pages/socialaccount-oauth-redirect.js' %}?v={{ timestamp|default:'1.0' }}"></script>
 {% endblock %}

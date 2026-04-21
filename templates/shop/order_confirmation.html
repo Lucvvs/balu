@@ -236,7 +236,7 @@
                     <div class="row align-items-center g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold mb-2" for="orderStatusSelect">Cambiar estado del pedido</label>
-                            <form method="post" action="{% url 'shop:admin_update_order_status' order.id %}" id="statusChangeForm" onsubmit="return confirmStatusChangeDetail(this);">
+                            <form method="post" action="{% url 'shop:admin_update_order_status' order.id %}" id="statusChangeForm">
                                 {% csrf_token %}
                                 <input type="hidden" name="from_detail" value="1">
                                 <select name="status" class="form-select" id="orderStatusSelect">
@@ -294,7 +294,7 @@
                                         {% if forloop.counter0 < progress.current_index %}
                                             <i class="bi bi-check-lg"></i>
                                         {% elif forloop.counter0 == progress.current_index %}
-                                            <img src="{% static 'img/motoestado.webp' %}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');">
+                                            <img src="{% static 'img/motoestado.webp' %}" alt="" class="js-img-fallback-reveal-next" loading="lazy" decoding="async">
                                             <i class="bi bi-bicycle text-success fs-3 d-none" aria-hidden="true"></i>
                                         {% else %}
                                             <i class="bi bi-circle"></i>
@@ -320,18 +320,11 @@
     </div>
 </section>
 
-{% if user.is_staff %}
-<script>
-function confirmStatusChangeDetail(form) {
-    const select = document.getElementById('orderStatusSelect');
-    const currentStatus = '{{ order.get_status_display|escapejs }}';
-    const newStatus = select.options[select.selectedIndex].text;
-    if (currentStatus === newStatus) {
-        alert('El estado seleccionado es el mismo que el actual.');
-        return false;
-    }
-    return confirm('¿Cambiar el pedido #{{ order.id }} de "' + currentStatus + '" a "' + newStatus + '"?');
-}
+{% endblock %}
+
+{% block extra_js %}
+<script id="order-confirmation-page-data" type="application/json">
+{"page":"order-confirmation"{% if user.is_staff %},"staff":{"orderId":{{ order.id }},"currentStatusDisplay":"{{ order.get_status_display|escapejs }}"}{% endif %}}
 </script>
-{% endif %}
+<script type="module" src="{% static 'js/pages/order_confirmation.js' %}?v={{ timestamp|default:'1.0' }}"></script>
 {% endblock %}

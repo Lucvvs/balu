@@ -4,6 +4,10 @@
 
 {% block title %}Buscar Pedido - MotoMoto{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/search-order.css' %}?v={{ timestamp|default:'1.0' }}">
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5 mb-5">
     <div class="row justify-content-center">
@@ -110,8 +114,8 @@
                                                             <i class="bi bi-check-circle-fill" style="color: white; font-size: 24px;"></i>
                                                         {% elif forloop.counter0 == progress.current_index %}
                                                             <!-- Imagen de moto en el estado actual -->
-                                                            <img src="{% static 'img/motoestado.webp' %}" alt="Estado actual" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%; padding: 5px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                            <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center;">
+                                                            <img src="{% static 'img/motoestado.webp' %}" alt="Estado actual" class="js-img-fallback-reveal-next search-order-status-moto-img" loading="lazy" decoding="async">
+                                                            <div class="search-order-moto-fallback d-none w-100 h-100 align-items-center justify-content-center">
                                                                 <i class="bi bi-bicycle" style="color: white; font-size: 28px;"></i>
                                                             </div>
                                                         {% else %}
@@ -217,21 +221,11 @@
     </div>
 </div>
 
-<style>
-    @media (max-width: 768px) {
-        .order-progress-container .progress-track {
-            margin: 0 20px !important;
-        }
-        .order-progress-container .status-point {
-            width: 70px !important;
-        }
-        .order-progress-container .status-circle {
-            width: 40px !important;
-            height: 40px !important;
-        }
-        .order-progress-container .status-label {
-            font-size: 9px !important;
-        }
-    }
-</style>
+{% endblock %}
+
+{% block extra_js %}
+<script id="search-order-page-data" type="application/json">
+{"page":"search-order"}
+</script>
+<script type="module" src="{% static 'js/pages/search_order.js' %}?v={{ timestamp|default:'1.0' }}"></script>
 {% endblock %}

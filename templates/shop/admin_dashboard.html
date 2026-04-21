@@ -137,7 +137,7 @@
                                         <td>
                                             <form method="post" action="{% url 'shop:admin_update_order_status' order.id %}" class="d-inline order-status-form" id="statusFormRealized{{ order.id }}">
                                                 {% csrf_token %}
-                                                <select name="status" class="form-select form-select-sm d-inline-block" style="width: auto; min-width: 150px;" data-current-status="{{ order.get_status_display }}" data-order-id="{{ order.id }}" onchange="handleStatusChange(this);">
+                                                <select name="status" class="form-select form-select-sm d-inline-block order-status-select js-order-status-select" data-current-status="{{ order.get_status_display }}" data-order-id="{{ order.id }}">
                                                     {% for status_code, status_name in order.STATUS_CHOICES %}
                                                         <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
                                                             {{ status_name }}
@@ -203,7 +203,7 @@
                                         <td>
                                             <form method="post" action="{% url 'shop:admin_update_order_status' order.id %}" class="d-inline order-status-form" id="statusForm{{ order.id }}">
                                                 {% csrf_token %}
-                                                <select name="status" class="form-select form-select-sm d-inline-block" style="width: auto; min-width: 150px;" data-current-status="{{ order.get_status_display }}" data-order-id="{{ order.id }}" onchange="handleStatusChange(this);">
+                                                <select name="status" class="form-select form-select-sm d-inline-block order-status-select js-order-status-select" data-current-status="{{ order.get_status_display }}" data-order-id="{{ order.id }}">
                                                     {% for status_code, status_name in order.STATUS_CHOICES %}
                                                         <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
                                                             {{ status_name }}
@@ -268,7 +268,7 @@
                                         <td>
                                             <form method="post" action="{% url 'shop:admin_update_order_status' order.id %}" class="d-inline order-status-form" id="statusFormPending{{ order.id }}">
                                                 {% csrf_token %}
-                                                <select name="status" class="form-select form-select-sm d-inline-block" style="width: auto; min-width: 150px;" data-current-status="{{ order.get_status_display }}" data-order-id="{{ order.id }}" onchange="handleStatusChange(this);">
+                                                <select name="status" class="form-select form-select-sm d-inline-block order-status-select js-order-status-select" data-current-status="{{ order.get_status_display }}" data-order-id="{{ order.id }}">
                                                     {% for status_code, status_name in order.STATUS_CHOICES %}
                                                         <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
                                                             {{ status_name }}
@@ -362,7 +362,7 @@
                                             <a href="{% url 'shop:admin_contact_detail' message.id %}" class="btn btn-sm btn-outline-primary">
                                                 <i class="bi bi-eye"></i> Ver
                                             </a>
-                                            <form method="post" action="{% url 'shop:admin_contact_delete' message.id %}" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este mensaje?');">
+                                            <form method="post" action="{% url 'shop:admin_contact_delete' message.id %}" class="d-inline js-confirm-submit" data-confirm-message="¿Estás seguro de eliminar este mensaje?">
                                                 {% csrf_token %}
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">
                                                     <i class="bi bi-trash"></i>
@@ -505,233 +505,15 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<style>
-.admin-dashboard-container {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    padding-bottom: 3rem;
-}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/admin-dashboard.css' %}?v={{ timestamp|default:'1.0' }}">
+{% endblock %}
 
-.dashboard-header {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
-    padding: 2rem 0;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-.dashboard-title {
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.dashboard-subtitle {
-    margin: 0.5rem 0 0 0;
-    opacity: 0.9;
-}
-
-.dashboard-tabs {
-    background: white;
-    padding: 1rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.dashboard-tabs .nav-link {
-    color: #495057;
-    font-weight: 500;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    transition: all 0.3s;
-    margin-right: 0.5rem;
-}
-
-.dashboard-tabs .nav-link:hover {
-    background-color: #f8f9fa;
-    color: #dc3545;
-}
-
-.dashboard-tabs .nav-link.active {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
-}
-
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    transition: transform 0.2s, box-shadow 0.2s;
-    height: 100%;
-}
-
-.stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.stat-card-primary .stat-icon {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-}
-
-.stat-card-success .stat-icon {
-    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-}
-
-.stat-card-info .stat-icon {
-    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
-}
-
-.stat-card-warning .stat-icon {
-    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-}
-
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-    flex-shrink: 0;
-}
-
-.stat-content {
-    flex-grow: 1;
-}
-
-.stat-value {
-    font-size: 1.75rem;
-    font-weight: bold;
-    margin: 0;
-    color: #212529;
-}
-
-.stat-label {
-    margin: 0.25rem 0 0 0;
-    color: #6c757d;
-    font-size: 0.9rem;
-}
-
-.card {
-    border: none;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.card-header {
-    border-bottom: none;
-    padding: 1rem 1.5rem;
-    font-weight: 600;
-}
-
-.table {
-    margin-bottom: 0;
-}
-
-.table thead th {
-    border-bottom: 2px solid #dee2e6;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-}
-
-.table tbody tr {
-    transition: background-color 0.2s;
-}
-
-.table tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-.list-group-item {
-    border-left: none;
-    border-right: none;
-    padding: 1rem;
-    transition: background-color 0.2s;
-}
-
-.list-group-item:hover {
-    background-color: #f8f9fa;
-}
-
-.list-group-item:first-child {
-    border-top: none;
-}
-
-.list-group-item:last-child {
-    border-bottom: none;
-}
-
-@media (max-width: 768px) {
-    .dashboard-title {
-        font-size: 1.5rem;
-    }
-    
-    .dashboard-tabs .nav-link {
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-    }
-    
-    .stat-card {
-        flex-direction: column;
-        text-align: center;
-        padding: 1rem;
-    }
-    
-    .stat-icon {
-        width: 50px;
-        height: 50px;
-        font-size: 1.25rem;
-    }
-    
-    .stat-value {
-        font-size: 1.5rem;
-    }
-    
-    .table {
-        font-size: 0.85rem;
-    }
-    
-    .btn-sm {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
-    }
-    }
-</style>
-
-<script>
-function handleStatusChange(select) {
-    const currentStatus = select.getAttribute('data-current-status');
-    const selectedOption = select.options[select.selectedIndex];
-    const newStatus = selectedOption.text;
-    const orderId = select.getAttribute('data-order-id');
-    const form = select.closest('form');
-    
-    if (currentStatus === newStatus) {
-        // No hacer nada si no cambió
-        return;
-    }
-    
-    if (confirm(`¿Estás seguro de cambiar el estado del pedido #${orderId} de "${currentStatus}" a "${newStatus}"?`)) {
-        form.submit();
-    } else {
-        // Revertir al estado anterior
-        const originalValue = Array.from(select.options).find(opt => opt.text === currentStatus)?.value;
-        if (originalValue) {
-            select.value = originalValue;
-        }
-    }
-}
+{% block extra_js %}
+<script id="admin-dashboard-page-data" type="application/json">
+{"page":"admin-dashboard"}
 </script>
+<script type="module" src="{% static 'js/pages/admin-dashboard.js' %}?v={{ timestamp|default:'1.0' }}"></script>
 {% endblock %}

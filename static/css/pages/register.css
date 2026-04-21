@@ -1,0 +1,219 @@
+/* templates/shop/register.html */
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-input-wrapper input {
+  padding-right: 45px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 5px;
+  transition: color 0.3s ease;
+  z-index: 10;
+}
+
+.password-toggle-btn:hover {
+  color: var(--primary-color);
+}
+
+.strength-bar {
+  width: 100%;
+  height: 5px;
+  background: #e9ecef;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 10px;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  background: linear-gradient(90deg, #dc3545, #ff6b35, #ffc107, #28a745);
+  background-size: 400% 100%;
+  animation: registerGradientShift 2s ease infinite;
+}
+
+.strength-fill.weak {
+  width: 25%;
+  background: linear-gradient(90deg, #dc3545, #ff2a2a);
+  animation: none;
+}
+
+.strength-fill.fair {
+  width: 50%;
+  background: linear-gradient(90deg, #ff6b35, #ff8c42);
+  animation: none;
+}
+
+.strength-fill.good {
+  width: 75%;
+  background: linear-gradient(90deg, #ffc107, #ffd700);
+  animation: none;
+}
+
+.strength-fill.strong {
+  width: 100%;
+  background: linear-gradient(90deg, #28a745, #20c997);
+  animation: none;
+}
+
+@keyframes registerGradientShift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.password-requirements {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 12px;
+}
+
+.requirement-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  opacity: 0.6;
+  transform: translateX(-5px);
+}
+
+.requirement-item.valid {
+  opacity: 1;
+  transform: translateX(0);
+  color: #28a745;
+}
+
+.requirement-item.valid .requirement-icon {
+  color: #28a745;
+  transform: scale(1.5);
+}
+
+.requirement-item:not(.valid) .requirement-icon {
+  color: #dc3545;
+}
+
+.requirement-icon {
+  font-size: 8px;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  text-align: center;
+  line-height: 12px;
+}
+
+.requirement-item.valid .requirement-icon::before {
+  content: "\f00c";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 12px;
+  display: inline-block;
+}
+
+.requirement-item:not(.valid) .requirement-icon::before {
+  content: "\f111";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 400;
+  font-size: 8px;
+  display: inline-block;
+}
+
+.requirement-text {
+  transition: color 0.3s ease;
+}
+
+.password-match-indicator {
+  min-height: 20px;
+}
+
+.match-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  opacity: 0.6;
+}
+
+.match-status.valid {
+  opacity: 1;
+  color: #28a745;
+}
+
+.match-status.invalid {
+  opacity: 1;
+  color: #dc3545;
+}
+
+.match-icon {
+  font-size: 8px;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.match-status.valid .match-icon {
+  color: #28a745;
+  transform: scale(1.5);
+}
+
+.match-status.valid .match-icon::before {
+  content: "\f00c";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.match-status.invalid .match-icon {
+  color: #dc3545;
+}
+
+.match-status.invalid .match-icon::before {
+  content: "\f00d";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 12px;
+}
+
+.register-page .form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.register-page .form-control.valid {
+  border-color: #28a745;
+}
+
+.register-page .form-control.invalid {
+  border-color: #dc3545;
+}
+
+.register-captcha-container {
+  min-height: 50px;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.register-captcha-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+}

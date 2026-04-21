@@ -154,30 +154,11 @@
         </div>
     </div>
 </section>
+{% endblock %}
 
-<script>
-(function () {
-    var form = document.getElementById('profile-form');
-    if (!form) return;
-
-    var phone = form.querySelector('input[name="phone"]');
-    if (phone) {
-        phone.addEventListener('input', function () {
-            this.value = this.value.replace(/\D/g, '');
-        });
-    }
-
-    function stripDigitsFromName(el) {
-        if (!el) return;
-        el.addEventListener('input', function () {
-            var s = this.value;
-            var t = s.replace(/[0-9]/g, '');
-            if (t !== s) this.value = t;
-        });
-    }
-
-    stripDigitsFromName(form.querySelector('input[name="first_name"]'));
-    stripDigitsFromName(form.querySelector('input[name="last_name"]'));
-})();
+{% block extra_js %}
+<script id="profile-page-data" type="application/json">
+{"page":"profile"}
 </script>
+<script type="module" src="{% static 'js/pages/profile.js' %}?v={{ timestamp|default:'1.0' }}"></script>
 {% endblock %}

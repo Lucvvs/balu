@@ -1,0 +1,28 @@
+/* templates/shop/search_order.html */
+
+.search-order-status-moto-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+  padding: 5px;
+}
+
+@media (max-width: 768px) {
+  .order-progress-container .progress-track {
+    margin: 0 20px !important;
+  }
+
+  .order-progress-container .status-point {
+    width: 70px !important;
+  }
+
+  .order-progress-container .status-circle {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .order-progress-container .status-label {
+    font-size: 9px !important;
+  }
+}

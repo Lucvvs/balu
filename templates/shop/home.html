@@ -9,38 +9,38 @@
 <link rel="preload" as="image" href="{% static 'img/vercatalogo.webp' %}">
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v={{ timestamp|default:'1.0' }}">
+{% endblock %}
+
 {% block content %}
 <!-- Hero Section -->
-<section class="hero-section"
-    style="background-image: url('{% static 'img/bienvenida.webp' %}'); filter: brightness(1.0);">
+<section class="hero-section home-hero">
     <div class="container">
         <div class="masking-container">
             <h1 class="masked-text">¿Qué productos MotoMoto buscas hoy?</h1>
         </div>
         <a href="{% url 'shop:products_list' %}" class="btn btn-hero">
-            <img src="{% static 'img/vercatalogo.webp' %}" alt="Ver Catálogo" fetchpriority="high" onerror="this.style.display='none'">
+            <img src="{% static 'img/vercatalogo.webp' %}" alt="Ver Catálogo" fetchpriority="high" class="js-img-fallback" data-fallback-src="">
         </a>
     </div>
 </section>
 
 <!-- Category Banner -->
 <section class="category-banner">
-    <a href="{% url 'shop:products_list' %}?category=equipamiento" class="category-item"
-        style="background-image: url('{% static 'img/banner1.webp' %}');">
+    <a href="{% url 'shop:products_list' %}?category=equipamiento" class="category-item home-category home-category--equipamiento">
         <div class="overlay">
-            <span style="color: white; font-size: 2rem; font-weight: bold;">Equipamiento</span>
+            <span>Equipamiento</span>
         </div>
     </a>
-    <a href="{% url 'shop:products_list' %}?category=accesorios" class="category-item"
-        style="background-image: url('{% static 'img/banner3.webp' %}');">
+    <a href="{% url 'shop:products_list' %}?category=accesorios" class="category-item home-category home-category--accesorios">
         <div class="overlay">
-            <span style="color: white; font-size: 2rem; font-weight: bold;">Accesorios</span>
+            <span>Accesorios</span>
         </div>
     </a>
-    <a href="{% url 'shop:products_list' %}?category=maletas" class="category-item"
-        style="background-image: url('{% static 'img/banner2.webp' %}');">
+    <a href="{% url 'shop:products_list' %}?category=maletas" class="category-item home-category home-category--maletas">
         <div class="overlay">
-            <span style="color: white; font-size: 2rem; font-weight: bold;">Para la Moto</span>
+            <span>Para la Moto</span>
         </div>
     </a>
 </section>
@@ -51,31 +51,26 @@
 <section class="security-banner">
     <div class="container">
         <h3 class="security-title">
-            <img src="{% static 'img/garant1.webp' %}" alt="Garantía 1" class="security-title-image-left" loading="lazy" decoding="async" onerror="this.style.display='none'">
+            <img src="{% static 'img/garant1.webp' %}" alt="Garantía 1" class="security-title-image-left js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
             Seguridad Garantizada al Mejor Precio
-            <img src="{% static 'img/garant2.webp' %}" alt="Garantía 2" class="security-title-image-right" loading="lazy" decoding="async" onerror="this.style.display='none'">
+            <img src="{% static 'img/garant2.webp' %}" alt="Garantía 2" class="security-title-image-right js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
         
         </h3>
         <div class="security-images-container">
             <div class="security-image-item">
-                <img src="{% static 'img/seguridad2.webp' %}" alt="Seguridad 2" class="security-image" loading="lazy" decoding="async"
-                    onerror="this.style.display='none'">
+                <img src="{% static 'img/seguridad2.webp' %}" alt="Seguridad 2" class="security-image js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
             </div>
             <div class="security-image-item">
-                <img src="{% static 'img/seguridad1.webp' %}" alt="Seguridad 1" class="security-image" loading="lazy" decoding="async"
-                    onerror="this.style.display='none'">
+                <img src="{% static 'img/seguridad1.webp' %}" alt="Seguridad 1" class="security-image js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
             </div>
             <div class="security-image-item">
-                <img src="{% static 'img/seguridad5.webp' %}" alt="Seguridad 5" class="security-image" loading="lazy" decoding="async"
-                    onerror="this.style.display='none'">
+                <img src="{% static 'img/seguridad5.webp' %}" alt="Seguridad 5" class="security-image js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
             </div>
             <div class="security-image-item">
-                <img src="{% static 'img/seguridad3.webp' %}" alt="Seguridad 3" class="security-image" loading="lazy" decoding="async"
-                    onerror="this.style.display='none'">
+                <img src="{% static 'img/seguridad3.webp' %}" alt="Seguridad 3" class="security-image js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
             </div>
             <div class="security-image-item">
-                <img src="{% static 'img/seguridad4.webp' %}" alt="Seguridad 4" class="security-image" loading="lazy" decoding="async"
-                    onerror="this.style.display='none'">
+                <img src="{% static 'img/seguridad4.webp' %}" alt="Seguridad 4" class="security-image js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
             </div>
         </div>
     </div>
@@ -90,19 +85,19 @@
                 {% for brand in brands %}
                     <!-- Primera copia -->
                     <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
-                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" loading="lazy" decoding="async" onerror="this.style.display='none'">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo js-img-fallback {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" loading="lazy" decoding="async" data-fallback-src="">
                     </a>
                 {% endfor %}
                 <!-- Segunda copia para loop infinito -->
                 {% for brand in brands %}
                     <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
-                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" loading="lazy" decoding="async" onerror="this.style.display='none'">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo js-img-fallback {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" loading="lazy" decoding="async" data-fallback-src="">
                     </a>
                 {% endfor %}
                 <!-- Tercera copia para transición perfecta sin saltos -->
                 {% for brand in brands %}
                     <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
-                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" loading="lazy" decoding="async" onerror="this.style.display='none'">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo js-img-fallback {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" loading="lazy" decoding="async" data-fallback-src="">
                     </a>
                 {% endfor %}
             {% endif %}
@@ -121,21 +116,20 @@
                     {% if product.has_offer %}
                     <span class="offer-badge">OFERTA</span>
                     {% endif %}
-                    <a href="{% url 'shop:product_detail' slug=product.slug %}" style="display: block; position: relative;">
+                    <a href="{% url 'shop:product_detail' slug=product.slug %}" class="product-card-image-link">
                         {% with images=product.images.all %}
                         {% if images|length > 0 %}
                         <div class="product-card-image-container offer-image-container" data-product-id="{{ product.id }}">
                             {% for image in images %}
                             <img src="{{ image.image.url }}" alt="{{ product.name }}" 
-                                 class="product-card-img offer-product-img {% if forloop.first %}active{% endif %}" 
+                                 class="product-card-img offer-product-img js-img-fallback {% if forloop.first %}active{% endif %}" 
                                  data-image-index="{{ forloop.counter0 }}"
                                  loading="lazy" decoding="async"
-                                 onerror="if(this.src!='{% static 'img/placeholder.webp' %}'){this.src='{% static 'img/placeholder.webp' %}';}else{this.style.display='none';}">
+                                 data-fallback-src="{% static 'img/placeholder.webp' %}">
                             {% endfor %}
                         </div>
                         {% else %}
-                        <img src="{% static 'img/placeholder.webp' %}" alt="{{ product.name }}" class="product-card-img" loading="lazy" decoding="async"
-                            onerror="this.style.display='none';">
+                        <img src="{% static 'img/placeholder.webp' %}" alt="{{ product.name }}" class="product-card-img js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
                         {% endif %}
                         {% endwith %}
                     </a>
@@ -152,17 +146,16 @@
                                 {% endif %}
                             </div>
                         </a>
-                        <div class="product-card-actions" onclick="event.stopPropagation();">
+                        <div class="product-card-actions js-stop-propagation">
                             <a href="{% url 'shop:product_detail' slug=product.slug %}" class="btn btn-view-detail">
                                 Ver Detalle
                             </a>
                             {% if product.is_available_for_purchase and product.uses_variant_stock %}
-                                <button type="button" class="btn btn-add-cart" 
+                                <button type="button" class="btn btn-add-cart js-open-size-modal" 
                                         title="Agregar al carrito"
                                         data-product-id="{{ product.id }}"
                                         data-product-name="{{ product.name|escapejs }}"
-                                        data-product-variants="{{ product.variants_catalog_json|escape }}"
-                                        onclick="event.stopPropagation(); openSizeModal(this);">
+                                        data-product-variants="{{ product.variants_catalog_json|escape }}">
                                     <i class="bi bi-cart-plus"></i>
                                 </button>
                             {% elif product.is_available_for_purchase %}
@@ -198,36 +191,30 @@
 <!-- Service Banner -->
 <section class="service-banner">
     <div class="service-item">
-        <img src="{% static 'img/envios.webp' %}" alt="Envíos" class="service-main-image" loading="lazy" decoding="async"
-            onerror="this.style.display='none'">
+        <img src="{% static 'img/envios.webp' %}" alt="Envíos" class="service-main-image js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
         <h5 class="service-title">Envíos a toda la Región Metropolitana</h5>
         <p class="service-text">Por solo $3000 (Compras superiores a $40.000)</p>
         <small class="service-text">(Cotiza  tu envio a regiones)</small>
-        <img src="{% static 'img/couriers.webp' %}" alt="Couriers" class="service-small-image mt-2" loading="lazy" decoding="async"
-            onerror="this.style.display='none'">
+        <img src="{% static 'img/couriers.webp' %}" alt="Couriers" class="service-small-image mt-2 js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
         
     </div>
     <div class="service-item">
-        <img src="{% static 'img/retiros.webp' %}" alt="Retiros" class="service-main-image" loading="lazy" decoding="async"
-            onerror="this.style.display='none'">
+        <img src="{% static 'img/retiros.webp' %}" alt="Retiros" class="service-main-image js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
         <h5 class="service-title">Retiros en Bodega MotoMoto</h5>
         <p class="service-text">Cercano al Peñon & Los Jesuitas, Puente Alto</p>
         <a href="https://www.google.com/maps/place/Sant%C3%ADsima+Trinidad+%26+Los+Jesuitas,+8206926+Puente+Alto,+Regi%C3%B3n+Metropolitana/@-33.5810237,-70.5618784,19z/data=!3m1!4b1!4m6!3m5!1s0x9662d6c2b8f727c7:0xaaf5b9f5d352d167!8m2!3d-33.5810248!4d-70.5612347!16s%2Fg%2F11gdmf1b2d?entry=ttu&amp;g_ep=EgoyMDI2MDMxNy4wIKXMDSoASAFQAw%3D%3D"
             target="_blank" rel="noopener noreferrer" class="service-maps-stack mt-1" aria-label="Ver ubicación en Google Maps">
             <img src="{% static 'img/maps.webp' %}" alt=""
-                class="service-small-image service-small-image-maps service-maps-shake" loading="lazy" decoding="async"
-                onerror="this.style.display='none'">
+                class="service-small-image service-small-image-maps service-maps-shake js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
             <span class="service-maps-caption">Ver Ubicación</span>
         </a>
         
     </div>
     <div class="service-item">
-        <img src="{% static 'img/metodospago.webp' %}" alt="Métodos de Pago" class="service-main-image" loading="lazy" decoding="async"
-            onerror="this.style.display='none'">
+        <img src="{% static 'img/metodospago.webp' %}" alt="Métodos de Pago" class="service-main-image js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
         <h5 class="service-title">Métodos de Pago</h5>
         <p class="service-text">Aceptamos Todo medio de pago, Transferencia, Efectivo y Tarjetas</p>
-        <img src="{% static 'img/tarjetas.webp' %}" alt="Tarjetas" class="service-small-image mt-2" loading="lazy" decoding="async"
-            onerror="this.style.display='none'">
+        <img src="{% static 'img/tarjetas.webp' %}" alt="Tarjetas" class="service-small-image mt-2 js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
     </div>
 </section>
 
@@ -246,8 +233,7 @@
                     {% if images|length > 0 %}
                     <div class="carousel-main-container" id="carousel-container-{{ product.id }}">
                         {% if images|length > 1 %}
-                        <i class="bi bi-chevron-left carousel-arrow prev-arrow" data-product="{{ product.id }}"
-                            onclick="changeCarouselImage({{ product.id }}, -1)"></i>
+                        <i class="bi bi-chevron-left carousel-arrow prev-arrow" data-product="{{ product.id }}" data-direction="-1" role="button" tabindex="0" aria-label="Imagen anterior"></i>
                         <a href="{% url 'shop:product_detail' slug=product.slug %}">
                             {% with primary_img=product.get_primary_image %}
                                 {% if primary_img %}
@@ -256,8 +242,7 @@
                                 {% endif %}
                             {% endwith %}
                         </a>
-                        <i class="bi bi-chevron-right carousel-arrow next-arrow" data-product="{{ product.id }}"
-                            onclick="changeCarouselImage({{ product.id }}, 1)"></i>
+                        <i class="bi bi-chevron-right carousel-arrow next-arrow" data-product="{{ product.id }}" data-direction="1" role="button" tabindex="0" aria-label="Imagen siguiente"></i>
                         {% else %}
                         <a href="{% url 'shop:product_detail' slug=product.slug %}">
                             {% with first_img=images|first %}
@@ -274,17 +259,15 @@
                         <img src="{{ image.image.url }}" alt="{{ product.name }}"
                             class="carousel-thumb {% if forloop.first %}active{% endif %}"
                             data-product="{{ product.id }}" data-index="{{ forloop.counter0 }}"
-                            loading="lazy" decoding="async"
-                            onclick="setCarouselImage({{ product.id }}, {{ forloop.counter0 }}, '{{ image.image.url }}')">
+                            loading="lazy" decoding="async">
                         {% endfor %}
                     </div>
                     {% endif %}
                     {% else %}
                     <div class="carousel-main-container">
-                        <a href="{% url 'shop:product_detail' slug=product.slug %}"
-                            style="display: block; width: 100%; height: 100%;">
+                        <a href="{% url 'shop:product_detail' slug=product.slug %}" class="best-seller-placeholder-link">
                             <img src="{% static 'img/placeholder.webp' %}" alt="{{ product.name }}"
-                                class="carousel-main main-image-{{ product.id }}" id="main-image-{{ product.id }}" loading="lazy" decoding="async">
+                                class="carousel-main main-image-{{ product.id }} js-img-fallback" id="main-image-{{ product.id }}" loading="lazy" decoding="async" data-fallback-src="">
                         </a>
                     </div>
                     {% endif %}
@@ -304,14 +287,13 @@
                                 {% endif %}
                             </div>
                         </a>
-                        <div class="best-seller-cart-action" onclick="event.stopPropagation();">
+                        <div class="best-seller-cart-action js-stop-propagation">
                             {% if product.is_available_for_purchase and product.uses_variant_stock %}
-                            <button type="button" class="btn btn-danger btn-lg best-seller-btn"
+                            <button type="button" class="btn btn-danger btn-lg best-seller-btn js-open-size-modal"
                                 title="Agregar al carrito"
                                 data-product-id="{{ product.id }}"
                                 data-product-name="{{ product.name|escapejs }}"
-                                data-product-variants="{{ product.variants_catalog_json|escape }}"
-                                onclick="openSizeModal(this);">
+                                data-product-variants="{{ product.variants_catalog_json|escape }}">
                                 <i class="bi bi-cart-plus"></i> ¡Lo Quiero!
                             </button>
                             {% elif product.is_available_for_purchase %}
@@ -378,7 +360,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" onclick="submitSizeForm();">
+                <button type="button" class="btn btn-danger" id="js-size-modal-submit">
                     <i class="bi bi-cart-plus"></i> Agregar al Carrito
                 </button>
             </div>
@@ -389,261 +371,8 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-function openSizeModal(button) {
-    const productId = button.getAttribute('data-product-id');
-    const productName = button.getAttribute('data-product-name');
-    const raw = button.getAttribute('data-product-variants') || '[]';
-    let items = [];
-    try {
-        items = JSON.parse(raw);
-    } catch (e) {
-        items = [];
-    }
-    const modal = new bootstrap.Modal(document.getElementById('sizeModal'));
-    document.getElementById('modalProductId').value = productId;
-    document.getElementById('modalProductName').textContent = productName;
-    const sel = document.getElementById('modalVariantSelect');
-    sel.innerHTML = '<option value="">-- Seleccione una opción --</option>';
-    items.forEach(function (row) {
-        const opt = document.createElement('option');
-        opt.value = String(row.id);
-        opt.textContent = row.name;
-        opt.setAttribute('data-stock', String(row.stock));
-        sel.appendChild(opt);
-    });
-    document.getElementById('sizeModalForm').reset();
-    document.getElementById('modalProductId').value = productId;
-    document.getElementById('sizeModalForm').querySelector('input[name="quantity"]').value = 1;
-    modal.show();
-}
-
-function submitSizeForm() {
-    const form = document.getElementById('sizeModalForm');
-    const sel = document.getElementById('modalVariantSelect');
-    const productId = document.getElementById('modalProductId').value;
-    if (!sel.value) {
-        alert('Por favor, selecciona una talla/color antes de agregar al carrito.');
-        sel.focus();
-        return;
-    }
-    form.action = '/carrito/agregar/' + productId + '/';
-    form.submit();
-}
-
-    // Rotación escalonada de imágenes en ofertas
-    document.addEventListener('DOMContentLoaded', function() {
-        const offerCards = document.querySelectorAll('.offer-card');
-        
-        offerCards.forEach((card, index) => {
-            const imageContainer = card.querySelector('.offer-image-container');
-            if (!imageContainer) return;
-            
-            const images = imageContainer.querySelectorAll('.offer-product-img');
-            if (images.length <= 1) return;
-            
-            let currentImageIndex = 0;
-            const delay = (index + 1) * 2000; // 2s, 4s, 6s...
-            
-            function changeToNextImage() {
-                const currentImg = images[currentImageIndex];
-                currentImg.classList.remove('active', 'flip-in');
-                currentImg.classList.add('flip-out');
-                
-                currentImageIndex = (currentImageIndex + 1) % images.length;
-                
-                setTimeout(() => {
-                    currentImg.classList.remove('flip-out');
-                    const nextImg = images[currentImageIndex];
-                    nextImg.classList.remove('flip-out');
-                    nextImg.classList.add('flip-in', 'active');
-                    
-                    setTimeout(() => {
-                        images.forEach(img => {
-                            img.classList.remove('flip-in', 'flip-out');
-                            if (img !== nextImg) {
-                                img.classList.remove('active');
-                            }
-                        });
-                    }, 600);
-                }, 50);
-            }
-            
-            // Iniciar cambio después del delay inicial
-            setTimeout(() => {
-                changeToNextImage();
-                // Cambiar cada 6 segundos después del primer cambio
-                setInterval(changeToNextImage, 6000);
-            }, delay);
-        });
-    });
-    
-    // Store current indices for each product carousel
-    const carouselIndices = {};
-
-    // Initialize carousels for best sellers
-    document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.product-carousel').forEach(carousel => {
-            const productId = carousel.querySelector('[data-product]')?.dataset.product;
-            if (!productId) return;
-
-            const thumbnails = carousel.querySelectorAll(`.carousel-thumb[data-product="${productId}"]`);
-            if (thumbnails.length <= 1) return;
-
-            // Initialize index
-            carouselIndices[productId] = 0;
-
-            // Auto-rotate images
-            const interval = 4000 + (parseInt(productId) * 300); // Different interval per product
-            let rotationInterval = setInterval(() => {
-                const nextIndex = (carouselIndices[productId] + 1) % thumbnails.length;
-                setCarouselImage(productId, nextIndex, thumbnails[nextIndex].src);
-            }, interval);
-
-            // Pause on hover
-            carousel.addEventListener('mouseenter', () => {
-                clearInterval(rotationInterval);
-            });
-
-            carousel.addEventListener('mouseleave', () => {
-                rotationInterval = setInterval(() => {
-                    const nextIndex = (carouselIndices[productId] + 1) % thumbnails.length;
-                    setCarouselImage(productId, nextIndex, thumbnails[nextIndex].src);
-                }, interval);
-            });
-
-            // Pause on user interaction
-            thumbnails.forEach(thumb => {
-                thumb.addEventListener('click', () => {
-                    clearInterval(rotationInterval);
-                    setTimeout(() => {
-                        rotationInterval = setInterval(() => {
-                            const nextIndex = (carouselIndices[productId] + 1) % thumbnails.length;
-                            setCarouselImage(productId, nextIndex, thumbnails[nextIndex].src);
-                        }, interval);
-                    }, 5000);
-                });
-            });
-        });
-    });
-
-    function setCarouselImage(productId, index, imageUrl) {
-        const mainImage = document.getElementById(`main-image-${productId}`);
-        const thumbnails = document.querySelectorAll(`.carousel-thumb[data-product="${productId}"]`);
-
-        if (!mainImage || !thumbnails.length) return;
-
-        // Update main image with fade effect
-        mainImage.style.opacity = '0';
-        setTimeout(() => {
-            mainImage.src = imageUrl;
-            mainImage.style.opacity = '1';
-        }, 150);
-
-        // Update active thumbnail
-        thumbnails.forEach((thumb, idx) => {
-            thumb.classList.toggle('active', idx === index);
-        });
-
-        // Update current index
-        carouselIndices[productId] = index;
-    }
-
-    function changeCarouselImage(productId, direction) {
-        const thumbnails = document.querySelectorAll(`.carousel-thumb[data-product="${productId}"]`);
-        if (!thumbnails.length) return;
-
-        const currentIndex = carouselIndices[productId] || 0;
-        let newIndex;
-
-        if (direction > 0) {
-            newIndex = (currentIndex + 1) % thumbnails.length;
-        } else {
-            newIndex = (currentIndex - 1 + thumbnails.length) % thumbnails.length;
-        }
-
-        setCarouselImage(productId, newIndex, thumbnails[newIndex].src);
-    }
-
-    // Add transition effect to main images
-    document.querySelectorAll('.carousel-main').forEach(img => {
-        img.style.transition = 'opacity 0.3s ease-in-out';
-    });
-
-    // Carrusel de marcas (≤768px): la marca cuyo centro está más cerca del centro de pantalla a color
-    function initBrandsCenter() {
-        const mq = window.matchMedia('(max-width: 768px)');
-        const banner = document.querySelector('.brands-banner');
-        const scrollEl = document.querySelector('.brands-scroll');
-        if (!banner || !scrollEl) return;
-
-        let rafId = null;
-
-        function cleanup() {
-            banner.classList.remove('brands-center-focus');
-            scrollEl.querySelectorAll('.brand-logo-link.is-near-center').forEach(function (el) {
-                el.classList.remove('is-near-center');
-            });
-        }
-
-        function tick() {
-            if (!mq.matches) {
-                rafId = null;
-                cleanup();
-                return;
-            }
-
-            banner.classList.add('brands-center-focus');
-            const links = scrollEl.querySelectorAll('.brand-logo-link');
-            const cx = window.innerWidth / 2;
-            let best = null;
-            let bestDist = Infinity;
-
-            links.forEach(function (link) {
-                const r = link.getBoundingClientRect();
-                const mid = r.left + r.width / 2;
-                const d = Math.abs(mid - cx);
-                if (d < bestDist) {
-                    bestDist = d;
-                    best = link;
-                }
-            });
-
-            links.forEach(function (link) {
-                link.classList.toggle('is-near-center', link === best);
-            });
-
-            rafId = requestAnimationFrame(tick);
-        }
-
-        function start() {
-            if (rafId !== null) {
-                cancelAnimationFrame(rafId);
-                rafId = null;
-            }
-            if (!mq.matches) {
-                cleanup();
-                return;
-            }
-            rafId = requestAnimationFrame(tick);
-        }
-
-        function onResize() {
-            start();
-        }
-
-        mq.addEventListener('change', start);
-        window.addEventListener('resize', onResize);
-        window.addEventListener('orientationchange', onResize);
-        start();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initBrandsCenter);
-    } else {
-        initBrandsCenter();
-    }
+<script id="home-page-data" type="application/json">
+{"page":"home","addToCartUrlTemplate":"{% url 'shop:add_to_cart' product_id=999999999 %}"}
 </script>
-
-
+<script type="module" src="{% static 'js/pages/home.js' %}?v={{ timestamp|default:'1.0' }}"></script>
 {% endblock %}

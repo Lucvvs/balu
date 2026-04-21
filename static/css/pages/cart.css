@@ -1,0 +1,47 @@
+/**
+ * Estilos específicos de la página carrito (antes inline en cart.html).
+ */
+
+#shipping-row.is-hidden,
+#discount-row.is-hidden {
+  display: none !important;
+}
+
+.checkout-section--spaced {
+  margin-top: 2rem;
+}
+
+.shipping-fields-panel.is-hidden {
+  display: none;
+}
+
+.shipping-comuna-select {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.coupon-code-input {
+  text-transform: uppercase;
+}
+
+.cart-coupon-badge {
+  font-size: 0.7rem;
+}
+
+.cart-item-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+#mercado-pago-message.is-hidden {
+  display: none !important;
+}
+
+#mercado-pago-message:not(.is-hidden) {
+  display: inline;
+}
+
+.cart-qty-spinner {
+  width: 1rem;
+  height: 1rem;
+}

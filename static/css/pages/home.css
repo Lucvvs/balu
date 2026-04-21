@@ -1,0 +1,40 @@
+/* Estilos solo para templates/shop/home.html (evitar inline en la vista). */
+
+.home-hero {
+  background-image: url("../../img/bienvenida.webp");
+  filter: brightness(1.0);
+}
+
+.home-category {
+  background-size: cover;
+  background-position: center;
+}
+
+.home-category--equipamiento {
+  background-image: url("../../img/banner1.webp");
+}
+
+.home-category--accesorios {
+  background-image: url("../../img/banner3.webp");
+}
+
+.home-category--maletas {
+  background-image: url("../../img/banner2.webp");
+}
+
+.category-banner .overlay span {
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.offer-card .product-card-image-link {
+  display: block;
+  position: relative;
+}
+
+.best-seller-placeholder-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

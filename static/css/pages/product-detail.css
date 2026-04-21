@@ -1,0 +1,39 @@
+/* templates/shop/product_detail.html */
+
+.main-product-image {
+  max-height: 405px;
+  object-fit: contain;
+}
+
+.product-thumbnail {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+}
+
+.product-thumbnail.active {
+  border-color: #dc3545;
+}
+
+.related-products-section .product-card > a.product-card-image-link {
+  display: block;
+  position: relative;
+}
+
+.related-products-section .product-card-img {
+  cursor: pointer;
+}
+
+.related-product-title a,
+.related-product-price a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.related-product-title a:hover,
+.related-product-price a:hover {
+  text-decoration: underline;
+}
