@@ -114,6 +114,8 @@
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
+        /* En pantallas pequeñas, no recortar controles (evita que se "tapen") */
+        overflow: visible;
     }
     
     .cart-item-header {
@@ -161,10 +163,50 @@
     .cart-item-actions .quantity-form {
         width: 100%;
         justify-content: space-between;
+        min-width: 0;
+        flex-shrink: 1;
+        white-space: normal;
     }
     
     .quantity-label {
         font-size: 0.85rem;
+    }
+
+    /* Extra-small: si no cabe, achicar y/o reordenar sin truncar ni tapar */
+    @media (max-width: 420px) {
+        .cart-item-actions .quantity-form {
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            gap: 0.4rem;
+        }
+
+        .quantity-label {
+            flex: 1 0 100%;
+            margin-right: 0;
+        }
+
+        .quantity-controls {
+            max-width: 100%;
+            flex: 0 0 auto;
+        }
+
+        .quantity-btn {
+            width: clamp(28px, 9vw, 34px);
+            min-width: clamp(28px, 9vw, 34px);
+            height: clamp(28px, 9vw, 34px);
+            font-size: 0.95rem;
+        }
+
+        .quantity-input,
+        input.quantity-input,
+        .quantity-controls input,
+        .quantity-controls input[type="number"] {
+            width: clamp(44px, 14vw, 56px) !important;
+            min-width: clamp(44px, 14vw, 56px) !important;
+            height: clamp(28px, 9vw, 34px) !important;
+            line-height: clamp(28px, 9vw, 34px) !important;
+            font-size: 0.95rem !important;
+        }
     }
     
     .cart-item-total {
