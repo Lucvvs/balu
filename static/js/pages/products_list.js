@@ -89,6 +89,44 @@ function initActionStopPropagation() {
   });
 }
 
+function applyVariantSeparators() {
+  document.querySelectorAll(".variant-badges").forEach((wrap) => {
+    // Limpieza para recalcular idempotente
+    wrap.querySelectorAll(".variant-badge-sep").forEach((n) => n.remove());
+
+    const badges = [...wrap.querySelectorAll(".variant-badge")];
+    if (badges.length <= 1) return;
+
+    const firstTop = badges[0].offsetTop;
+    const inOneRow = badges.every((b) => b.offsetTop === firstTop);
+    if (!inOneRow) return;
+
+    // Insertar separadores entre todos los badges
+    for (let i = 0; i < badges.length - 1; i += 1) {
+      const sep = document.createElement("span");
+      sep.className = "variant-badge-sep";
+      sep.textContent = "-";
+      sep.setAttribute("aria-hidden", "true");
+      badges[i].insertAdjacentElement("afterend", sep);
+    }
+  });
+}
+
+function initVariantSeparators() {
+  // Esperar a layout final (fuentes/imágenes) antes de medir wrap
+  const schedule = () => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(applyVariantSeparators));
+  };
+
+  schedule();
+
+  let t = null;
+  window.addEventListener("resize", () => {
+    if (t) window.clearTimeout(t);
+    t = window.setTimeout(schedule, 120);
+  });
+}
+
 function onReady(fn) {
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", fn);
@@ -111,6 +149,7 @@ function initProductsListPage() {
   initActionStopPropagation();
   initSizeVariantModal(data);
   initCatalogProductCards();
+  initVariantSeparators();
 }
 
 onReady(initProductsListPage);

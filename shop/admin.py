@@ -87,6 +87,10 @@ class ProductAdmin(admin.ModelAdmin):
         ('Categorización', {
             'fields': ('category', 'brand')
         }),
+        ('Catálogo', {
+            'fields': ('show_variant_badges',),
+            'description': 'Controla si se muestran los cuadros de tallas/variantes sobre la imagen en el catálogo.',
+        }),
         ('Precios', {
             'fields': ('price', 'offer_price')
         }),

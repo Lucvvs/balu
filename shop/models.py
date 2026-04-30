@@ -140,6 +140,11 @@ class Product(models.Model):
                                          help_text="Número menor = aparece primero. Solo se muestran los 3 primeros. Usar 0 para no mostrar en más vendidos.")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Fecha de actualización")
+    show_variant_badges = models.BooleanField(
+        default=True,
+        verbose_name="Mostrar tallas/variantes en catálogo",
+        help_text="Si está activo y el producto tiene variantes, se muestran los cuadros de tallas/variantes sobre la imagen en el catálogo.",
+    )
 
     class Meta:
         verbose_name = "Producto"

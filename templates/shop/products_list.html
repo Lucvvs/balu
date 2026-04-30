@@ -58,6 +58,15 @@
                         {% with images=product.images.all %}
                             {% if images|length > 0 %}
                                 <div class="product-card-image-container" data-product-id="{{ product.id }}">
+                                    {% if product.uses_variant_stock and product.show_variant_badges %}
+                                        <div class="variant-badges" aria-label="Variantes (tallas/colores)">
+                                            {% for v in product.variants.all %}
+                                                <span class="variant-badge{% if v.stock <= 0 %} is-out{% endif %}" title="{{ v.name }}">
+                                                    {{ v.name|slice:":2"|upper }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                                     {% for image in images %}
                                         <img src="{{ image.image.url }}" alt="{{ product.name }}" 
                                              class="product-card-img js-img-fallback {% if forloop.first %}active{% endif %}" 
@@ -73,6 +82,15 @@
                                 </div>
                             {% else %}
                                 <div class="product-card-image-container product-card-image-container--placeholder">
+                                    {% if product.uses_variant_stock and product.show_variant_badges %}
+                                        <div class="variant-badges" aria-label="Variantes (tallas/colores)">
+                                            {% for v in product.variants.all %}
+                                                <span class="variant-badge{% if v.stock <= 0 %} is-out{% endif %}" title="{{ v.name }}">
+                                                    {{ v.name|slice:":2"|upper }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                                     <img src="{% static 'img/placeholder.webp' %}" alt="{{ product.name }}" class="product-card-img js-img-fallback" loading="lazy" decoding="async" data-fallback-src="">
                                     {% if product.stock == 1 %}
                                         <span class="stock-alert-badge">

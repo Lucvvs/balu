@@ -18,3 +18,67 @@
 .product-card-image-container--placeholder {
   position: relative;
 }
+
+/* Badges de variantes (tallas/colores) en esquina inferior izquierda */
+.product-card-image-container {
+  position: relative;
+}
+
+.variant-badges {
+  --variant-badge-size-base: clamp(20px, 2.3vw, 32px);
+  --variant-badge-size: calc(var(--variant-badge-size-base) * 0.8);
+  --variant-badge-font: clamp(0.65rem, 1.4vw, 0.95rem);
+
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 10;
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  max-width: calc(100% - 56px); /* deja espacio al badge de stock a la derecha */
+  pointer-events: none; /* no bloquear clics sobre la tarjeta */
+}
+
+.variant-badge-sep {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--variant-badge-size);
+  margin: 0 -2px; /* acerca el guion a los cuadros sin romper el gap */
+
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 900;
+  font-size: clamp(0.9rem, 1.8vw, 1.2rem);
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
+.variant-badge {
+  width: var(--variant-badge-size);
+  height: var(--variant-badge-size);
+  border-radius: 6px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid var(--white);
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+
+  font-weight: 900;
+  font-size: var(--variant-badge-font);
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.variant-badge.is-out {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
