@@ -141,7 +141,7 @@ class ProductAdmin(admin.ModelAdmin):
         return custom + super().get_urls()
 
     def export_catalog_pdf_view(self, request):
-        """Descarga PDF: activos con stock (o todos los activos/inactivos si ?include_inactive=1). Sin stock no entran."""
+        """Descarga PDF: activos con stock (o todos si ?include_inactive=1). Sin stock no entran."""
         from shop.catalog_pdf import build_catalog_pdf_bytes
 
         include_inactive = request.GET.get('include_inactive') == '1'
