@@ -4,7 +4,7 @@ services:
     name: motomoto-web
     runtime: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn motomoto.wsgi:application --bind 0.0.0.0:$PORT"
+    startCommand: "gunicorn motomoto.wsgi:application --bind 0.0.0.0:$PORT --timeout 120"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
