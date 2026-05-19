@@ -78,7 +78,13 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
+/* Sin stock: mucho más pálido que las disponibles (negro #111 sobre blanco) */
 .variant-badge.is-out {
-  opacity: 0.45;
-  filter: grayscale(1);
+  background: rgba(255, 255, 255, 0.26);
+  color: rgba(200, 200, 200, 0.88);
+  border-color: rgba(255, 255, 255, 0.38);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  opacity: 1;
+  filter: none;
 }

@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.http import HttpResponse
+from django.urls import path
 from django.utils.html import format_html
 from .forms import CustomAdminUserCreationForm, CustomUserChangeForm
 from .models import (
@@ -68,6 +70,8 @@ class ProductVariantInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/shop/product/change_list.html'
+    actions = ['delete_selected', 'export_catalog_pdf_action']
     list_display = ('id', 'name', 'category', 'brand', 'current_price_display', 'stock', 'is_active', 'is_offer', 'offer_order', 'is_best_seller', 'featured_order', 'created_at')
     list_filter = ('is_active', 'is_offer', 'is_best_seller', 'category', 'brand', 'created_at')
     search_fields = ('name', 'short_description', 'description')
@@ -122,8 +126,48 @@ class ProductAdmin(admin.ModelAdmin):
                 ).replace(',', '.')
             )
         return format_html('<span>${:,}</span>'.format(obj.price).replace(',', '.'))
+
     current_price_display.short_description = 'Precio'
 
+    def get_urls(self):
+        info = self.model._meta.app_label, self.model._meta.model_name
+        custom = [
+            path(
+                'export-catalog-pdf/',
+                self.admin_site.admin_view(self.export_catalog_pdf_view),
+                name='%s_%s_export_catalog_pdf' % info,
+            ),
+        ]
+        return custom + super().get_urls()
+
+    def export_catalog_pdf_view(self, request):
+        """Descarga PDF con todos los productos activos (o todos si ?include_inactive=1)."""
+        from shop.catalog_pdf import build_catalog_pdf_bytes
+
+        include_inactive = request.GET.get('include_inactive') == '1'
+        qs = Product.objects.select_related('category', 'brand').prefetch_related('images', 'variants')
+        if not include_inactive:
+            qs = qs.filter(is_active=True)
+        qs = qs.order_by('category__name', 'name')
+        pdf_bytes = build_catalog_pdf_bytes(qs)
+        filename = 'catalogo-motomoto-completo.pdf'
+        if include_inactive:
+            filename = 'catalogo-motomoto-todos.pdf'
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    @admin.action(description='Exportar catálogo PDF (selección)')
+    def export_catalog_pdf_action(self, request, queryset):
+        from shop.catalog_pdf import build_catalog_pdf_bytes
+
+        qs = queryset.select_related('category', 'brand').prefetch_related('images', 'variants').order_by(
+            'category__name', 'name'
+        )
+        pdf_bytes = build_catalog_pdf_bytes(qs)
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="catalogo-motomoto-seleccion.pdf"'
+        return response
 
 @admin.register(Coupon)
 class CouponAdmin(admin.ModelAdmin):
