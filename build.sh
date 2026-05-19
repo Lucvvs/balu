@@ -2,30 +2,33 @@
 # exit on error
 set -o errexit
 
-# Pillow necesita libwebp en el sistema para abrir imágenes .webp de productos (producción)
+# libwebp vía apt solo en entornos Debian con filesystem de escritura (no Render native build)
 if command -v apt-get >/dev/null 2>&1; then
-  apt-get update -qq
-  apt-get install -y -qq libwebp-dev zlib1g-dev libjpeg62-turbo-dev libpng-dev 2>/dev/null \
-    || apt-get install -y -qq libwebp-dev zlib1g-dev libjpeg-dev libpng-dev 2>/dev/null \
-    || true
+  (
+    set +e
+    apt-get update -qq 2>/dev/null
+    apt-get install -y -qq libwebp-dev zlib1g-dev libjpeg-dev libpng-dev 2>/dev/null
+    true
+  )
 fi
 
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Recompilar Pillow tras instalar libwebp (wheel previo puede no traer WebP)
+# En Render, el wheel de Pillow suele incluir WebP; reinstalar solo si hace falta (sin fallar el build)
 python - <<'PY'
 from PIL import features
 import subprocess
 import sys
 
 if not features.check("webp"):
-    subprocess.check_call(
-        [sys.executable, "-m", "pip", "install", "--force-reinstall", "--no-cache-dir", "Pillow>=10.0.0"]
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "--force-reinstall", "--no-cache-dir", "Pillow>=10.0.0"],
+        check=False,
     )
     if not features.check("webp"):
         sys.stderr.write(
-            "AVISO: Pillow sigue sin WebP; instala libwebp-dev en el build o usa imágenes JPEG/PNG.\n"
+            "AVISO: Pillow sin WebP en este build; el catálogo PDF puede omitir fotos .webp.\n"
         )
 PY
 
@@ -37,4 +40,3 @@ python manage.py migrate
 
 # Cargar datos iniciales (opcional - comentar si ya se cargaron)
 # python manage.py load_initial_data
-
