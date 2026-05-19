@@ -578,7 +578,7 @@ python manage.py set_featured_products
 
 #### ✨ Nuevas Funcionalidades
 
-- **Catalogo.pdf: Generar PDF con Catalogo de productos activos desde el panel de admin
+- **Catalogo.pdf**: Generar PDF con Catalogo de productos activos desde el panel de admin
 - **Sistema de Imágenes Mejorado**: Detección automática de productos, marcas y categorías desde nombres de archivos
 - **Imágenes globales**: Soporte para imágenes compartidas
 - **Efecto hover en tarjetas**: Las imágenes cambian automáticamente cada 2.5s
