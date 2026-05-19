@@ -141,14 +141,14 @@ class ProductAdmin(admin.ModelAdmin):
         return custom + super().get_urls()
 
     def export_catalog_pdf_view(self, request):
-        """Descarga PDF con todos los productos activos (o todos si ?include_inactive=1)."""
+        """Descarga PDF: activos con stock (o todos los activos/inactivos si ?include_inactive=1). Sin stock no entran."""
         from shop.catalog_pdf import build_catalog_pdf_bytes
 
         include_inactive = request.GET.get('include_inactive') == '1'
         qs = Product.objects.select_related('category', 'brand').prefetch_related('images', 'variants')
         if not include_inactive:
             qs = qs.filter(is_active=True)
-        qs = qs.order_by('category__name', 'name')
+        qs = qs.order_by('name')
         pdf_bytes = build_catalog_pdf_bytes(qs)
         filename = 'catalogo-motomoto-completo.pdf'
         if include_inactive:
@@ -161,9 +161,7 @@ class ProductAdmin(admin.ModelAdmin):
     def export_catalog_pdf_action(self, request, queryset):
         from shop.catalog_pdf import build_catalog_pdf_bytes
 
-        qs = queryset.select_related('category', 'brand').prefetch_related('images', 'variants').order_by(
-            'category__name', 'name'
-        )
+        qs = queryset.select_related('category', 'brand').prefetch_related('images', 'variants').order_by('name')
         pdf_bytes = build_catalog_pdf_bytes(qs)
         response = HttpResponse(pdf_bytes, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="catalogo-motomoto-seleccion.pdf"'

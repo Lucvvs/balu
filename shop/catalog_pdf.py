@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import BinaryIO, Iterable
 
 from django.conf import settings
-from django.db.models import QuerySet
+from django.db.models import Exists, OuterRef, Q, QuerySet
 
 from PIL import Image
 
@@ -34,6 +34,17 @@ from reportlab.platypus import (
 
 
 COLS = 4
+
+# Orden de secciones en el PDF (slug o nombre, case-insensitive). "Otros" al final; el resto después.
+CATALOG_CATEGORY_ORDER = (
+    "cascos",
+    "seguridad",
+    "maletas",
+    "equipamiento",
+    "accesorios",
+)
+CATALOG_CATEGORY_OTROS = "otros"
+
 MESES_ES = (
     "ENERO",
     "FEBRERO",
@@ -108,24 +119,6 @@ CATALOG_CHANNEL_SPECS: tuple[tuple[tuple[str, ...], str, str], ...] = (
     ),
 )
 
-KNOWN_SIZES = frozenset(
-    {
-        "XS",
-        "S",
-        "M",
-        "L",
-        "XL",
-        "XXL",
-        "XXXL",
-        "ÚNICA",
-        "UNICA",
-        "UNICO",
-        "ÚNICO",
-        "STD",
-        "ST",
-    }
-)
-
 # Separación deseada entre precio y cuadros de talla (línea “verde” del mockup)
 BADGE_TOP_SEP = 1.1 * mm
 CARD_ROW_BADGES_CONTENT = 5.0 * mm * 1.12 * 1.10
@@ -138,10 +131,8 @@ CARD_ROW_SWATCH = 2.85 * mm
 CARD_ROW_SWATCH_EMPTY = 0.55 * mm
 CARD_ROW_PRICE = 8.2 * mm * 1.22 * 1.10
 
-# Descripción en varias líneas: más espacio al bloque título+texto sin cambiar la altura total
-# de la tarjeta (se compensa reduciendo solo la fila de imagen).
+# Descripción en varias líneas: más espacio al bloque título+texto (la fila de imagen no se reduce).
 TITLE_STACK_HEIGHT_BUF_PT = 4.0
-CARD_ROW_IMAGE_MIN = 23.0 * mm
 
 
 def _product_swatch_hexes(product) -> list[str]:
@@ -292,22 +283,26 @@ def _card_body_row_heights(
     styles: dict,
 ) -> list[float]:
     """
-    Alturas de filas de la tarjeta. Si el texto título+descripción no cabe en
-    ``CARD_ROW_TITLE``, se amplía esa fila y se reduce la de imagen la misma
-    cantidad (altura total de la tarjeta sin cambios).
+    Alturas de filas de la tarjeta. La fila de imagen es siempre ``CARD_ROW_IMAGE``.
+    Si el título+descripción necesita más alto, solo crece esa fila.
     """
     h = _card_row_heights(product)
     need = _title_desc_natural_height(inner_w, name_raw, desc_raw, styles)
     boost = need - h[1] + TITLE_STACK_HEIGHT_BUF_PT
     if boost <= 0:
         return h
-    max_boost = h[0] - CARD_ROW_IMAGE_MIN
-    if max_boost <= 0:
-        return h
-    b = min(boost, max_boost)
     out = list(h)
-    out[0] = h[0] - b
-    out[1] = h[1] + b
+    out[1] = h[1] + boost
+    return out
+
+
+def _unify_card_row_heights(per_card: list[list[float]]) -> list[float]:
+    """Misma altura por fila en las 4 columnas; imagen siempre con alto fijo."""
+    if not per_card:
+        return _card_row_heights(None)
+    out = [CARD_ROW_IMAGE]
+    for i in range(1, len(per_card[0])):
+        out.append(max(row[i] for row in per_card))
     return out
 
 
@@ -579,39 +574,33 @@ def _bytes_to_rl_image(raw: bytes, max_w_pt: float, max_h_pt: float):
 
 
 def _product_image_flowable(product, max_w_pt: float, max_h_pt: float, styles: dict):
+    """
+    Caja de imagen de alto fijo (``max_h_pt``). La foto se escala dentro y se alinea
+    al borde inferior para que el título empiece siempre en la misma línea.
+    """
     pi = product.get_primary_image()
     field = pi.image if pi else None
     raw = _read_image_field_bytes(field)
+    has_image = False
     if raw:
-        rl = _bytes_to_rl_image(raw, max_w_pt, max_h_pt)
-        if rl:
-            t = Table([[rl]], colWidths=[max_w_pt])
-            t.setStyle(
-                TableStyle(
-                    [
-                        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                        ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                        ("TOPPADDING", (0, 0), (-1, -1), 0),
-                        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                    ]
-                )
-            )
-            return t
-    return Table(
-        [[Paragraph("Sin imagen", styles["no_img"])]],
-        colWidths=[max_w_pt],
-        style=TableStyle(
-            [
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("TOPPADDING", (0, 0), (-1, -1), 0),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f4f4f4")),
-            ]
-        ),
-    )
+        content = _bytes_to_rl_image(raw, max_w_pt, max_h_pt)
+        has_image = content is not None
+    if not has_image:
+        content = Paragraph("Sin imagen", styles["no_img"])
+
+    t = Table([[content]], colWidths=[max_w_pt], rowHeights=[max_h_pt])
+    style_rows = [
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]
+    if not has_image:
+        style_rows.append(("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f4f4f4")))
+    t.setStyle(TableStyle(style_rows))
+    return t
 
 
 class _RoundedVariantChipFlowable(Flowable):
@@ -641,6 +630,12 @@ class _RoundedVariantChipFlowable(Flowable):
         c.drawString(tx, ty, self._label)
 
 
+def _variant_name_is_size_label(name: str) -> bool:
+    """True solo para tallas: nombre de variante de 1 o 2 letras (S, M, XL, etc.)."""
+    key = (name or "").strip().upper()
+    return 1 <= len(key) <= 2 and bool(re.match(r"^[A-ZÁÉÍÓÚÑ]+$", key))
+
+
 def _size_badges_flowable(product, cell_inner_w: float):
     """Recuadros grises redondeados (una talla por caja)."""
     names = []
@@ -648,8 +643,8 @@ def _size_badges_flowable(product, cell_inner_w: float):
         if v.stock <= 0:
             continue
         key = (v.name or "").strip().upper()
-        if key in KNOWN_SIZES or (len(key) <= 4 and re.match(r"^[A-Z0-9ÁÉÍÓÚÑ]+$", key)):
-            names.append(key[:6])
+        if _variant_name_is_size_label(key):
+            names.append(key)
     if not names:
         return Spacer(1, 0.1)
 
@@ -851,12 +846,12 @@ def _price_block(product, styles: dict, inner_w: float):
     return t
 
 
-def _product_cell(product, styles: dict, cell_w: float):
+def _product_cell(product, styles: dict, cell_w: float, *, row_heights: list[float] | None = None):
     inner = cell_w - 4 * mm
     img_pad = 0.2 * mm
     name_raw = _truncate((product.name or "").upper(), 68)
     desc_raw = _truncate((product.short_description or "") or "", 80)
-    h = _card_body_row_heights(product, inner, name_raw, desc_raw, styles)
+    h = row_heights or _card_body_row_heights(product, inner, name_raw, desc_raw, styles)
     img_w = max(12.0, inner - 2 * img_pad)
     img_h = max(12.0, h[0] - 2 * img_pad)
     body = Table(
@@ -899,9 +894,9 @@ def _product_cell(product, styles: dict, cell_w: float):
     return wrap
 
 
-def _empty_cell(cell_w: float):
+def _empty_cell(cell_w: float, *, row_heights: list[float] | None = None):
     inner = cell_w - 4 * mm
-    h = _card_row_heights(None)
+    h = row_heights or _card_row_heights(None)
     rows = [
         [_slot(inner, h[0], Spacer(1, 0.1))],
         [_slot(inner, h[1], Spacer(1, 0.1))],
@@ -1212,10 +1207,45 @@ def _draw_catalog_page_decorations(
     canv.restoreState()
 
 
+def filter_products_for_catalog_pdf(products: Iterable | QuerySet):
+    """
+    Solo productos vendibles: stock > 0 sin variantes, o al menos una variante con stock.
+    Coincide con Product.is_available_for_purchase().
+    """
+    from shop.models import ProductVariant
+
+    variant_in_stock = ProductVariant.objects.filter(
+        product_id=OuterRef("pk"),
+        stock__gt=0,
+    )
+    has_variants = ProductVariant.objects.filter(product_id=OuterRef("pk"))
+    available = Q(Exists(variant_in_stock)) | (Q(stock__gt=0) & ~Q(Exists(has_variants)))
+
+    if isinstance(products, QuerySet):
+        return products.filter(available)
+    return [p for p in products if p.is_available_for_purchase()]
+
+
+def _catalog_category_sort_key(product) -> tuple:
+    cat = product.category
+    cat_name = (cat.name if cat else "").strip().lower()
+    cat_slug = (cat.slug if cat else "").strip().lower()
+    ident = cat_slug or cat_name
+
+    for idx, label in enumerate(CATALOG_CATEGORY_ORDER):
+        if ident == label or cat_name == label:
+            return (0, idx, product.name.lower())
+
+    if ident == CATALOG_CATEGORY_OTROS or cat_name == CATALOG_CATEGORY_OTROS:
+        return (0, len(CATALOG_CATEGORY_ORDER), product.name.lower())
+
+    return (1, cat_name, product.name.lower())
+
+
 def build_catalog_pdf_bytes(products: Iterable | QuerySet, *, generated_label: str | None = None) -> bytes:
     _ = generated_label  # compatibilidad con llamadas anteriores (sin texto en cabecera)
-    items = list(products)
-    items.sort(key=lambda p: ((p.category.name if p.category else "").lower(), p.name.lower()))
+    items = list(filter_products_for_catalog_pdf(products))
+    items.sort(key=_catalog_category_sort_key)
 
     styles = _paragraph_styles()
     buffer = io.BytesIO()
@@ -1249,17 +1279,33 @@ def build_catalog_pdf_bytes(products: Iterable | QuerySet, *, generated_label: s
         story.append(Spacer(1, 5 * mm))
 
     prev_cat = None
-    row_buf: list = []
+    row_buf_products: list = []
     # ("banner" | "row", flowable)
     grid_rows: list[tuple[str, Table]] = []
 
     def flush_row():
-        if not row_buf:
+        if not row_buf_products:
             return
-        row = row_buf[:]
-        row_buf.clear()
-        while len(row) < COLS:
-            row.append(_empty_cell(cell_w))
+        prods = row_buf_products[:]
+        row_buf_products.clear()
+        while len(prods) < COLS:
+            prods.append(None)
+        inner = cell_w - 4 * mm
+        per_heights: list[list[float]] = []
+        for p in prods:
+            if p is None:
+                per_heights.append(_card_row_heights(None))
+            else:
+                name_raw = _truncate((p.name or "").upper(), 68)
+                desc_raw = _truncate((p.short_description or "") or "", 80)
+                per_heights.append(_card_body_row_heights(p, inner, name_raw, desc_raw, styles))
+        unified = _unify_card_row_heights(per_heights)
+        row = []
+        for p in prods:
+            if p is None:
+                row.append(_empty_cell(cell_w, row_heights=unified))
+            else:
+                row.append(_product_cell(p, styles, cell_w, row_heights=unified))
         t = Table([row], colWidths=[cell_w] * COLS, repeatRows=0)
         t.setStyle(
             TableStyle(
@@ -1282,8 +1328,8 @@ def build_catalog_pdf_bytes(products: Iterable | QuerySet, *, generated_label: s
             grid_rows.append(("banner", _category_banner_table(cat, styles, full_w)))
             prev_cat = cat
 
-        row_buf.append(_product_cell(p, styles, cell_w))
-        if len(row_buf) >= COLS:
+        row_buf_products.append(p)
+        if len(row_buf_products) >= COLS:
             flush_row()
 
     flush_row()
