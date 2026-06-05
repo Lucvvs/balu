@@ -1,0 +1,88 @@
+<div class="modal fade home-promo-modal" id="homePromoModal" tabindex="-1"
+    aria-labelledby="homePromoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content home-promo-modal__content">
+            <div class="home-promo-modal__header-actions">
+                <button type="button" class="home-promo-modal__close btn-close" data-bs-dismiss="modal"
+                    aria-label="Cerrar" id="homePromoModalClose"></button>
+            </div>
+
+            <div class="home-promo-modal__hero">
+                <div class="home-promo-modal__hero-glow" aria-hidden="true"></div>
+                <div class="home-promo-modal__hero-top">
+                    <div class="home-promo-modal__badge" aria-label="{{ home_promo_modal.discount_percent }}% de descuento">
+                        <span class="home-promo-modal__badge-value">{{ home_promo_modal.discount_percent }}%</span>
+                        <span class="home-promo-modal__badge-label">OFF</span>
+                    </div>
+                </div>
+                <div class="home-promo-modal__hero-inner">
+                    <h2 class="home-promo-modal__headline" id="homePromoModalLabel">
+                        {{ home_promo_modal.headline }}
+                    </h2>
+                    <p class="home-promo-modal__tagline">
+                        {{ home_promo_modal.tagline }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="home-promo-modal__body">
+                <p class="home-promo-modal__description">{{ home_promo_modal.body_text }}</p>
+
+                <ol class="home-promo-modal__steps">
+                    <li>
+                        <a href="{{ home_promo_modal.instagram_url }}" target="_blank" rel="noopener noreferrer"
+                            class="home-promo-modal__step home-promo-modal__step-link home-promo-modal__instagram-link">
+                            <span class="home-promo-modal__step-icon" aria-hidden="true">
+                                <i class="bi bi-instagram"></i>
+                            </span>
+                            <span class="home-promo-modal__step-text">
+                                <strong>Síguenos</strong>
+                                <small>{{ home_promo_modal.instagram_handle }}</small>
+                            </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ home_promo_modal.instagram_url }}" target="_blank" rel="noopener noreferrer"
+                            class="home-promo-modal__step home-promo-modal__step-link home-promo-modal__instagram-link">
+                            <span class="home-promo-modal__step-icon" aria-hidden="true">
+                                <i class="bi bi-chat-heart-fill"></i>
+                            </span>
+                            <span class="home-promo-modal__step-text">
+                                <strong>Escríbenos</strong>
+                                <small>Un mensaje directo</small>
+                            </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ home_promo_modal.instagram_url }}" target="_blank" rel="noopener noreferrer"
+                            class="home-promo-modal__step home-promo-modal__step-link home-promo-modal__instagram-link">
+                            <span class="home-promo-modal__step-icon" aria-hidden="true">
+                                <i class="bi bi-ticket-perforated-fill"></i>
+                            </span>
+                            <span class="home-promo-modal__step-text">
+                                <strong>Recibe tu cupón</strong>
+                                <small>{{ home_promo_modal.discount_percent }}% de descuento</small>
+                            </span>
+                        </a>
+                    </li>
+                </ol>
+
+                <div class="home-promo-modal__actions">
+                    <a href="{{ home_promo_modal.instagram_url }}" target="_blank" rel="noopener noreferrer"
+                        class="home-promo-modal__cta home-promo-modal__instagram-link" id="homePromoModalCta">
+                        <i class="bi bi-instagram" aria-hidden="true"></i>
+                        {{ home_promo_modal.cta_label }}
+                    </a>
+                    <button type="button" class="home-promo-modal__dismiss" data-bs-dismiss="modal">
+                        Ahora no, gracias
+                    </button>
+                </div>
+
+                <label class="home-promo-modal__remember">
+                    <input type="checkbox" id="homePromoModalRemember" checked>
+                    <span>No volver a mostrar por un tiempo</span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>

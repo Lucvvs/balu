@@ -18,7 +18,8 @@ from urllib.parse import urlparse
 
 from .models import (
     Product, ProductVariant, Category, Brand, ProductImage, Cart, CartItem, Order, OrderItem,
-    Coupon, ShippingMethod, ShippingRule, PaymentMethod, Payment, ContactMessage, MetricEvent, PromotionalBanner
+    Coupon, ShippingMethod, ShippingRule, PaymentMethod, Payment, ContactMessage, MetricEvent, PromotionalBanner,
+    HomePromoModal,
 )
 from .utils import (
     get_comunas_choices,
@@ -101,12 +102,15 @@ def home(request):
         is_active=True
     ).order_by('order', 'created_at')[:3]
 
+    home_promo_modal = HomePromoModal.get_solo()
+
     context = {
         'offers': offers,
         'best_sellers': best_sellers,
         'categories': categories,
         'brands': brands,
         'promotional_banners': promotional_banners,
+        'home_promo_modal': home_promo_modal,
     }
     return render(request, 'shop/home.html', context)
 

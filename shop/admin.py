@@ -6,7 +6,8 @@ from django.utils.html import format_html
 from .forms import CustomAdminUserCreationForm, CustomUserChangeForm
 from .models import (
     CustomUser, Brand, Category, Product, ProductVariant, ProductImage, Coupon, ShippingMethod, ShippingRule, PaymentMethod,
-    Cart, CartItem, Order, OrderItem, Payment, ContactMessage, MetricEvent, PromotionalBanner
+    Cart, CartItem, Order, OrderItem, Payment, ContactMessage, MetricEvent, PromotionalBanner,
+    HomePromoModal,
 )
 
 
@@ -493,6 +494,43 @@ class PromotionalBannerAdmin(admin.ModelAdmin):
         }),
     )
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(HomePromoModal)
+class HomePromoModalAdmin(admin.ModelAdmin):
+    list_display = ('headline', 'is_active', 'discount_percent', 'dismiss_days', 'updated_at')
+    list_filter = ('is_active',)
+    readonly_fields = ('updated_at',)
+    fieldsets = (
+        ('Estado', {
+            'fields': ('is_active',),
+            'description': 'Activa o desactiva el modal emergente en la página de inicio.',
+        }),
+        ('Contenido', {
+            'fields': (
+                'headline',
+                'tagline',
+                'body_text',
+                'discount_percent',
+                'instagram_handle',
+                'instagram_url',
+                'cta_label',
+            ),
+        }),
+        ('Comportamiento', {
+            'fields': ('show_delay_ms', 'dismiss_days'),
+        }),
+        ('Fechas', {
+            'fields': ('updated_at',),
+            'classes': ('collapse',),
+        }),
+    )
+
+    def has_add_permission(self, request):
+        return not HomePromoModal.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 # Configurar el sitio de admin

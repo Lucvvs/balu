@@ -906,3 +906,73 @@ class PromotionalBanner(models.Model):
 
     def __str__(self):
         return self.text
+
+
+class HomePromoModal(models.Model):
+    """Configuración del modal promocional en la página de inicio (registro único)."""
+    is_active = models.BooleanField(
+        default=False,
+        verbose_name="Activo",
+        help_text="Muestra el modal emergente al entrar a la página de inicio.",
+    )
+    headline = models.CharField(
+        max_length=120,
+        default="Seguridad garantizada al mejor precio siempre.",
+        verbose_name="Título principal",
+    )
+    tagline = models.CharField(
+        max_length=200,
+        default="Descuentos sobre descuentos",
+        verbose_name="Subtítulo",
+        help_text="Subtítulo que aparece debajo del título principal en el modal.",
+    )
+    body_text = models.TextField(
+        default=(
+            "Síguenos en Instagram y escríbenos un mensaje. "
+            "Te enviamos un cupón exclusivo para tu próxima compra."
+        ),
+        verbose_name="Texto descriptivo",
+    )
+    discount_percent = models.PositiveSmallIntegerField(
+        default=10,
+        verbose_name="Porcentaje de descuento",
+    )
+    instagram_url = models.URLField(
+        max_length=255,
+        default="https://www.instagram.com/motomotochile.cl/",
+        verbose_name="URL de Instagram",
+    )
+    instagram_handle = models.CharField(
+        max_length=80,
+        default="@motomotochile.cl",
+        verbose_name="Usuario de Instagram",
+    )
+    cta_label = models.CharField(
+        max_length=60,
+        default="Ir a Instagram",
+        verbose_name="Texto del botón principal",
+    )
+    show_delay_ms = models.PositiveIntegerField(
+        default=1400,
+        verbose_name="Retardo antes de mostrar (ms)",
+        help_text="Tiempo de espera tras cargar la página antes de abrir el modal.",
+    )
+    dismiss_days = models.PositiveIntegerField(
+        default=7,
+        verbose_name="Días sin mostrar tras cerrar",
+        help_text="Si el visitante cierra el modal, no se vuelve a mostrar durante este período.",
+    )
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Última actualización")
+
+    class Meta:
+        verbose_name = "Modal promocional (inicio)"
+        verbose_name_plural = "Modal promocional (inicio)"
+
+    def __str__(self):
+        status = "activo" if self.is_active else "inactivo"
+        return f"Modal promocional — {status}"
+
+    @classmethod
+    def get_solo(cls):
+        """Devuelve la configuración única del modal, si existe."""
+        return cls.objects.first()

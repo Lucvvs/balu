@@ -7,6 +7,7 @@ import { initSizeVariantModal } from "../components/size-variant-modal.js";
 import { initOfferImageRotation } from "../components/offer-image-rotation.js";
 import { initBestSellerCarousels } from "../components/best-seller-carousel.js";
 import { initBrandsCenterFocus } from "../components/brands-center-focus.js";
+import { initHomePromoModal } from "../components/home-promo-modal.js";
 
 function readHomePageData() {
   const el = document.getElementById("home-page-data");
@@ -44,6 +45,7 @@ function initHomePage() {
   initOfferImageRotation();
   initBestSellerCarousels();
   initBrandsCenterFocus();
+  initHomePromoModal(data);
 }
 
 onReady(initHomePage);

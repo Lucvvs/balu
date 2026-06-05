@@ -11,6 +11,9 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v={{ timestamp|default:'1.0' }}">
+{% if home_promo_modal and home_promo_modal.is_active %}
+<link rel="stylesheet" href="{% static 'css/components/home-promo-modal.css' %}?v={{ timestamp|default:'1.0' }}">
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -326,6 +329,10 @@
 <!-- Como Comprar y Canales -->
 {% include 'partials/_como_comprar_y_canales.html' %}
 
+{% if home_promo_modal and home_promo_modal.is_active %}
+{% include 'partials/_home_promo_modal.html' %}
+{% endif %}
+
 <!-- Modal para seleccionar talla/color -->
 <div class="modal fade" id="sizeModal" tabindex="-1" aria-labelledby="sizeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -372,7 +379,15 @@
 
 {% block extra_js %}
 <script id="home-page-data" type="application/json">
-{"page":"home","addToCartUrlTemplate":"{% url 'shop:add_to_cart' product_id=999999999 %}"}
+{
+  "page": "home",
+  "addToCartUrlTemplate": "{% url 'shop:add_to_cart' product_id=999999999 %}",
+  "promoModal": {
+    "enabled": {% if home_promo_modal and home_promo_modal.is_active %}true{% else %}false{% endif %},
+    "showDelayMs": {% if home_promo_modal %}{{ home_promo_modal.show_delay_ms }}{% else %}1400{% endif %},
+    "dismissDays": {% if home_promo_modal %}{{ home_promo_modal.dismiss_days }}{% else %}7{% endif %}
+  }
+}
 </script>
 <script type="module" src="{% static 'js/pages/home.js' %}?v={{ timestamp|default:'1.0' }}"></script>
 {% endblock %}
