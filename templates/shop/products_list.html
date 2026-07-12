@@ -5,7 +5,7 @@
 {% block title %}Catálogo MotoMoto - Productos{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/products-list.css' %}?v={{ timestamp|default:'1.0' }}">
+<link rel="stylesheet" href="{% static 'css/pages/products-list.css' %}?v={{ timestamp|default:'1.0' }}&f=catlayout2">
 {% endblock %}
 
 {% block content %}
@@ -16,21 +16,35 @@
     <div class="filter-bar-compact mb-4">
         <div class="filter-row">
             <div class="filter-categories">
-                <a href="{% url 'shop:products_list' %}{% if current_sort %}?sort={{ current_sort }}{% endif %}{% if current_offers %}{% if current_sort %}&{% else %}?{% endif %}offers=true{% endif %}" class="filter-btn {% if not current_category and not current_offers %}active{% endif %}">
+                <a href="{% url 'shop:products_list' %}{% if current_sort %}?sort={{ current_sort }}{% endif %}{% if current_offers %}{% if current_sort %}&{% else %}?{% endif %}offers=true{% endif %}" class="filter-btn filter-btn--todos {% if not current_category and not current_offers %}active{% endif %}">
                     <i class="bi bi-grid"></i>
                     <span>Todos</span>
                 </a>
+                <span class="filter-row-break" aria-hidden="true"></span>
                 <a href="{% if current_offers %}{% url 'shop:products_list' %}{% if current_category or current_sort %}?{% endif %}{% if current_category %}category={{ current_category }}{% endif %}{% if current_sort %}{% if current_category %}&{% endif %}sort={{ current_sort }}{% endif %}{% else %}{% url 'shop:products_list' %}?offers=true{% if current_category %}&category={{ current_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}{% endif %}" class="filter-btn filter-offer {% if current_offers %}active{% endif %}">
                     <i class="bi bi-lightning-fill"></i>
                     <span>Ofertas</span>
                 </a>
                 {% for category in categories %}
+                    {% if category.name|lower != 'equipamiento' %}
                     <a href="#"
                        data-category-slug="{{ category.slug }}"
                        class="filter-btn {% if category.slug in current_categories %}active{% endif %}">
                         <i class="bi bi-circle-fill"></i>
                         <span>{{ category.name }}</span>
                     </a>
+                    {% endif %}
+                {% endfor %}
+                <span class="filter-row-break" aria-hidden="true"></span>
+                {% for category in categories %}
+                    {% if category.name|lower == 'equipamiento' %}
+                    <a href="#"
+                       data-category-slug="{{ category.slug }}"
+                       class="filter-btn filter-btn--equipamiento {% if category.slug in current_categories %}active{% endif %}">
+                        <i class="bi bi-circle-fill"></i>
+                        <span>{{ category.name }}</span>
+                    </a>
+                    {% endif %}
                 {% endfor %}
             </div>
             
