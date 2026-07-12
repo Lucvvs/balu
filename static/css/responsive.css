@@ -1443,9 +1443,9 @@
     .filter-btn {
         padding: 0.5rem 1rem;
         font-size: 0.85rem;
-        width: calc((100% - 1rem) / 3 * 1.2);
+        width: calc((100% - 1rem) / 3 * 1.2 * 1.15 * 1.1 * 0.95);
         min-width: 0;
-        flex: 0 0 calc((100% - 1rem) / 3 * 1.2);
+        flex: 0 0 calc((100% - 1rem) / 3 * 1.2 * 1.15 * 1.1 * 0.95);
         justify-content: flex-start;
         text-align: left;
         box-sizing: border-box;
