@@ -910,10 +910,44 @@ class PromotionalBanner(models.Model):
 
 class HomePromoModal(models.Model):
     """Configuración del modal promocional en la página de inicio (registro único)."""
+    DISPLAY_MODE_STRUCTURED = "structured"
+    DISPLAY_MODE_IMAGE = "image"
+    DISPLAY_MODE_CHOICES = [
+        (DISPLAY_MODE_STRUCTURED, "Contenido configurado (textos + Instagram)"),
+        (DISPLAY_MODE_IMAGE, "Solo imagen (pieza publicitaria)"),
+    ]
+
     is_active = models.BooleanField(
         default=False,
         verbose_name="Activo",
         help_text="Muestra el modal emergente al entrar a la página de inicio.",
+    )
+    display_mode = models.CharField(
+        max_length=20,
+        choices=DISPLAY_MODE_CHOICES,
+        default=DISPLAY_MODE_STRUCTURED,
+        verbose_name="Tipo de modal",
+        help_text="Elige si se muestra el diseño con textos o solo una imagen a pantalla completa del modal.",
+    )
+    image_portrait = models.ImageField(
+        upload_to="home_promo/",
+        blank=True,
+        null=True,
+        verbose_name="Imagen vertical",
+        help_text="Se usa en pantallas en orientación vertical (móvil, tablet o escritorio).",
+    )
+    image_landscape = models.ImageField(
+        upload_to="home_promo/",
+        blank=True,
+        null=True,
+        verbose_name="Imagen horizontal",
+        help_text="Se usa en pantallas en orientación horizontal. Si falta, se usa la vertical.",
+    )
+    link_url = models.URLField(
+        max_length=255,
+        default="https://www.instagram.com/motomotochile.cl/",
+        verbose_name="URL al hacer clic (modo imagen)",
+        help_text="Destino al tocar la imagen. Por defecto Instagram.",
     )
     headline = models.CharField(
         max_length=120,
@@ -960,7 +994,7 @@ class HomePromoModal(models.Model):
     dismiss_days = models.PositiveIntegerField(
         default=7,
         verbose_name="Días sin mostrar tras cerrar",
-        help_text="Si el visitante cierra el modal, no se vuelve a mostrar durante este período.",
+        help_text="Si el visitante marca “no volver a mostrar”, no se vuelve a mostrar durante este período.",
     )
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Última actualización")
 
@@ -971,6 +1005,41 @@ class HomePromoModal(models.Model):
     def __str__(self):
         status = "activo" if self.is_active else "inactivo"
         return f"Modal promocional — {status}"
+
+    @property
+    def is_image_mode(self):
+        return self.display_mode == self.DISPLAY_MODE_IMAGE
+
+    def _image_url(self, *field_names):
+        for name in field_names:
+            field = getattr(self, name, None)
+            if field:
+                return field.url
+        return None
+
+    @property
+    def has_any_promo_image(self):
+        return bool(self.image_portrait or self.image_landscape)
+
+    @property
+    def picture_sources(self):
+        """URLs para <picture>: vertical / horizontal con fallback cruzado."""
+        portrait = self._image_url("image_portrait", "image_landscape")
+        landscape = self._image_url("image_landscape", "image_portrait")
+        return {
+            "portrait": portrait,
+            "landscape": landscape,
+            "default": portrait or landscape,
+        }
+
+    @property
+    def should_show(self):
+        """True si el modal debe renderizarse en la home."""
+        if not self.is_active:
+            return False
+        if self.is_image_mode:
+            return self.has_any_promo_image
+        return True
 
     @classmethod
     def get_solo(cls):

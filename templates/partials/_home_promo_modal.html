@@ -1,3 +1,29 @@
+{% if home_promo_modal.is_image_mode %}
+{% with sources=home_promo_modal.picture_sources %}
+<div class="modal fade home-promo-modal home-promo-modal--image" id="homePromoModal" tabindex="-1"
+    aria-labelledby="homePromoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content home-promo-modal__content">
+            <div class="home-promo-modal__header-actions">
+                <button type="button" class="home-promo-modal__close btn-close" data-bs-dismiss="modal"
+                    aria-label="Cerrar" id="homePromoModalClose"></button>
+            </div>
+            <a href="{{ home_promo_modal.link_url }}" target="_blank" rel="noopener noreferrer"
+                class="home-promo-modal__image-link home-promo-modal__instagram-link"
+                id="homePromoModalCta" aria-label="Ver promoción">
+                <picture>
+                    {% if sources.landscape %}
+                    <source media="(orientation: landscape)" srcset="{{ sources.landscape }}">
+                    {% endif %}
+                    <img src="{{ sources.default }}" alt="Promoción MotoMoto"
+                        class="home-promo-modal__image" id="homePromoModalLabel" width="800" height="1000">
+                </picture>
+            </a>
+        </div>
+    </div>
+</div>
+{% endwith %}
+{% else %}
 <div class="modal fade home-promo-modal" id="homePromoModal" tabindex="-1"
     aria-labelledby="homePromoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -86,3 +112,4 @@
         </div>
     </div>
 </div>
+{% endif %}

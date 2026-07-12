@@ -498,15 +498,31 @@ class PromotionalBannerAdmin(admin.ModelAdmin):
 
 @admin.register(HomePromoModal)
 class HomePromoModalAdmin(admin.ModelAdmin):
-    list_display = ('headline', 'is_active', 'discount_percent', 'dismiss_days', 'updated_at')
-    list_filter = ('is_active',)
+    list_display = ('display_mode', 'is_active', 'headline', 'dismiss_days', 'updated_at')
+    list_filter = ('is_active', 'display_mode')
     readonly_fields = ('updated_at',)
     fieldsets = (
         ('Estado', {
-            'fields': ('is_active',),
-            'description': 'Activa o desactiva el modal emergente en la página de inicio.',
+            'fields': ('is_active', 'display_mode'),
+            'description': (
+                'Activa el modal y elige el tipo: contenido configurado '
+                'o solo imagen publicitaria.'
+            ),
         }),
-        ('Contenido', {
+        ('Modo imagen', {
+            'fields': (
+                'link_url',
+                'image_portrait',
+                'image_landscape',
+            ),
+            'description': (
+                'Usado cuando el tipo es “Solo imagen”. '
+                'Sube una pieza vertical y otra horizontal; el modal elige según la orientación '
+                'de la pantalla. El tamaño del modal se adapta solo (móvil / tablet / escritorio). '
+                'Al tocar la imagen se abre la URL indicada.'
+            ),
+        }),
+        ('Modo contenido (textos + Instagram)', {
             'fields': (
                 'headline',
                 'tagline',
@@ -516,6 +532,7 @@ class HomePromoModalAdmin(admin.ModelAdmin):
                 'instagram_url',
                 'cta_label',
             ),
+            'description': 'Usado cuando el tipo es “Contenido configurado”.',
         }),
         ('Comportamiento', {
             'fields': ('show_delay_ms', 'dismiss_days'),

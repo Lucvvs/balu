@@ -24,7 +24,9 @@ function rememberDismissal(shouldRemember) {
 
 function shouldRememberDismissal() {
   const rememberCheckbox = document.getElementById("homePromoModalRemember");
-  return rememberCheckbox ? rememberCheckbox.checked : true;
+  // Sin checkbox (modo imagen): no persistir; se muestra en cada visita.
+  if (!rememberCheckbox) return false;
+  return rememberCheckbox.checked;
 }
 
 function bindDismissHandlers(modalEl, modal) {

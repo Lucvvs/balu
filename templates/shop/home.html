@@ -11,7 +11,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v={{ timestamp|default:'1.0' }}">
-{% if home_promo_modal and home_promo_modal.is_active %}
+{% if home_promo_modal and home_promo_modal.should_show %}
 <link rel="stylesheet" href="{% static 'css/components/home-promo-modal.css' %}?v={{ timestamp|default:'1.0' }}">
 {% endif %}
 {% endblock %}
@@ -329,7 +329,7 @@
 <!-- Como Comprar y Canales -->
 {% include 'partials/_como_comprar_y_canales.html' %}
 
-{% if home_promo_modal and home_promo_modal.is_active %}
+{% if home_promo_modal and home_promo_modal.should_show %}
 {% include 'partials/_home_promo_modal.html' %}
 {% endif %}
 
@@ -383,7 +383,7 @@
   "page": "home",
   "addToCartUrlTemplate": "{% url 'shop:add_to_cart' product_id=999999999 %}",
   "promoModal": {
-    "enabled": {% if home_promo_modal and home_promo_modal.is_active %}true{% else %}false{% endif %},
+    "enabled": {% if home_promo_modal and home_promo_modal.should_show %}true{% else %}false{% endif %},
     "showDelayMs": {% if home_promo_modal %}{{ home_promo_modal.show_delay_ms }}{% else %}1400{% endif %},
     "dismissDays": {% if home_promo_modal %}{{ home_promo_modal.dismiss_days }}{% else %}7{% endif %}
   }
