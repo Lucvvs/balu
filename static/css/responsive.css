@@ -1446,8 +1446,8 @@
         width: calc((100% - 1rem) / 3 * 1.2);
         min-width: 0;
         flex: 0 0 calc((100% - 1rem) / 3 * 1.2);
-        justify-content: center;
-        text-align: center;
+        justify-content: flex-start;
+        text-align: left;
         box-sizing: border-box;
     }
     
