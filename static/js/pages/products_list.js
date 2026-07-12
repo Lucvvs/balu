@@ -81,6 +81,76 @@ function initFilterButtonsReveal() {
   });
 }
 
+/**
+ * Solo en móvil vertical y si el nombre tiene más de 10 caracteres:
+ * si no cabe en el botón, reduce el font-size de ESA etiqueta.
+ * Categorías cortas (≤10) mantienen el tamaño por defecto.
+ */
+function fitOverflowingFilterLabels() {
+  const mq = window.matchMedia("(max-width: 768px) and (orientation: portrait)");
+  const labels = document.querySelectorAll(".filter-categories .filter-btn span");
+
+  labels.forEach((span) => {
+    span.style.fontSize = "";
+    span.style.letterSpacing = "";
+    span.style.whiteSpace = "";
+  });
+
+  if (!mq.matches) return;
+
+  labels.forEach((span) => {
+    const btn = span.closest(".filter-btn");
+    if (!btn) return;
+
+    const label = (span.textContent || "").trim();
+    if (label.length <= 10) {
+      return;
+    }
+
+    const icon = btn.querySelector("i");
+    const btnStyle = window.getComputedStyle(btn);
+    const padL = parseFloat(btnStyle.paddingLeft) || 0;
+    const padR = parseFloat(btnStyle.paddingRight) || 0;
+    const gap = parseFloat(btnStyle.gap) || 0;
+    const iconW = icon ? icon.getBoundingClientRect().width : 0;
+    const available = btn.clientWidth - padL - padR - iconW - gap - 2;
+    if (available <= 0) return;
+
+    span.style.whiteSpace = "nowrap";
+    const baseSize = parseFloat(window.getComputedStyle(span).fontSize);
+    if (!Number.isFinite(baseSize) || span.scrollWidth <= available) {
+      span.style.whiteSpace = "";
+      return;
+    }
+
+    let fontSize = baseSize;
+    const minSize = Math.max(10, baseSize * 0.7);
+    span.style.letterSpacing = "-0.03em";
+
+    while (span.scrollWidth > available && fontSize > minSize) {
+      fontSize -= 0.5;
+      span.style.fontSize = `${fontSize}px`;
+    }
+  });
+}
+
+function initFitOverflowingFilterLabels() {
+  const run = () => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(fitOverflowingFilterLabels));
+  };
+
+  run();
+  // Tras la animación de reveal de los botones
+  window.setTimeout(run, 450);
+
+  let t = null;
+  window.addEventListener("resize", () => {
+    if (t) window.clearTimeout(t);
+    t = window.setTimeout(run, 120);
+  });
+  window.matchMedia("(orientation: portrait)").addEventListener("change", run);
+}
+
 function initActionStopPropagation() {
   document.querySelectorAll(".js-stop-propagation").forEach((el) => {
     el.addEventListener("click", (e) => {
@@ -142,6 +212,7 @@ function initProductsListPage() {
   const productsListUrl = data.productsListUrl || "";
 
   initFilterButtonsReveal();
+  initFitOverflowingFilterLabels();
   initFilterCategories(productsListUrl);
   initSortSelect();
   initResetFilters(productsListUrl);
