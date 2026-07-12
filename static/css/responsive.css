@@ -971,13 +971,13 @@
         flex-shrink: 0;
     }
     
-    /* Solo aplicar altura grande a tarjetas que NO son de Todos los Productos */
+    /* Ofertas en vertical: recortar solo el hueco del contenedor de imagen (437 → ~altura útil) */
     .offers-section .product-card-image-container,
-    .best-sellers-section .product-card-image-container {
-        height: 437px; /* Aumentado 15% (de 380px) */
+    .offers-section .product-card-img {
+        height: 260px;
     }
-    
-    .offers-section .product-card-img,
+
+    .best-sellers-section .product-card-image-container,
     .best-sellers-section .product-card-img {
         height: 437px; /* Aumentado 15% (de 380px) */
     }
