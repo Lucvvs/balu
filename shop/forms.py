@@ -268,6 +268,7 @@ class CheckoutForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         shipping_method = cleaned_data.get('shipping_method')
+        payment_method = cleaned_data.get('payment_method')
         shipping_region = cleaned_data.get('shipping_region')
         shipping_comuna = cleaned_data.get('shipping_comuna')
         shipping_address = cleaned_data.get('shipping_address')
@@ -281,6 +282,12 @@ class CheckoutForm(forms.Form):
                 raise forms.ValidationError("Debe seleccionar la comuna para envío a domicilio.")
             if not shipping_address or shipping_address.strip() == '':
                 raise forms.ValidationError("Debe ingresar la dirección para envío a domicilio.")
+            from .models import is_cash_payment_method
+            if is_cash_payment_method(payment_method):
+                raise forms.ValidationError(
+                    "Con envío a domicilio no se acepta pago en efectivo. "
+                    "El pedido se despacha una vez confirmado el pago."
+                )
 
         return cleaned_data
 

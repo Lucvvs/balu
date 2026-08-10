@@ -33,12 +33,14 @@
   color: inherit;
 }
 
-#mercado-pago-message.is-hidden {
+#mercado-pago-message.is-hidden,
+#domestic-payment-message.is-hidden {
   display: none !important;
 }
 
-#mercado-pago-message:not(.is-hidden) {
-  display: inline;
+#mercado-pago-message:not(.is-hidden),
+#domestic-payment-message:not(.is-hidden) {
+  display: flex;
 }
 
 .cart-qty-spinner {

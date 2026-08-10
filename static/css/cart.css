@@ -640,8 +640,9 @@ input.quantity-input,
     object-fit: contain;
 }
 
-/* Mensaje de MercadoPago */
-.mercado-pago-message {
+/* Mensaje de MercadoPago / aviso pago domicilio */
+.mercado-pago-message,
+.domestic-payment-message {
     font-size: 0.8rem;
     color: #495057;
     margin-top: 1rem;
@@ -662,18 +663,26 @@ input.quantity-input,
     overflow: visible;
 }
 
-.mercado-pago-message i {
+.mercado-pago-message i,
+.domestic-payment-message i {
     color: #0066cc;
     font-size: 1rem;
     flex-shrink: 0;
     margin-top: 0.05rem;
 }
 
-.mercado-pago-message span {
+.mercado-pago-message span,
+.domestic-payment-message span {
     flex: 1;
     min-width: 0;
     word-break: normal;
     overflow-wrap: anywhere;
     hyphens: auto;
+}
+
+.checkout-option-payment.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+    cursor: not-allowed;
 }
 

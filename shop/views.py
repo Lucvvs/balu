@@ -19,10 +19,11 @@ from urllib.parse import urlparse
 from .models import (
     Product, ProductVariant, Category, Brand, ProductImage, Cart, CartItem, Order, OrderItem,
     Coupon, ShippingMethod, ShippingRule, PaymentMethod, Payment, ContactMessage, MetricEvent, PromotionalBanner,
-    HomePromoModal,
+    HomePromoModal, resolve_cart_shipping_cost, is_cash_payment_method,
 )
 from .utils import (
     get_comunas_choices,
+    get_regiones_choices,
     CHILE_METRO_REGION_NAME,
     SHIPPING_PRICE_METRO_REGION_DEFAULT,
     SHIPPING_PRICE_OTHER_REGIONS_DEFAULT,
@@ -532,6 +533,15 @@ def cart_view(request):
     region_prices = {}
     shipping_price_min = other_price
     shipping_price_max = other_price
+    has_special_shipping = False
+    cart_products = []
+    if cart:
+        cart_products = [
+            item.product
+            for item in cart.items.select_related('product').prefetch_related('product__shipping_rates')
+        ]
+        has_special_shipping = any(p.uses_special_shipping for p in cart_products)
+
     if domestic_shipping:
         r_metro = ShippingRule.objects.filter(
             shipping_method=domestic_shipping, is_active=True, region=CHILE_METRO_REGION_NAME, comuna=''
@@ -545,28 +555,50 @@ def cart_view(request):
             other_price = r_other.price
 
         subtotal_for_rules = cart.get_subtotal() if cart else 0
-        distinct_regions = (
-            ShippingRule.objects.filter(
-                shipping_method=domestic_shipping,
-                is_active=True,
-                comuna='',
-            )
-            .exclude(region='')
-            .values_list('region', flat=True)
-            .distinct()
-        )
-        for rname in distinct_regions:
-            region_prices[rname] = domestic_shipping.resolve_price(subtotal_for_rules, rname, '')
 
-        all_rule_prices = list(
-            ShippingRule.objects.filter(
-                shipping_method=domestic_shipping,
-                is_active=True,
-            ).values_list('price', flat=True)
-        )
-        if all_rule_prices:
-            shipping_price_min = min(all_rule_prices)
-            shipping_price_max = max(all_rule_prices)
+        if has_special_shipping and cart_products:
+            metro_price = resolve_cart_shipping_cost(
+                cart_products, domestic_shipping, subtotal_for_rules, CHILE_METRO_REGION_NAME, ''
+            )
+            other_price = resolve_cart_shipping_cost(
+                cart_products, domestic_shipping, subtotal_for_rules, '', ''
+            )
+            region_names = [name for name, _label in get_regiones_choices()]
+            for rname in region_names:
+                region_prices[rname] = resolve_cart_shipping_cost(
+                    cart_products, domestic_shipping, subtotal_for_rules, rname, ''
+                )
+            if region_prices:
+                shipping_price_min = min(region_prices.values())
+                shipping_price_max = max(region_prices.values())
+            else:
+                shipping_price_min = min(metro_price, other_price)
+                shipping_price_max = max(metro_price, other_price)
+        else:
+            distinct_regions = (
+                ShippingRule.objects.filter(
+                    shipping_method=domestic_shipping,
+                    is_active=True,
+                    comuna='',
+                )
+                .exclude(region='')
+                .values_list('region', flat=True)
+                .distinct()
+            )
+            for rname in distinct_regions:
+                region_prices[rname] = domestic_shipping.resolve_price(subtotal_for_rules, rname, '')
+
+            all_rule_prices = list(
+                ShippingRule.objects.filter(
+                    shipping_method=domestic_shipping,
+                    is_active=True,
+                ).values_list('price', flat=True)
+            )
+            if all_rule_prices:
+                shipping_price_min = min(all_rule_prices)
+                shipping_price_max = max(all_rule_prices)
+
+    cash_payment = PaymentMethod.objects.filter(is_active=True, name__icontains='efectivo').first()
 
     context = {
         'cart': cart,
@@ -584,6 +616,8 @@ def cart_view(request):
         'shipping_region_prices_json': json.dumps(region_prices, ensure_ascii=False),
         'shipping_price_min': shipping_price_min,
         'shipping_price_max': shipping_price_max,
+        'has_special_shipping': has_special_shipping,
+        'cash_payment_method_id': cash_payment.id if cash_payment else None,
     }
     return render(request, 'shop/cart.html', context)
 
@@ -805,12 +839,19 @@ def checkout(request):
     shipping_method = form.cleaned_data['shipping_method']
     shipping_region = (form.cleaned_data.get('shipping_region') or '').strip()
     shipping_comuna = (form.cleaned_data.get('shipping_comuna') or '').strip()
-    shipping_cost = shipping_method.resolve_price(subtotal, shipping_region, shipping_comuna)
+    cart_products = [
+        item.product
+        for item in cart.items.select_related('product').prefetch_related('product__shipping_rates')
+    ]
+    shipping_cost = resolve_cart_shipping_cost(
+        cart_products, shipping_method, subtotal, shipping_region, shipping_comuna
+    )
 
     # Validación adicional para envío a domicilio
     if shipping_method.base_price > 0:
         shipping_address = form.cleaned_data.get('shipping_address', '').strip()
-        
+        payment_method_early = form.cleaned_data.get('payment_method')
+
         if not shipping_region:
             messages.error(request, '❌ Error: Debe seleccionar una región para envío a domicilio.')
             return redirect('shop:cart')
@@ -819,6 +860,13 @@ def checkout(request):
             return redirect('shop:cart')
         if not shipping_address:
             messages.error(request, '❌ Error: Debe ingresar la dirección para envío a domicilio.')
+            return redirect('shop:cart')
+        if is_cash_payment_method(payment_method_early):
+            messages.error(
+                request,
+                '❌ Con envío a domicilio no se acepta pago en efectivo. '
+                'El pedido se despacha una vez confirmado el pago.',
+            )
             return redirect('shop:cart')
 
     # Reserva de stock atómica (evita carreras y asegura descuento también con Mercado Pago)

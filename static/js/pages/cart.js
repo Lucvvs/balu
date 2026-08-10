@@ -233,14 +233,70 @@ function syncShippingFromMethodChange(cfg, money, radioInput) {
   const isDomestic = cfg && String(radioInput.value) === String(cfg.domesticId);
   if (isDomestic) {
     updateShippingCost(cfg, money, 0, {});
-    return;
+  } else {
+    const shippingOption = radioInput.closest(".checkout-option");
+    const costText = shippingOption ? shippingOption.textContent : "";
+    const cost = costText.includes("Gratis")
+      ? 0
+      : parseClpString(costText.match(/\$[\d.]+/)?.[0] || "0");
+    updateShippingCost(cfg, money, cost, {});
   }
-  const shippingOption = radioInput.closest(".checkout-option");
-  const costText = shippingOption ? shippingOption.textContent : "";
-  const cost = costText.includes("Gratis")
-    ? 0
-    : parseClpString(costText.match(/\$[\d.]+/)?.[0] || "0");
-  updateShippingCost(cfg, money, cost, {});
+  syncCashPaymentAvailability(cfg);
+}
+
+function isCashPaymentRadio(radio, cashPaymentId) {
+  if (!radio) return false;
+  if (cashPaymentId != null && String(radio.value) === String(cashPaymentId)) return true;
+  const nameAttr = (radio.getAttribute("data-payment-name") || "").toLowerCase();
+  if (nameAttr.includes("efectivo")) return true;
+  const label = radio.closest(".checkout-option-payment");
+  const nameEl = label ? label.querySelector(".payment-name") : null;
+  const paymentName = nameEl ? nameEl.textContent.trim().toLowerCase() : "";
+  return paymentName.includes("efectivo");
+}
+
+function syncCashPaymentAvailability(cfg) {
+  const domestic = isDomesticShippingSelected(cfg);
+  const cashId = cfg && cfg.cashPaymentId != null ? cfg.cashPaymentId : null;
+  const alertEl = document.getElementById("domestic-payment-message");
+  let selectedWasCash = false;
+
+  document.querySelectorAll('input[name="payment_method"]').forEach((radio) => {
+    const label = radio.closest(".checkout-option-payment");
+    const isCash = isCashPaymentRadio(radio, cashId);
+    if (!isCash) return;
+
+    if (domestic) {
+      if (radio.checked) selectedWasCash = true;
+      radio.checked = false;
+      radio.disabled = true;
+      radio.removeAttribute("required");
+      if (label) label.classList.add("is-disabled");
+    } else {
+      radio.disabled = false;
+      if (label) label.classList.remove("is-disabled");
+    }
+  });
+
+  if (alertEl) {
+    alertEl.classList.toggle("is-hidden", !domestic);
+  }
+
+  if (domestic && selectedWasCash) {
+    const firstAvailable = document.querySelector(
+      'input[name="payment_method"]:not(:disabled)'
+    );
+    if (firstAvailable) {
+      firstAvailable.checked = true;
+      firstAvailable.dispatchEvent(new Event("change"));
+    }
+  }
+
+  const enabled = document.querySelectorAll('input[name="payment_method"]:not(:disabled)');
+  enabled.forEach((r, idx) => {
+    if (idx === 0) r.setAttribute("required", "required");
+    else r.removeAttribute("required");
+  });
 }
 
 function initRegionComunas(comunasUrlBase, cfg, money) {
@@ -385,7 +441,7 @@ function initShippingCards(cfg, money) {
   });
 }
 
-function initPaymentCards(paymentNamesForMp) {
+function initPaymentCards(paymentNamesForMp, cfg) {
   const names = paymentNamesForMp || ["Tarjeta de Crédito", "Tarjeta de Débito"];
 
   function updatePaymentMethodStyles() {
@@ -427,7 +483,10 @@ function initPaymentCards(paymentNamesForMp) {
   document.querySelectorAll(".checkout-option-payment").forEach((label) => {
     label.addEventListener("click", function (ev) {
       const radio = label.querySelector('input[type="radio"]');
-      if (!radio) return;
+      if (!radio || radio.disabled) {
+        ev.preventDefault();
+        return;
+      }
       if (ev.target !== radio) {
         radio.checked = true;
         updatePaymentMethodStyles();
@@ -436,6 +495,7 @@ function initPaymentCards(paymentNamesForMp) {
     });
   });
 
+  syncCashPaymentAvailability(cfg);
   updateMercadoPagoMessage();
 }
 
@@ -443,7 +503,9 @@ function initCartPage() {
   const data = readPageConfig();
   if (!data || !data.page || data.page !== "cart") return;
 
-  const cfg = data.shipping || {};
+  const cfg = Object.assign({}, data.shipping || {}, {
+    cashPaymentId: data.payment?.cashPaymentId ?? null,
+  });
   const money = data.money || { subtotalClp: 0, discountClp: 0 };
   const comunasUrlBase = data.urls?.comunas || "";
 
@@ -457,7 +519,7 @@ function initCartPage() {
   initRegionComunas(comunasUrlBase, cfg, money);
   initCheckoutValidation();
   initShippingCards(cfg, money);
-  initPaymentCards(data.payment?.mercadoPagoNames);
+  initPaymentCards(data.payment?.mercadoPagoNames, cfg);
 }
 
 if (document.readyState === "loading") {

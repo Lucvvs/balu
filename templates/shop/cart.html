@@ -256,6 +256,7 @@
                                     <label for="payment-{{ payment.id }}" class="checkout-option checkout-option-payment">
                                         <input type="radio" name="payment_method" id="payment-{{ payment.id }}" 
                                                value="{{ payment.id }}" required
+                                               data-payment-name="{{ payment.name|lower }}"
                                                {% if forloop.first %}checked{% endif %}>
                                         <span class="checkout-payment-label">
                                             <span class="payment-name">{{ payment.name }}</span>
@@ -270,6 +271,10 @@
                                     </label>
                                 </div>
                             {% endfor %}
+                        </div>
+                        <div id="domestic-payment-message" class="domestic-payment-message is-hidden">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Con envío a domicilio el pedido se despacha una vez confirmado el pago. Efectivo no está disponible.</span>
                         </div>
                         <div id="mercado-pago-message" class="mercado-pago-message is-hidden">
                             <i class="bi bi-info-circle"></i>
@@ -344,14 +349,16 @@
     "metroRegion": "{{ shipping_metro_region_name|default:''|escapejs }}",
     "priceMetro": {{ shipping_price_metro|default:3000 }},
     "priceOther": {{ shipping_price_other|default:5000 }},
-    "regionPrices": {{ shipping_region_prices_json|default:'{}'|safe }}
+    "regionPrices": {{ shipping_region_prices_json|default:'{}'|safe }},
+    "hasSpecialShipping": {% if has_special_shipping %}true{% else %}false{% endif %}
   },
   "money": {
     "subtotalClp": {{ cart.get_subtotal|default:0 }},
     "discountClp": {{ discount_amount|default:0 }}
   },
   "payment": {
-    "mercadoPagoNames": ["Tarjeta de Crédito", "Tarjeta de Débito"]
+    "mercadoPagoNames": ["Tarjeta de Crédito", "Tarjeta de Débito"],
+    "cashPaymentId": {% if cash_payment_method_id %}{{ cash_payment_method_id }}{% else %}null{% endif %}
   }
 }
 </script>

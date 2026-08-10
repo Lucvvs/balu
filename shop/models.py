@@ -145,6 +145,14 @@ class Product(models.Model):
         verbose_name="Mostrar tallas/variantes en catálogo",
         help_text="Si está activo y el producto tiene variantes, se muestran los cuadros de tallas/variantes sobre la imagen en el catálogo.",
     )
+    uses_special_shipping = models.BooleanField(
+        default=False,
+        verbose_name="Usar envío especial",
+        help_text=(
+            "Si está activo, el costo de envío a domicilio se calcula con las tarifas "
+            "de región definidas abajo (productos de gran volumen)."
+        ),
+    )
 
     class Meta:
         verbose_name = "Producto"
@@ -450,6 +458,108 @@ class ShippingRule(models.Model):
     def __str__(self):
         label = self.region or 'Resto de regiones'
         return f'{self.shipping_method.name}: {label} → ${self.price:,}'.replace(',', '.')
+
+
+class ProductShippingRate(models.Model):
+    """Tarifa de envío especial por región/comuna para un producto de gran volumen."""
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='shipping_rates',
+        verbose_name='Producto',
+    )
+    region = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name='Región',
+        help_text=(
+            'Copiar el nombre exacto del listado de checkout (regiones_comunas.json). '
+            'Vacío = resto de regiones / tarifa por defecto.'
+        ),
+    )
+    comuna = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name='Comuna',
+        help_text='Opcional. Vacío = cualquier comuna de la región.',
+    )
+    price = models.IntegerField(validators=[MinValueValidator(0)], verbose_name='Precio de envío (CLP)')
+    is_active = models.BooleanField(default=True, verbose_name='Activa')
+
+    class Meta:
+        verbose_name = 'Tarifa de envío especial'
+        verbose_name_plural = 'Tarifas de envío especial'
+        ordering = ['product', 'region', 'comuna']
+
+    def __str__(self):
+        label = self.region or 'Resto de regiones'
+        return f'{self.product.name}: {label} → ${self.price:,}'.replace(',', '.')
+
+    @staticmethod
+    def resolve_price_for_product(product, region: str = '', comuna: str = ''):
+        """
+        Precio de envío especial del producto para región/comuna.
+        None si no hay tarifas activas aplicables.
+        """
+        from .utils import normalize_shipping_match_string
+
+        rates = list(product.shipping_rates.filter(is_active=True))
+        if not rates:
+            return None
+        region_n = normalize_shipping_match_string(region or '')
+        comuna_n = normalize_shipping_match_string(comuna or '')
+        candidates = []
+        for rate in rates:
+            if rate.region and normalize_shipping_match_string(rate.region) != region_n:
+                continue
+            if rate.comuna and normalize_shipping_match_string(rate.comuna) != comuna_n:
+                continue
+            specificity = (2 if rate.region else 0) + (1 if rate.comuna else 0)
+            candidates.append((specificity, rate.price))
+        if not candidates:
+            return None
+        candidates.sort(key=lambda x: x[0], reverse=True)
+        return candidates[0][1]
+
+
+def resolve_cart_shipping_cost(products, shipping_method, subtotal: int, region: str = '', comuna: str = '') -> int:
+    """
+    Costo de envío del carrito. Retiro → 0.
+    Si hay productos con envío especial, usa el máximo entre sus tarifas (y el estándar
+    si también hay productos normales). Si no hay especiales, usa resolve_price del método.
+    """
+    if not shipping_method or shipping_method.base_price == 0:
+        return 0
+
+    product_list = list(products)
+    special_products = [p for p in product_list if getattr(p, 'uses_special_shipping', False)]
+    has_normal = any(not getattr(p, 'uses_special_shipping', False) for p in product_list)
+
+    if not special_products:
+        return shipping_method.resolve_price(subtotal, region, comuna)
+
+    special_prices = []
+    for product in special_products:
+        price = ProductShippingRate.resolve_price_for_product(product, region, comuna)
+        if price is not None:
+            special_prices.append(price)
+
+    if not special_prices:
+        return shipping_method.resolve_price(subtotal, region, comuna)
+
+    cost = max(special_prices)
+    if has_normal:
+        cost = max(cost, shipping_method.resolve_price(subtotal, region, comuna))
+    return cost
+
+
+def is_cash_payment_method(payment_method) -> bool:
+    """True si el método de pago es Efectivo (por nombre)."""
+    if not payment_method:
+        return False
+    return 'efectivo' in (payment_method.name or '').strip().lower()
 
 
 class PaymentMethod(models.Model):

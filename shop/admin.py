@@ -5,7 +5,8 @@ from django.urls import path
 from django.utils.html import format_html
 from .forms import CustomAdminUserCreationForm, CustomUserChangeForm
 from .models import (
-    CustomUser, Brand, Category, Product, ProductVariant, ProductImage, Coupon, ShippingMethod, ShippingRule, PaymentMethod,
+    CustomUser, Brand, Category, Product, ProductVariant, ProductImage, ProductShippingRate,
+    Coupon, ShippingMethod, ShippingRule, PaymentMethod,
     Cart, CartItem, Order, OrderItem, Payment, ContactMessage, MetricEvent, PromotionalBanner,
     HomePromoModal,
 )
@@ -69,16 +70,24 @@ class ProductVariantInline(admin.TabularInline):
     ordering = ('sort_order', 'name', 'id')
 
 
+class ProductShippingRateInline(admin.TabularInline):
+    """Tarifas de envío especial por región (solo aplican si el producto tiene «Usar envío especial»)."""
+    model = ProductShippingRate
+    extra = 0
+    fields = ('region', 'comuna', 'price', 'is_active')
+    ordering = ('region', 'comuna')
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     change_list_template = 'admin/shop/product/change_list.html'
     actions = ['delete_selected', 'export_catalog_pdf_action']
-    list_display = ('id', 'name', 'category', 'brand', 'current_price_display', 'stock', 'is_active', 'is_offer', 'offer_order', 'is_best_seller', 'featured_order', 'created_at')
-    list_filter = ('is_active', 'is_offer', 'is_best_seller', 'category', 'brand', 'created_at')
+    list_display = ('id', 'name', 'category', 'brand', 'current_price_display', 'stock', 'is_active', 'is_offer', 'uses_special_shipping', 'offer_order', 'is_best_seller', 'featured_order', 'created_at')
+    list_filter = ('is_active', 'is_offer', 'is_best_seller', 'uses_special_shipping', 'category', 'brand', 'created_at')
     search_fields = ('name', 'short_description', 'description')
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ('created_at', 'updated_at')
-    inlines = [ProductVariantInline, ProductImageInline]
+    inlines = [ProductVariantInline, ProductImageInline, ProductShippingRateInline]
 
     def get_readonly_fields(self, request, obj=None):
         ro = list(self.readonly_fields)
@@ -105,6 +114,14 @@ class ProductAdmin(admin.ModelAdmin):
                 'Tallas, colores u otras opciones: añádelas en "Variantes de producto" abajo, cada una con su stock. '
                 'El stock del producto es la suma de las variantes (solo lectura si hay variantes). '
                 'Sin variantes, usa solo el stock del producto.'
+            ),
+        }),
+        ('Envío especial', {
+            'fields': ('uses_special_shipping',),
+            'description': (
+                'Activa «Usar envío especial» solo para productos de gran volumen. '
+                'Define tarifas por región en «Tarifas de envío especial» (región vacía = resto / tarifa por defecto). '
+                'Si el carrito mezcla productos normales y especiales, se cobra el máximo entre tarifas.'
             ),
         }),
         ('Orden en Destacados', {
