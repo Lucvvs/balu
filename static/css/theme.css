@@ -1,9 +1,9 @@
 /*
  * MotoMoto — Punto de entrada CSS (solo @import; el orden replica el theme monolítico).
  */
-@import url("theme-base.css");
+@import url("theme-base.css?v=navicon90");
 @import url("components/toasts.css");
-@import url("home.css");
+@import url("home.css?v=freedconn40");
 @import url("cart.css");
 @import url("forms-global.css");
 @import url("footer.css");
@@ -12,7 +12,7 @@
 @import url("profile.css");
 @import url("order_confirmation.css");
 @import url("contact-continued.css");
-@import url("responsive.css");
+@import url("responsive.css?v=freedconn-fit");
 @import url("products_list.css");
 @import url("product_detail.css");
 @import url("cart-responsive-extras.css");

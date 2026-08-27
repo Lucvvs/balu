@@ -131,13 +131,13 @@ body.navbar-scrolled .hero-section {
 
 .navbar-motomoto .navbar-brand-icon {
     display: block;
-    height: 51px;
+    height: 46px;
     width: auto;
-    max-height: 51px;
+    max-height: 46px;
     object-fit: contain;
     flex-shrink: 0;
     /* Más grande que el texto, sin empujar la altura del navbar */
-    margin-block: -11px;
+    margin-block: -10px;
     transition: height 0.3s ease, max-height 0.3s ease, margin-block 0.3s ease;
 }
 
@@ -146,9 +146,9 @@ body.navbar-scrolled .hero-section {
 }
 
 .navbar-motomoto.scrolled .navbar-brand-icon {
-    height: 38px;
-    max-height: 38px;
-    margin-block: -8px;
+    height: 34px;
+    max-height: 34px;
+    margin-block: -7px;
 }
 
 .navbar-motomoto .navbar-nav.me-auto {

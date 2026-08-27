@@ -91,19 +91,19 @@
                 {% for brand in brands %}
                     <!-- Primera copia -->
                     <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
-                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo js-img-fallback {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" loading="lazy" decoding="async" data-fallback-src="">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo js-img-fallback {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% elif brand.slug == 'freedconn' %}brand-logo-freedconn{% endif %}" loading="lazy" decoding="async" data-fallback-src="">
                     </a>
                 {% endfor %}
                 <!-- Segunda copia para loop infinito -->
                 {% for brand in brands %}
                     <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
-                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo js-img-fallback {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" loading="lazy" decoding="async" data-fallback-src="">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo js-img-fallback {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% elif brand.slug == 'freedconn' %}brand-logo-freedconn{% endif %}" loading="lazy" decoding="async" data-fallback-src="">
                     </a>
                 {% endfor %}
                 <!-- Tercera copia para transición perfecta sin saltos -->
                 {% for brand in brands %}
                     <a href="{% url 'shop:products_list' %}?brand={{ brand.slug }}" class="brand-logo-link">
-                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo js-img-fallback {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% endif %}" loading="lazy" decoding="async" data-fallback-src="">
+                        <img src="{{ brand.slug|brand_image }}" alt="{{ brand.name }}" class="brand-logo js-img-fallback {% if brand.slug == 'hro' %}brand-logo-hro{% elif brand.slug == 'motocentric' %}brand-logo-motocentric{% elif brand.slug == 'kovix' %}brand-logo-kovix{% elif brand.slug == '4rs' %}brand-logo-4rs{% elif brand.slug == 'ich' %}brand-logo-ich{% elif brand.slug == 'shot' %}brand-logo-shot{% elif brand.slug == 'freedconn' %}brand-logo-freedconn{% endif %}" loading="lazy" decoding="async" data-fallback-src="">
                     </a>
                 {% endfor %}
             {% endif %}

@@ -269,7 +269,7 @@
 
 .brands-scroll-wrapper {
     white-space: nowrap;
-    overflow: hidden;
+    overflow: visible;
     width: 100%;
 }
 .navbar-logo {
@@ -278,10 +278,12 @@
 }
 .brands-scroll {
     display: inline-flex;
+    align-items: center;
     animation: scrollInfinite 50s linear infinite;
     gap: 2rem; /* Reducido de 3.2rem a 2rem para juntar más las marcas */
     will-change: transform;
     width: max-content;
+    height: 110px;
 }
 
 .brands-scroll:hover {
@@ -336,11 +338,24 @@
     max-width: 216px; /* 180px + 20% = 216px */
 }
 
+/* FreedConn: +40% visual con scale (no agranda la franja) */
+.brand-logo-freedconn {
+    max-height: 110px;
+    max-width: 216px;
+    transform: scale(1.4);
+    transform-origin: center center;
+}
+
 /* SHAFT mantiene tamaño estándar (sin clase especial) */
 
 .brand-logo:hover {
     filter: grayscale(0%);
     transform: scale(1.1);
+}
+
+.brand-logo-freedconn:hover {
+    filter: grayscale(0%);
+    transform: scale(1.54); /* 1.4 * 1.1 */
 }
 
 .brand-logo-link {
@@ -393,6 +408,20 @@
     .brands-banner.brands-center-focus .brand-logo-link.is-near-center:hover .brand-logo {
         filter: grayscale(0%);
         transform: scale(1.15);
+    }
+
+    .brands-banner.brands-center-focus .brand-logo-link .brand-logo-freedconn {
+        transform: scale(1.4);
+    }
+
+    .brands-banner.brands-center-focus .brand-logo-link:hover .brand-logo-freedconn {
+        transform: scale(1.4);
+    }
+
+    .brands-banner.brands-center-focus .brand-logo-link.is-near-center .brand-logo-freedconn,
+    .brands-banner.brands-center-focus .brand-logo-link.is-near-center:hover .brand-logo-freedconn {
+        filter: grayscale(0%);
+        transform: scale(1.61); /* 1.4 * 1.15 */
     }
 
     .brands-banner.brands-center-focus .brand-logo {

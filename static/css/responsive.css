@@ -634,11 +634,11 @@
         }
 
         .navbar-motomoto .navbar-brand-icon {
-            height: 38px;
-            max-height: 38px;
+            height: 34px;
+            max-height: 34px;
             width: auto;
-            max-width: 38px;
-            margin-block: -8px;
+            max-width: 34px;
+            margin-block: -7px;
         }
 
         .navbar-motomoto.scrolled .navbar-brand {
@@ -714,11 +714,11 @@
 
         .navbar-motomoto .navbar-brand-icon {
             flex-shrink: 0;
-            height: 35px;
-            max-height: 35px;
+            height: 32px;
+            max-height: 32px;
             width: auto;
-            max-width: 35px;
-            margin-block: -8px;
+            max-width: 32px;
+            margin-block: -7px;
         }
         
         .navbar-motomoto .cart-mobile {
@@ -756,10 +756,10 @@
         }
 
         .navbar-motomoto.scrolled .navbar-brand-icon {
-            height: 29px;
-            max-height: 29px;
-            max-width: 29px;
-            margin-block: -5px;
+            height: 26px;
+            max-height: 26px;
+            max-width: 26px;
+            margin-block: -4px;
         }
 
         /* Pantallas extremadamente pequeñas: reducir un poco más */
@@ -938,6 +938,11 @@
         max-height: 72px; /* 60px + 20% = 72px */
         max-width: 144px; /* 120px + 20% = 144px */
     }
+
+    .brand-logo-freedconn {
+        max-height: 75px;
+        max-width: 144px;
+    }
     
     .brand-logo-4rs {
         max-height: 60px; /* Mantiene tamaño estándar */
@@ -952,6 +957,7 @@
     
     .brands-scroll {
         gap: 2rem;
+        height: 75px;
     }
     
     .security-title-image-left,
