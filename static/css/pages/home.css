@@ -3,6 +3,71 @@
 .home-hero {
   background-image: url("../../img/bienvenida.webp");
   filter: brightness(1.0);
+  overflow-x: hidden;
+}
+
+.hero-title-track {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.hero-section .masked-text {
+  color: #cccccc;
+  background-image: none;
+  background-clip: border-box;
+  -webkit-background-clip: border-box;
+  -webkit-text-fill-color: #cccccc;
+  animation: heroTitleGlow 2.4s ease-in-out infinite;
+  filter: none;
+  -webkit-text-stroke: 4px #5c0e14;
+  paint-order: stroke fill;
+}
+
+@keyframes heroTitleGlow {
+  0%, 100% {
+    text-shadow:
+      0 3px 0 #5c0e14,
+      0 6px 12px rgba(0, 0, 0, 0.85),
+      0 10px 22px rgba(0, 0, 0, 0.55),
+      0 0 10px rgba(220, 53, 69, 0.35);
+  }
+  50% {
+    text-shadow:
+      0 4px 0 #7a1218,
+      0 8px 16px rgba(0, 0, 0, 0.95),
+      0 14px 28px rgba(0, 0, 0, 0.65),
+      0 0 22px rgba(220, 53, 69, 0.75);
+  }
+}
+
+.hero-title-moto {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  z-index: 3;
+  font-size: clamp(1.35rem, 4vw, 2.3rem);
+  line-height: 1;
+  color: #dc3545;
+  opacity: 1;
+  pointer-events: none;
+  will-change: left, top, transform;
+  filter: drop-shadow(0 0 1px #fff) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.75));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-title-moto {
+    animation: none;
+    display: none;
+  }
+
+  .hero-section .masked-text {
+    animation: none;
+    text-shadow:
+      0 3px 0 #5c0e14,
+      0 8px 16px rgba(0, 0, 0, 0.9),
+      0 0 14px rgba(220, 53, 69, 0.45);
+  }
 }
 
 .home-category {

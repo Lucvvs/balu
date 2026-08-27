@@ -670,6 +670,14 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Fecha de actualización")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='realized', verbose_name="Estado")
+    order_number = models.CharField(
+        max_length=32,
+        unique=True,
+        blank=True,
+        null=True,
+        verbose_name="Número de pedido",
+        help_text="Se genera una sola vez al crear el pedido y no cambia.",
+    )
     
     # Datos de envío
     shipping_method = models.ForeignKey(ShippingMethod, on_delete=models.PROTECT, verbose_name="Método de envío")
@@ -718,32 +726,30 @@ class Order(models.Model):
         return f"Pedido #{self.id} - {self.customer_name or 'Anónimo'}"
 
     def generate_order_number(self):
-        """Genera número de pedido según formato: ID + inicial nombre + inicial email + (año - día - mes)"""
-        from datetime import datetime
-        now = datetime.now()
-        
-        # ID del pedido
-        order_id = str(self.id)
-        
-        # Primera inicial del nombre y email
+        """Genera número de pedido: ID + inicial nombre + inicial email + (año - día - mes)."""
+        if not self.id:
+            raise ValueError('No se puede generar número de pedido sin ID')
+
+        created = self.created_at or timezone.now()
+        if timezone.is_naive(created):
+            created = timezone.make_aware(created, timezone.get_current_timezone())
+        dt = timezone.localtime(created)
+
         if self.user:
             name_init = self.user.first_name[0].upper() if self.user.first_name else 'A'
             email_init = self.user.email[0].upper() if self.user.email else 'A'
         else:
             name_init = self.customer_name[0].upper() if self.customer_name else 'A'
             email_init = self.customer_email[0].upper() if self.customer_email else 'A'
-        
-        # Año - (día + mes)
-        year = now.year
-        day_month = now.day + now.month
-        year_code = year - day_month
-        
-        return f"{order_id}{name_init}{email_init}{year_code}"
 
-    @property
-    def order_number(self):
-        """Retorna el número de pedido formateado"""
-        return self.generate_order_number()
+        year_code = dt.year - (dt.day + dt.month)
+        return f"{self.id}{name_init}{email_init}{year_code}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.order_number:
+            self.order_number = self.generate_order_number()
+            super().save(update_fields=['order_number'])
 
     def is_pickup_order(self):
         """Determina si el pedido es para retiro en bodega"""

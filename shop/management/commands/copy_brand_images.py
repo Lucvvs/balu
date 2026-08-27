@@ -35,6 +35,7 @@ class Command(BaseCommand):
             'motocentric.webp',
             'ich.webp',
             'shot.webp',
+            'freedconn.webp',
         ]
         
         copied = 0

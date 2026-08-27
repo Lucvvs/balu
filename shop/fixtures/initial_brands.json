@@ -59,13 +59,23 @@
       "is_active": true
     }
   },
-  {
+    {
     "model": "shop.brand",
     "pk": 7,
     "fields": {
       "name": "SHOT",
       "slug": "shot",
       "description": "Equipamiento y accesorios",
+      "is_active": true
+    }
+  },
+  {
+    "model": "shop.brand",
+    "pk": 8,
+    "fields": {
+      "name": "FreedConn",
+      "slug": "freedconn",
+      "description": "Intercomunicadores y comunicación Bluetooth",
       "is_active": true
     }
   }

@@ -84,6 +84,7 @@ body.navbar-scrolled .hero-section {
 .navbar-motomoto {
     background-color: var(--dark-bg);
     padding: 1rem 0;
+    min-height: 80px; /* Igual al padding-top del body: evita franja clara */
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     position: fixed;
     top: 0;
@@ -102,22 +103,52 @@ body.navbar-scrolled .hero-section {
 /* Navbar cuando se hace scroll */
 .navbar-motomoto.scrolled {
     padding: 0.5rem 0;
+    min-height: 60px;
     background-color: rgba(33, 37, 41, 0.95);
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .navbar-motomoto .navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
     font-size: 1.8rem;
     font-weight: bold;
     color: var(--primary-color) !important;
-    transition: font-size 0.3s ease;
+    transform-origin: left center;
+    transition: font-size 0.3s ease, transform 0.2s ease;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
+@media (hover: hover) {
+    .navbar-motomoto .navbar-brand:hover,
+    .navbar-motomoto .navbar-brand:focus-visible {
+        transform: scale(1.06);
+    }
+}
+
+.navbar-motomoto .navbar-brand-icon {
+    display: block;
+    height: 51px;
+    width: auto;
+    max-height: 51px;
+    object-fit: contain;
+    flex-shrink: 0;
+    /* Más grande que el texto, sin empujar la altura del navbar */
+    margin-block: -11px;
+    transition: height 0.3s ease, max-height 0.3s ease, margin-block 0.3s ease;
+}
+
 .navbar-motomoto.scrolled .navbar-brand {
     font-size: 1.5rem;
+}
+
+.navbar-motomoto.scrolled .navbar-brand-icon {
+    height: 38px;
+    max-height: 38px;
+    margin-block: -8px;
 }
 
 .navbar-motomoto .navbar-nav.me-auto {

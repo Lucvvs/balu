@@ -93,8 +93,8 @@ def home(request):
     # Categorías destacadas
     categories = Category.objects.filter(is_active=True, highlight_on_home=True)[:3]
 
-    # Marcas para el banner (en orden específico: HRO, SHAFT, motocentric, 4RS, KOVIX, ICH, SHOT)
-    brand_order = ['hro', 'shaft', 'motocentric', '4rs', 'kovix', 'ich', 'shot']
+    # Marcas para el banner (en orden específico: HRO, SHAFT, motocentric, 4RS, KOVIX, ICH, SHOT, FreedConn)
+    brand_order = ['hro', 'shaft', 'motocentric', '4rs', 'kovix', 'ich', 'shot', 'freedconn']
     brands_dict = {brand.slug: brand for brand in Brand.objects.filter(is_active=True)}
     brands = [brands_dict[slug] for slug in brand_order if slug in brands_dict]
 
@@ -1436,7 +1436,7 @@ def get_comunas(request):
 
 def search_order(request):
     """
-    Vista para buscar pedidos por número de pedido.
+    Vista para buscar pedidos por número de pedido persistido.
     Accesible para usuarios anónimos.
     """
     order = None
@@ -1444,35 +1444,12 @@ def search_order(request):
     error = None
     
     if order_number:
-        # Limpiar el número de pedido (eliminar espacios y caracteres especiales comunes)
         order_number_clean = order_number.upper().strip().replace('#', '').replace(' ', '')
-        
-        # Buscar por número de pedido completo
-        # El número de pedido tiene formato: {ID}{InicialNombre}{InicialEmail}{Año-Día-Mes}
-        # Extraer el ID del inicio para buscar el pedido
-        try:
-            # Extraer todos los dígitos consecutivos del inicio (el ID)
-            order_id_str = ''
-            for char in order_number_clean:
-                if char.isdigit():
-                    order_id_str += char
-                else:
-                    break
-            
-            if order_id_str:
-                # Buscar el pedido por ID
-                try:
-                    order = Order.objects.get(id=int(order_id_str))
-                    # Verificar que el número generado coincida exactamente con el ingresado
-                    generated_number = order.order_number.upper()
-                    if generated_number != order_number_clean:
-                        order = None
-                        error = "No se encontró ningún pedido con ese número. Verifica que hayas ingresado el número completo correctamente."
-                except Order.DoesNotExist:
-                    error = "No se encontró ningún pedido con ese número."
-            else:
-                error = "El número de pedido no es válido. Debe contener al menos un número al inicio."
-        except ValueError:
+        if order_number_clean:
+            order = Order.objects.filter(order_number__iexact=order_number_clean).first()
+            if not order:
+                error = "No se encontró ningún pedido con ese número. Verifica que hayas ingresado el número completo correctamente."
+        else:
             error = "El número de pedido no es válido."
     
     context = {

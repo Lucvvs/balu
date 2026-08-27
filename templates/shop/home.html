@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v={{ timestamp|default:'1.0' }}">
+<link rel="stylesheet" href="{% static 'css/pages/home.css' %}?v={{ timestamp|default:'1.0' }}&moto=9">
 {% if home_promo_modal and home_promo_modal.should_show %}
 <link rel="stylesheet" href="{% static 'css/components/home-promo-modal.css' %}?v={{ timestamp|default:'1.0' }}">
 {% endif %}
@@ -19,9 +19,12 @@
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-section home-hero">
+    <i class="fa-solid fa-motorcycle hero-title-moto" aria-hidden="true"></i>
     <div class="container">
         <div class="masking-container">
-            <h1 class="masked-text">¿Qué productos MotoMoto buscas hoy?</h1>
+            <div class="hero-title-track">
+                <h1 class="masked-text">¿Qué productos MotoMoto buscas hoy?</h1>
+            </div>
         </div>
         <a href="{% url 'shop:products_list' %}" class="btn btn-hero">
             <img src="{% static 'img/vercatalogo.webp' %}" alt="Ver Catálogo" fetchpriority="high" class="js-img-fallback" data-fallback-src="">
@@ -389,5 +392,5 @@
   }
 }
 </script>
-<script type="module" src="{% static 'js/pages/home.js' %}?v={{ timestamp|default:'1.0' }}"></script>
+<script type="module" src="{% static 'js/pages/home.js' %}?v={{ timestamp|default:'1.0' }}&moto=8"></script>
 {% endblock %}

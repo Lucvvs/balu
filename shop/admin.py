@@ -281,12 +281,12 @@ class OrderItemInline(admin.TabularInline):
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('order_number_display', 'user_display', 'status', 'total_display', 'payment_method', 'shipping_method', 'created_at')
     list_filter = ('status', 'payment_method', 'shipping_method', 'created_at')
-    search_fields = ('id', 'user__email', 'customer_name', 'customer_email', 'customer_phone')
-    readonly_fields = ('created_at', 'updated_at', 'total', 'subtotal', 'discount_total', 'shipping_cost')
+    search_fields = ('order_number', 'id', 'user__email', 'customer_name', 'customer_email', 'customer_phone')
+    readonly_fields = ('order_number', 'created_at', 'updated_at', 'total', 'subtotal', 'discount_total', 'shipping_cost')
     inlines = [OrderItemInline]
     fieldsets = (
         ('Información del Pedido', {
-            'fields': ('user', 'status', 'created_at', 'updated_at')
+            'fields': ('order_number', 'user', 'status', 'created_at', 'updated_at')
         }),
         ('Cliente', {
             'fields': ('customer_name', 'customer_email', 'customer_phone')
@@ -304,10 +304,10 @@ class OrderAdmin(admin.ModelAdmin):
     actions = ['mark_as_confirmed', 'mark_as_shipped', 'mark_as_ready_for_pickup', 'mark_as_delivered', 'mark_as_cancelled']
 
     def order_number_display(self, obj):
-        """Muestra el número de pedido personalizado"""
-        return f"#{obj.order_number}"
+        """Muestra el número de pedido persistido"""
+        return f"#{obj.order_number}" if obj.order_number else f"#{obj.id}"
     order_number_display.short_description = 'Número de Pedido'
-    order_number_display.admin_order_field = 'id'  # Permite ordenar por ID
+    order_number_display.admin_order_field = 'order_number'
 
     def user_display(self, obj):
         if obj.user:
