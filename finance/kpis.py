@@ -9,7 +9,7 @@ from django.db.models import Count, Sum
 from django.utils import timezone
 
 from finance.calculations import contribution_margin, margin_percentage
-from finance.models import FinancialAccount, FinancialMovement, PaymentSettlement
+from finance.models import FinancialAccount, FinancialMovement, OperationalExpense, OrderRefundItem
 from finance.money import ZERO, to_decimal
 from shop.models import OrderItem
 
@@ -97,13 +97,24 @@ def compute_sales_kpis(date_from: date, date_to: date, channel: str = '') -> Sal
     commission = to_decimal(agg['commission'])
     shipping = to_decimal(agg['shipping'])
     other = to_decimal(agg['other'])
-    opex = ZERO
+    units = int(agg['units'] or 0)
+    refunds = period_refunds(date_from, date_to, channel)
+    net -= refunds['net']
+    cogs -= refunds['cogs']
+    commission -= refunds['commission']
+    shipping -= refunds['shipping']
+    vat = to_decimal(agg['vat']) - refunds['vat']
+    gross = to_decimal(agg['gross']) - refunds['gross']
+    units -= refunds['units']
+    if units < 0:
+        units = 0
+    opex = period_opex(date_from, date_to)
     contrib = contribution_margin(net, cogs, commission, shipping, other)
     operating = contrib - opex
     return SalesKpis(
         net_sales=net,
-        gross_sales=to_decimal(agg['gross']),
-        vat_debit=to_decimal(agg['vat']),
+        gross_sales=gross,
+        vat_debit=vat,
         cogs=cogs,
         gross_margin=net - cogs,
         contribution=contrib,
@@ -112,9 +123,47 @@ def compute_sales_kpis(date_from: date, date_to: date, channel: str = '') -> Sal
         other_variable=other,
         opex=opex,
         operating_result=operating,
-        units=int(agg['units'] or 0),
+        units=units,
         orders=int(agg['orders'] or 0),
     )
+
+
+def period_opex(date_from: date, date_to: date) -> Decimal:
+    """Opex del período. Independiente del canal de venta; no incluye compras."""
+    return to_decimal(
+        OperationalExpense.objects.filter(
+            occurred_on__gte=date_from,
+            occurred_on__lte=date_to,
+        ).aggregate(total=Sum('net_amount'))['total']
+    )
+
+
+def period_refunds(date_from: date, date_to: date, channel: str = '') -> dict:
+    """Devoluciones del período. No reescribe las líneas originales."""
+    qs = OrderRefundItem.objects.filter(
+        refund__occurred_on__gte=date_from,
+        refund__occurred_on__lte=date_to,
+    )
+    if channel in ('web', 'pos'):
+        qs = qs.filter(refund__order__sales_channel=channel)
+    agg = qs.aggregate(
+        net=Sum('net_amount'),
+        gross=Sum('gross_amount'),
+        vat=Sum('vat_amount'),
+        cogs=Sum('cogs_amount'),
+        commission=Sum('commission_amount'),
+        shipping=Sum('shipping_assumed_amount'),
+        units=Sum('quantity'),
+    )
+    return {
+        'net': to_decimal(agg['net']),
+        'gross': to_decimal(agg['gross']),
+        'vat': to_decimal(agg['vat']),
+        'cogs': to_decimal(agg['cogs']),
+        'commission': to_decimal(agg['commission']),
+        'shipping': to_decimal(agg['shipping']),
+        'units': int(agg['units'] or 0),
+    }
 
 
 def percent_delta(current, previous) -> Decimal | None:
@@ -215,17 +264,6 @@ def treasury_snapshot(date_from: date, date_to: date, account_id=None):
         'timeline': timeline,
         'accounts': accounts,
     }
-
-
-def finance_alerts():
-    pending = PaymentSettlement.objects.filter(status='pending').count()
-    items = []
-    if pending:
-        items.append({
-            'text': f'{pending} liquidación{"es" if pending != 1 else ""} pendiente{"s" if pending != 1 else ""}',
-            'tone': 'warn',
-        })
-    return items
 
 
 def filters_from_request(request) -> dict:

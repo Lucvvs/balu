@@ -40,7 +40,8 @@
         <section>
             <h3>Pedido</h3>
             <dl>
-                <div><dt>Estado logístico</dt><dd>{{ order.get_status_display }}</dd></div>
+                <div><dt>Canal</dt><dd>{{ order.get_sales_channel_display }}</dd></div>
+                <div><dt>Cliente</dt><dd>{{ order.customer_name|default:"—" }}</dd></div>
                 <div><dt>Estado financiero</dt><dd>{{ order.get_financial_status_display }}</dd></div>
                 <div><dt>Pago</dt><dd>{{ order.payment_method.name }}</dd></div>
                 <div><dt>Entrega</dt><dd>{{ order.shipping_method.name }}</dd></div>

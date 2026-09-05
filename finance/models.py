@@ -203,6 +203,13 @@ class FinancialMovement(models.Model):
     class MovementType(models.TextChoices):
         SALE_SETTLEMENT = 'sale_settlement', 'Liquidación de venta'
         MANUAL_ADJUSTMENT = 'manual_adjustment', 'Ajuste manual'
+        CAPITAL_CONTRIBUTION = 'capital_contribution', 'Aporte de capital'
+        LOAN_IN = 'loan_in', 'Desembolso de préstamo'
+        LOAN_REPAYMENT = 'loan_repayment', 'Pago de préstamo'
+        PURCHASE = 'purchase', 'Compra de mercadería'
+        EXPENSE = 'expense', 'Gasto operativo'
+        SHIPMENT = 'shipment', 'Flete de envío'
+        REFUND = 'refund', 'Devolución al cliente'
 
     account = models.ForeignKey(
         FinancialAccount,
@@ -268,6 +275,46 @@ class FinancialMovement(models.Model):
         related_name='financial_movements',
         verbose_name='Pedido',
     )
+    financing = models.ForeignKey(
+        'Financing',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='movements',
+        verbose_name='Financiamiento',
+    )
+    purchase = models.ForeignKey(
+        'MerchandisePurchase',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='movements',
+        verbose_name='Compra',
+    )
+    expense = models.ForeignKey(
+        'OperationalExpense',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='movements',
+        verbose_name='Gasto',
+    )
+    shipment = models.ForeignKey(
+        'OrderShipment',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='movements',
+        verbose_name='Envío',
+    )
+    refund = models.ForeignKey(
+        'OrderRefund',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='movements',
+        verbose_name='Devolución',
+    )
 
     class Meta:
         verbose_name = 'Movimiento de tesorería'
@@ -291,4 +338,359 @@ class FinancialMovement(models.Model):
         if self.status == self.Status.CONFIRMED:
             raise ValidationError('No se eliminan movimientos confirmados. Anúlalos para conservar la auditoría.')
         return super().delete(*args, **kwargs)
+
+
+class Financing(models.Model):
+    """Aporte de capital o préstamo. No es venta ni gasto operativo."""
+
+    class Kind(models.TextChoices):
+        CONTRIBUTION = 'contribution', 'Aporte de capital'
+        LOAN = 'loan', 'Préstamo'
+
+    kind = models.CharField(max_length=16, choices=Kind.choices, db_index=True, verbose_name='Tipo')
+    counterparty = models.CharField(max_length=160, verbose_name='Origen / prestamista')
+    principal = models.DecimalField(max_digits=14, decimal_places=0, verbose_name='Monto original (CLP)')
+    account = models.ForeignKey(
+        FinancialAccount,
+        on_delete=models.PROTECT,
+        related_name='financings',
+        verbose_name='Cuenta destino',
+    )
+    occurred_on = models.DateField(verbose_name='Fecha', db_index=True)
+    notes = models.TextField(blank=True, default='', verbose_name='Observaciones')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_financings',
+        verbose_name='Registrado por',
+    )
+
+    class Meta:
+        verbose_name = 'Financiamiento'
+        verbose_name_plural = 'Financiamientos'
+        ordering = ['-occurred_on', '-id']
+        constraints = [
+            models.CheckConstraint(condition=Q(principal__gt=0), name='financing_principal_gt_0'),
+            models.CheckConstraint(condition=Q(counterparty__gt=''), name='financing_counterparty_not_empty'),
+        ]
+
+    def __str__(self):
+        return f'{self.get_kind_display()} {self.counterparty} ${self.principal}'
+
+    def outstanding(self):
+        if self.kind != self.Kind.LOAN:
+            return ZERO
+        from django.db.models import Sum
+
+        repaid = to_decimal(
+            self.movements.filter(
+                movement_type=FinancialMovement.MovementType.LOAN_REPAYMENT,
+                status=FinancialMovement.Status.CONFIRMED,
+            ).aggregate(total=Sum('amount'))['total']
+        )
+        remaining = to_decimal(self.principal) - repaid
+        return remaining if remaining > ZERO else ZERO
+
+
+class MerchandisePurchase(models.Model):
+    """Compra de mercadería. No es venta ni gasto operativo."""
+
+    supplier = models.CharField(max_length=160, verbose_name='Proveedor')
+    account = models.ForeignKey(
+        FinancialAccount,
+        on_delete=models.PROTECT,
+        related_name='purchases',
+        verbose_name='Cuenta que paga',
+    )
+    occurred_on = models.DateField(verbose_name='Fecha', db_index=True)
+    updates_stock = models.BooleanField(
+        default=True,
+        verbose_name='Sumar al stock',
+        help_text='Si está activo, las unidades compradas entran al inventario.',
+    )
+    updates_catalog_cost = models.BooleanField(
+        default=True,
+        verbose_name='Actualizar costo vigente',
+        help_text='Costo estándar / último conocido. No recalcula ventas ya sincronizadas.',
+    )
+    is_vat_affected = models.BooleanField(default=True, verbose_name='Afecta a IVA')
+    gross_total = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='Total bruto (CLP)')
+    net_total = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='Total neto (CLP)')
+    vat_credit = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='IVA crédito (CLP)')
+    notes = models.TextField(blank=True, default='', verbose_name='Observaciones')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_purchases',
+        verbose_name='Registrado por',
+    )
+
+    class Meta:
+        verbose_name = 'Compra de mercadería'
+        verbose_name_plural = 'Compras de mercadería'
+        ordering = ['-occurred_on', '-id']
+        constraints = [
+            models.CheckConstraint(condition=Q(supplier__gt=''), name='purchase_supplier_not_empty'),
+            models.CheckConstraint(condition=Q(gross_total__gte=0), name='purchase_gross_gte_0'),
+        ]
+
+    def __str__(self):
+        return f'Compra {self.supplier} ${self.gross_total}'
+
+
+class PurchaseLine(models.Model):
+    purchase = models.ForeignKey(
+        MerchandisePurchase,
+        on_delete=models.CASCADE,
+        related_name='lines',
+        verbose_name='Compra',
+    )
+    product = models.ForeignKey(
+        'shop.Product',
+        on_delete=models.PROTECT,
+        related_name='purchase_lines',
+        verbose_name='Producto',
+    )
+    product_variant = models.ForeignKey(
+        'shop.ProductVariant',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='purchase_lines',
+        verbose_name='Variante',
+    )
+    product_name = models.CharField(max_length=200, verbose_name='Producto (snapshot)')
+    variant_label = models.CharField(max_length=64, blank=True, default='', verbose_name='Opción (snapshot)')
+    sku_snapshot = models.CharField(max_length=64, blank=True, default='', verbose_name='SKU (snapshot)')
+    quantity = models.IntegerField(verbose_name='Cantidad')
+    unit_cost_net = models.DecimalField(max_digits=14, decimal_places=0, verbose_name='Costo unitario neto')
+    unit_cost_gross = models.DecimalField(max_digits=14, decimal_places=0, verbose_name='Costo unitario bruto')
+    line_net = models.DecimalField(max_digits=14, decimal_places=0, verbose_name='Neto línea')
+    line_gross = models.DecimalField(max_digits=14, decimal_places=0, verbose_name='Bruto línea')
+    line_vat = models.DecimalField(max_digits=14, decimal_places=0, verbose_name='IVA línea')
+
+    class Meta:
+        verbose_name = 'Línea de compra'
+        verbose_name_plural = 'Líneas de compra'
+        ordering = ['id']
+        constraints = [
+            models.CheckConstraint(condition=Q(quantity__gte=1), name='purchase_line_qty_gte_1'),
+        ]
+
+    def __str__(self):
+        return f'{self.product_name} x{self.quantity}'
+
+
+class ExpenseCategory(models.Model):
+    """Categoría de gasto operativo. No incluye compras de mercadería."""
+
+    class Kind(models.TextChoices):
+        INFRASTRUCTURE = 'infrastructure', 'Infraestructura'
+        SERVICES = 'services', 'Servicios'
+        ADS = 'ads', 'Publicidad'
+        OTHER = 'other', 'Otros'
+
+    name = models.CharField(max_length=80, verbose_name='Nombre')
+    slug = models.SlugField(max_length=80, unique=True, verbose_name='Slug')
+    kind = models.CharField(
+        max_length=20,
+        choices=Kind.choices,
+        db_index=True,
+        verbose_name='Grupo',
+    )
+    is_active = models.BooleanField(default=True, db_index=True, verbose_name='Activa')
+    sort_order = models.PositiveIntegerField(default=0, verbose_name='Orden')
+
+    class Meta:
+        verbose_name = 'Categoría de gasto'
+        verbose_name_plural = 'Categorías de gasto'
+        ordering = ['sort_order', 'name']
+        constraints = [
+            models.CheckConstraint(condition=Q(name__gt=''), name='expense_category_name_not_empty'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class OperationalExpense(models.Model):
+    """Gasto operativo (opex). No es compra de mercadería ni venta."""
+
+    category = models.ForeignKey(
+        ExpenseCategory,
+        on_delete=models.PROTECT,
+        related_name='expenses',
+        verbose_name='Categoría',
+    )
+    vendor = models.CharField(max_length=160, verbose_name='Proveedor / destinatario')
+    description = models.CharField(max_length=200, verbose_name='Descripción')
+    account = models.ForeignKey(
+        FinancialAccount,
+        on_delete=models.PROTECT,
+        related_name='expenses',
+        verbose_name='Cuenta que paga',
+    )
+    occurred_on = models.DateField(verbose_name='Fecha', db_index=True)
+    is_vat_affected = models.BooleanField(default=True, verbose_name='Afecta a IVA')
+    gross_amount = models.DecimalField(max_digits=14, decimal_places=0, verbose_name='Total bruto (CLP)')
+    net_amount = models.DecimalField(max_digits=14, decimal_places=0, verbose_name='Neto (opex)')
+    vat_credit = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='IVA crédito (CLP)')
+    notes = models.TextField(blank=True, default='', verbose_name='Observaciones')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_expenses',
+        verbose_name='Registrado por',
+    )
+
+    class Meta:
+        verbose_name = 'Gasto operativo'
+        verbose_name_plural = 'Gastos operativos'
+        ordering = ['-occurred_on', '-id']
+        constraints = [
+            models.CheckConstraint(condition=Q(vendor__gt=''), name='expense_vendor_not_empty'),
+            models.CheckConstraint(condition=Q(description__gt=''), name='expense_description_not_empty'),
+            models.CheckConstraint(condition=Q(gross_amount__gt=0), name='expense_gross_gt_0'),
+        ]
+
+    def __str__(self):
+        return f'{self.description} ${self.gross_amount}'
+
+
+class OrderShipment(models.Model):
+    """Fuente única del flete: cobrado al cliente vs costo real/asumido."""
+
+    order = models.OneToOneField(
+        'shop.Order',
+        on_delete=models.PROTECT,
+        related_name='shipment',
+        verbose_name='Pedido',
+    )
+    account = models.ForeignKey(
+        FinancialAccount,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='shipments',
+        verbose_name='Cuenta que paga el flete',
+    )
+    carrier = models.CharField(max_length=120, blank=True, default='', verbose_name='Courier')
+    tracking_code = models.CharField(max_length=80, blank=True, default='', verbose_name='Seguimiento')
+    charged_amount = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='Cobrado al cliente')
+    actual_cost = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='Costo real (courier)')
+    assumed_cost = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='Costo asumido (margen)')
+    occurred_on = models.DateField(verbose_name='Fecha', db_index=True)
+    notes = models.TextField(blank=True, default='', verbose_name='Observaciones')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_shipments',
+        verbose_name='Registrado por',
+    )
+
+    class Meta:
+        verbose_name = 'Envío'
+        verbose_name_plural = 'Envíos'
+        ordering = ['-occurred_on', '-id']
+        constraints = [
+            models.CheckConstraint(condition=Q(charged_amount__gte=0), name='shipment_charged_gte_0'),
+            models.CheckConstraint(condition=Q(actual_cost__gte=0), name='shipment_actual_gte_0'),
+            models.CheckConstraint(condition=Q(assumed_cost__gte=0), name='shipment_assumed_gte_0'),
+        ]
+
+    def __str__(self):
+        return f'Envío pedido {self.order_id} ${self.assumed_cost}'
+
+
+class OrderRefund(models.Model):
+    """Devolución. No borra ni reescribe la venta original."""
+
+    order = models.ForeignKey(
+        'shop.Order',
+        on_delete=models.PROTECT,
+        related_name='refunds',
+        verbose_name='Pedido',
+    )
+    account = models.ForeignKey(
+        FinancialAccount,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='refunds',
+        verbose_name='Cuenta que devuelve el dinero',
+    )
+    occurred_on = models.DateField(verbose_name='Fecha', db_index=True)
+    restores_stock = models.BooleanField(default=True, verbose_name='Devolver stock')
+    gross_amount = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='Bruto devuelto')
+    net_amount = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='Neto devuelto')
+    vat_amount = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='IVA revertido')
+    cogs_amount = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='Costo revertido')
+    notes = models.TextField(blank=True, default='', verbose_name='Observaciones')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_refunds',
+        verbose_name='Registrado por',
+    )
+
+    class Meta:
+        verbose_name = 'Devolución'
+        verbose_name_plural = 'Devoluciones'
+        ordering = ['-occurred_on', '-id']
+        constraints = [
+            models.CheckConstraint(condition=Q(gross_amount__gte=0), name='refund_gross_gte_0'),
+        ]
+
+    def __str__(self):
+        return f'Devolución pedido {self.order_id} ${self.gross_amount}'
+
+
+class OrderRefundItem(models.Model):
+    refund = models.ForeignKey(
+        OrderRefund,
+        on_delete=models.CASCADE,
+        related_name='items',
+        verbose_name='Devolución',
+    )
+    order_item = models.ForeignKey(
+        'shop.OrderItem',
+        on_delete=models.PROTECT,
+        related_name='refund_lines',
+        verbose_name='Línea original',
+    )
+    quantity = models.IntegerField(verbose_name='Cantidad')
+    gross_amount = models.DecimalField(max_digits=14, decimal_places=0, verbose_name='Bruto')
+    net_amount = models.DecimalField(max_digits=14, decimal_places=0, verbose_name='Neto')
+    vat_amount = models.DecimalField(max_digits=14, decimal_places=0, verbose_name='IVA')
+    cogs_amount = models.DecimalField(max_digits=14, decimal_places=0, verbose_name='Costo')
+    commission_amount = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='Comisión revertida')
+    shipping_assumed_amount = models.DecimalField(max_digits=14, decimal_places=0, default=0, verbose_name='Flete revertido')
+
+    class Meta:
+        verbose_name = 'Línea de devolución'
+        verbose_name_plural = 'Líneas de devolución'
+        ordering = ['id']
+        constraints = [
+            models.CheckConstraint(condition=Q(quantity__gte=1), name='refund_item_qty_gte_1'),
+        ]
+
+    def __str__(self):
+        return f'Devolución {self.order_item_id} x{self.quantity}'
+
 

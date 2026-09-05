@@ -1,0 +1,122 @@
+{% extends 'finance/base.html' %}
+{% load shop_filters %}
+
+{% block finance_title %}{% if is_create %}Nuevo producto{% else %}{{ product.name }}{% endif %}{% endblock %}
+
+{% block finance_content %}
+<div class="finance-panel-head finance-inv-form-head">
+    <a href="{% url 'finance:inventory' %}?{{ sales_query }}">← Inventario</a>
+    {% if product %}
+    <a href="{% url 'shop:product_detail' product.slug %}">Ver en tienda</a>
+    {% endif %}
+</div>
+
+{% if potential %}
+<section class="treasury-strip" aria-label="Potencial de este SKU">
+    <div>
+        <span class="kpi-label">Stock</span>
+        <strong>{{ potential.units }}</strong>
+    </div>
+    <div>
+        <span class="kpi-label">Potencial neto</span>
+        <strong>{{ potential.net|currency_clp }}</strong>
+    </div>
+    <div>
+        <span class="kpi-label">Margen potencial</span>
+        <strong>{{ potential.margin|currency_clp }}</strong>
+        {% if potential.cost_missing %}<span class="kpi-hint">Falta costo vigente</span>{% endif %}
+    </div>
+</section>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" class="finance-form" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <section class="finance-form-section">
+        <h2>Identidad</h2>
+        <div class="finance-form-grid">
+            <label>Nombre {{ form.name }} {{ form.name.errors }}</label>
+            <label>SKU {{ form.sku }} {{ form.sku.errors }}</label>
+            <label>Categoría {{ form.category }} {{ form.category.errors }}</label>
+            <label>Marca {{ form.brand }} {{ form.brand.errors }}</label>
+            <label class="is-wide">Descripción corta {{ form.short_description }} {{ form.short_description.errors }}</label>
+            <label class="is-wide">Descripción {{ form.description }} {{ form.description.errors }}</label>
+        </div>
+        <div class="finance-form-checks">
+            <label>{{ form.is_active }} Activo</label>
+            <label>{{ form.is_best_seller }} Más vendido</label>
+            <label>{{ form.show_variant_badges }} Mostrar variantes en catálogo</label>
+            <label>{{ form.uses_special_shipping }} Envío especial (tarifas en Django Admin)</label>
+        </div>
+    </section>
+
+    <section class="finance-form-section">
+        <h2>Precios y costo vigente</h2>
+        <p class="kpi-hint">Cambiar el costo aquí no recalcula ventas ya sincronizadas. El potencial usa estos valores actuales.</p>
+        <div class="finance-form-grid">
+            <label>Precio lista {{ form.price }} {{ form.price.errors }}</label>
+            <label>Precio oferta {{ form.offer_price }} {{ form.offer_price.errors }}</label>
+            <label>Costo neto {{ form.cost_net }} {{ form.cost_net.errors }}</label>
+            <label>Costo bruto {{ form.cost_gross }} {{ form.cost_gross.errors }}</label>
+            <label>Stock {{ form.stock }} {% if form.stock.help_text %}<span class="kpi-hint">{{ form.stock.help_text }}</span>{% endif %} {{ form.stock.errors }}</label>
+        </div>
+        <div class="finance-form-checks">
+            <label>{{ form.is_vat_affected }} Afecto a IVA (19%)</label>
+            <label>{{ form.is_offer }} Marcar como oferta</label>
+        </div>
+    </section>
+
+    <section class="finance-form-section">
+        <h2>Variantes</h2>
+        <p class="kpi-hint">Si hay opciones, el stock del producto es la suma. El precio sigue siendo el del producto (no hay precio por talla).</p>
+        {{ variant_formset.management_form }}
+        {{ variant_formset.non_form_errors }}
+        <table class="finance-table finance-form-table">
+            <thead>
+                <tr>
+                    <th>Opción</th>
+                    <th>Stock</th>
+                    <th>Orden</th>
+                    <th>Quitar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vform in variant_formset %}
+                <tr>
+                    <td>{{ vform.id }}{{ vform.name }}{{ vform.name.errors }}</td>
+                    <td>{{ vform.stock }}{{ vform.stock.errors }}</td>
+                    <td>{{ vform.sort_order }}{{ vform.sort_order.errors }}</td>
+                    <td>{% if vform.instance.pk %}{{ vform.DELETE }}{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="finance-form-section">
+        <h2>Imágenes</h2>
+        {{ image_formset.management_form }}
+        {{ image_formset.non_form_errors }}
+        <div class="finance-image-forms">
+            {% for iform in image_formset %}
+            <div class="finance-image-form">
+                {{ iform.id }}
+                {% if iform.instance.pk and iform.instance.image %}
+                <img src="{{ iform.instance.image.url }}" alt="" class="inv-thumb">
+                {% endif %}
+                <label>Archivo {{ iform.image }}{{ iform.image.errors }}</label>
+                <label>{{ iform.is_primary }} Principal</label>
+                <label>Orden {{ iform.order }}</label>
+                {% if iform.instance.pk %}<label>{{ iform.DELETE }} Eliminar</label>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div class="finance-form-actions">
+        <button type="submit" class="finance-filter-submit">Guardar producto</button>
+        <a class="finance-text-link" href="{% url 'finance:inventory' %}?{{ sales_query }}">Cancelar</a>
+    </div>
+</form>
+{% endblock %}

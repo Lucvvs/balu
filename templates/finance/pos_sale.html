@@ -1,0 +1,203 @@
+{% extends 'finance/base.html' %}
+{% load shop_filters %}
+
+{% block finance_title %}Venta física{% endblock %}
+
+{% block finance_content %}
+<p class="finance-back">
+    <a href="{% url 'finance:sales_lines' %}?{{ sales_query }}">← Volver a ventas</a>
+</p>
+
+<p class="kpi-hint finance-inv-note">
+    Busca por nombre, SKU, marca o categoría. Se cobra el precio publicado; el de lista no cambia.
+</p>
+
+<div class="pos-layout">
+    <section class="finance-form-section">
+        <h2>Buscar producto</h2>
+        <form method="get" class="pos-search" id="pos-search-form">
+            <input type="hidden" name="date_from" value="{{ date_from }}">
+            <input type="hidden" name="date_to" value="{{ date_to }}">
+            {% if channel %}<input type="hidden" name="channel" value="{{ channel }}">{% endif %}
+            <label>
+                <span class="visually-hidden">Buscar</span>
+                <input id="pos-q" type="search" name="q" value="{{ search_q }}" placeholder="Nombre, SKU, marca o categoría" autocomplete="off">
+            </label>
+            <label>
+                <span class="visually-hidden">Categoría</span>
+                <select id="pos-category" name="category">
+                    <option value="">Todas las categorías</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if search_category == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                <span class="visually-hidden">Marca</span>
+                <select id="pos-brand" name="brand">
+                    <option value="">Todas las marcas</option>
+                    {% for brand in brands %}
+                    <option value="{{ brand.id }}" {% if search_brand == brand.id %}selected{% endif %}>{{ brand.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button type="submit">Buscar</button>
+        </form>
+
+        <div id="pos-results" class="pos-results">
+            {% if matches %}
+                {% for product in matches %}
+                <form method="post" class="pos-result">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="hidden" name="q" value="{{ search_q }}">
+                    {% if search_category %}<input type="hidden" name="category" value="{{ search_category }}">{% endif %}
+                    {% if search_brand %}<input type="hidden" name="brand" value="{{ search_brand }}">{% endif %}
+                    <div>
+                        <strong>{{ product.name }}</strong>
+                        <span class="muted">{{ product.sku|default:"Sin SKU" }}{% if product.brand %} · {{ product.brand.name }}{% endif %} · {{ product.category.name }}</span>
+                    </div>
+                    <span class="pos-price">{{ product.current_price|currency_clp }} · {{ product.stock }} u.</span>
+                    {% if product.variants.all %}
+                    <select name="variant_id" required>
+                        <option value="">Talla / color</option>
+                        {% for variant in product.variants.all %}
+                        <option value="{{ variant.id }}">{{ variant.name }} ({{ variant.stock }})</option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                    <input type="number" name="quantity" min="1" value="1" aria-label="Cantidad">
+                    <button type="submit">Agregar</button>
+                </form>
+                {% endfor %}
+            {% elif has_filter %}
+                <p class="finance-empty">No hay productos con esa búsqueda.</p>
+            {% else %}
+                <p class="finance-empty">Escribe un nombre o SKU, o elige marca/categoría. Los resultados se filtran al instante.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="finance-form-section">
+        <h2>Venta en curso</h2>
+        {% if ticket_rows %}
+        <ul class="pos-ticket">
+            {% for row in ticket_rows %}
+            <li>
+                <div>
+                    <strong>{{ row.product.name }}{% if row.variant %} — {{ row.variant.name }}{% endif %}</strong>
+                    <span class="muted">{{ row.quantity }} × {{ row.unit_price|currency_clp }}</span>
+                </div>
+                <span>{{ row.line_total|currency_clp }}</span>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove">
+                    <input type="hidden" name="index" value="{{ row.index }}">
+                    <button type="submit" class="pos-remove">Quitar</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        <p class="pos-ticket-total">Total {{ ticket_total|currency_clp }}</p>
+        {% else %}
+        <p class="finance-empty">Todavía no hay productos en la venta.</p>
+        {% endif %}
+
+        <form method="post" class="finance-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="register">
+            {{ form.non_field_errors }}
+            <div class="finance-form-grid">
+                <label>Cliente {{ form.customer_name }}</label>
+                <label>Teléfono {{ form.customer_phone }}</label>
+                <label>Medio de pago {{ form.payment_method }} {{ form.payment_method.errors }}</label>
+                <label>Descuento (CLP) {{ form.discount_total }} {{ form.discount_total.errors }}</label>
+                <label class="is-wide">Nota {{ form.notes }}</label>
+            </div>
+            <div class="finance-form-actions">
+                <button type="submit" class="finance-filter-submit" {% if not ticket_rows %}disabled{% endif %}>Registrar venta</button>
+                {% if ticket_rows %}
+                <button type="submit" name="action" value="clear" class="pos-remove">Vaciar</button>
+                {% endif %}
+            </div>
+        </form>
+    </section>
+</div>
+
+{{ pos_catalog|json_script:"pos-catalog-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const catalog = JSON.parse(document.getElementById('pos-catalog-data').textContent || '[]');
+    const qInput = document.getElementById('pos-q');
+    const catSel = document.getElementById('pos-category');
+    const brandSel = document.getElementById('pos-brand');
+    const results = document.getElementById('pos-results');
+    const csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!results || !qInput) return;
+
+    function formatClp(value) {
+        return '$' + Number(value).toLocaleString('es-CL');
+    }
+
+    function render(items) {
+        if (!items.length) {
+            results.innerHTML = '<p class="finance-empty">No hay productos con esa búsqueda.</p>';
+            return;
+        }
+        results.innerHTML = items.slice(0, 40).map(function (p) {
+            const variants = (p.variants || []).map(function (v) {
+                return '<option value="' + v.id + '">' + v.name + ' (' + v.stock + ')</option>';
+            }).join('');
+            const variantField = p.variants && p.variants.length
+                ? '<select name="variant_id" required><option value="">Talla / color</option>' + variants + '</select>'
+                : '';
+            return (
+                '<form method="post" class="pos-result">' +
+                '<input type="hidden" name="csrfmiddlewaretoken" value="' + (csrf ? csrf.value : '') + '">' +
+                '<input type="hidden" name="action" value="add">' +
+                '<input type="hidden" name="product_id" value="' + p.id + '">' +
+                '<div><strong>' + p.name + '</strong><span class="muted">' +
+                (p.sku || 'Sin SKU') + (p.brand ? ' · ' + p.brand : '') + ' · ' + p.category +
+                '</span></div>' +
+                '<span class="pos-price">' + formatClp(p.price) + ' · ' + p.stock + ' u.</span>' +
+                variantField +
+                '<input type="number" name="quantity" min="1" value="1" aria-label="Cantidad">' +
+                '<button type="submit">Agregar</button></form>'
+            );
+        }).join('');
+    }
+
+    function applyFilter() {
+        const q = (qInput.value || '').trim().toLowerCase();
+        const cat = catSel.value;
+        const brand = brandSel.value;
+        if (!q && !cat && !brand) {
+            results.innerHTML = '<p class="finance-empty">Escribe un nombre o SKU, o elige marca/categoría.</p>';
+            return;
+        }
+        const items = catalog.filter(function (p) {
+            const hay = (p.name + ' ' + p.sku + ' ' + p.brand + ' ' + p.category).toLowerCase();
+            if (q && hay.indexOf(q) === -1) return false;
+            if (cat && String(p.category_id) !== cat) return false;
+            if (brand && String(p.brand_id) !== brand) return false;
+            return true;
+        });
+        render(items);
+    }
+
+    qInput.addEventListener('input', applyFilter);
+    catSel.addEventListener('change', applyFilter);
+    brandSel.addEventListener('change', applyFilter);
+    document.getElementById('pos-search-form').addEventListener('submit', function (event) {
+        if (catalog.length) {
+            event.preventDefault();
+            applyFilter();
+        }
+    });
+})();
+</script>
+{% endblock %}

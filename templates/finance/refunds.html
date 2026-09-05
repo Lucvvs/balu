@@ -1,0 +1,126 @@
+{% extends 'finance/base.html' %}
+{% load shop_filters %}
+
+{% block finance_title %}Devoluciones{% endblock %}
+
+{% block finance_content %}
+<nav class="finance-local-tabs" aria-label="Ingresos">
+    <a href="{% url 'finance:sales_lines' %}?{{ sales_query }}">Ventas</a>
+    <a href="{% url 'finance:financing' %}?{{ sales_query }}">Financiamiento</a>
+    <a class="is-active" href="{% url 'finance:refunds' %}?{{ sales_query }}">Devoluciones</a>
+</nav>
+
+<p class="kpi-hint finance-inv-note">
+    La devolución no borra la venta original: las líneas quedan con su snapshot. El KPI del período resta el neto devuelto.
+</p>
+
+{% if can_add_manual_sale %}
+<div class="finance-split">
+    <form method="get" class="finance-form-section">
+        <input type="hidden" name="date_from" value="{{ date_from }}">
+        <input type="hidden" name="date_to" value="{{ date_to }}">
+        {% if channel %}<input type="hidden" name="channel" value="{{ channel }}">{% endif %}
+        <h2>Buscar pedido</h2>
+        <div class="finance-form-grid">
+            <label class="is-wide">Número {{ lookup.order_number }}</label>
+        </div>
+        <div class="finance-form-actions">
+            <button type="submit" class="finance-filter-submit">Buscar</button>
+        </div>
+    </form>
+
+    {% if target %}
+    <form method="post" class="finance-form-section">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="refund">
+        <input type="hidden" name="order_number" value="{{ target.order_number|default:target.id }}">
+        <h2>Devolver #{{ target.order_number|default:target.id }}</h2>
+        <ul class="pos-ticket">
+            {% for row in line_rows %}
+            <li>
+                <div>
+                    <strong>{{ row.item.product_name }}{% if row.item.variant_label %} — {{ row.item.variant_label }}{% endif %}</strong>
+                    <span class="muted">{{ row.remaining }} de {{ row.item.quantity }} disponibles</span>
+                </div>
+                <input type="number" name="qty_{{ row.item.pk }}" min="0" max="{{ row.remaining }}" value="0" {% if not row.remaining %}disabled{% endif %} aria-label="Cantidad a devolver">
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="finance-form-grid">
+            <label>Cuenta que devuelve
+                <select name="account" class="form-select">
+                    <option value="">Sin movimiento de caja</option>
+                    {% for acc in accounts %}
+                    <option value="{{ acc.id }}">{{ acc.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Fecha <input class="form-control" type="date" name="occurred_on" value="{{ today }}"></label>
+            <label class="is-wide">Nota <input class="form-control" type="text" name="notes"></label>
+        </div>
+        <div class="finance-form-checks">
+            <label><input class="form-check-input" type="checkbox" name="restores_stock" checked> Devolver stock</label>
+        </div>
+        <div class="finance-form-actions">
+            <button type="submit" class="finance-filter-submit">Registrar devolución</button>
+        </div>
+    </form>
+    {% elif order_number %}
+    <p class="finance-empty">No hay un pedido con ese número.</p>
+    {% endif %}
+</div>
+{% else %}
+<p class="finance-empty">Puedes ver el historial. Registrar una devolución requiere el permiso de venta física.</p>
+{% endif %}
+
+<div class="finance-panel">
+    <h2>Historial del período</h2>
+    {% if rows %}
+    <div class="finance-table-wrap">
+        <table class="finance-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Pedido</th>
+                    <th>Detalle</th>
+                    <th class="is-num">Bruto</th>
+                    <th class="is-num">Neto</th>
+                    <th>Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in rows %}
+                <tr>
+                    <td>{{ item.occurred_on|date:"d/m/Y" }}</td>
+                    <td>#{{ item.order.order_number|default:item.order_id }}</td>
+                    <td>
+                        {% for line in item.items.all %}
+                        {{ line.order_item.product_name }} ×{{ line.quantity }}{% if not forloop.last %}<br>{% endif %}
+                        {% endfor %}
+                    </td>
+                    <td class="is-num">{{ item.gross_amount|currency_clp }}</td>
+                    <td class="is-num">{{ item.net_amount|currency_clp }}</td>
+                    <td>{% if item.restores_stock %}Sí{% else %}No{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="finance-cards-mobile">
+        {% for item in rows %}
+        <div class="finance-line-card">
+            <strong>#{{ item.order.order_number|default:item.order_id }} · {{ item.net_amount|currency_clp }}</strong>
+            <span>{{ item.occurred_on|date:"d/m/Y" }} · {% if item.restores_stock %}con stock{% else %}sin stock{% endif %}</span>
+            <span>
+                {% for line in item.items.all %}
+                {{ line.order_item.product_name }} ×{{ line.quantity }}{% if not forloop.last %} · {% endif %}
+                {% endfor %}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="finance-empty">Aún no hay devoluciones en este período. Las ventas originales siguen en Ingresos.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -7,13 +7,19 @@
 {% if alerts %}
 <ul class="finance-alerts" aria-label="Alertas financieras">
     {% for alert in alerts %}
-    <li class="finance-alert finance-alert-{{ alert.tone }}">{{ alert.text }}</li>
+    <li>
+        {% if alert.href %}
+        <a class="finance-alert finance-alert-{{ alert.tone }}" href="{{ alert.href }}">{{ alert.text }}</a>
+        {% else %}
+        <span class="finance-alert finance-alert-{{ alert.tone }}">{{ alert.text }}</span>
+        {% endif %}
+    </li>
     {% endfor %}
 </ul>
 {% endif %}
 
 <section class="finance-hero-grid" aria-label="Indicadores principales">
-    <a class="kpi-hero" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">
+    <a class="kpi-hero" href="{% url 'finance:balances' %}?{{ sales_query }}&panel=rentabilidad">
         <span class="kpi-label">Resultado operativo</span>
         <strong class="kpi-value">{{ operating.value|currency_clp }}</strong>
         {% if operating.has_delta %}
@@ -40,10 +46,12 @@
             <span class="kpi-delta {% if contribution.up %}is-up{% else %}is-down{% endif %}">{{ contribution.delta }}</span>
             {% endif %}
         </a>
-        <a class="kpi-card is-static" href="{% url 'finance:expenses' %}?{{ sales_query }}">
+        <a class="kpi-card" href="{% url 'finance:expenses' %}?{{ sales_query }}">
             <span class="kpi-label">Gastos operacionales</span>
             <strong>{{ opex.value|currency_clp }}</strong>
-            <span class="kpi-delta is-muted">Se cargan con el módulo de gastos</span>
+            {% if opex.has_delta %}
+            <span class="kpi-delta {% if opex.up %}is-up{% else %}is-down{% endif %}">{{ opex.delta }}</span>
+            {% endif %}
         </a>
     </div>
 </section>
@@ -66,20 +74,40 @@
 </div>
 
 <section class="treasury-strip" aria-label="Tesorería e impuestos">
-    <div>
+    <a href="{% url 'finance:balances' %}?{{ sales_query }}&panel=caja">
         <span class="kpi-label">Caja</span>
         <strong>{{ treasury.cash|currency_clp }}</strong>
-    </div>
-    <div>
+    </a>
+    <a href="{% url 'finance:balances' %}?{{ sales_query }}&panel=bancos">
         <span class="kpi-label">Bancos y saldos digitales</span>
         <strong>{{ treasury.banks|currency_clp }}</strong>
-    </div>
-    <div>
+    </a>
+    <a href="{% url 'finance:balances' %}?{{ sales_query }}&panel=impuestos">
         <span class="kpi-label">IVA débito estimado</span>
         <strong>{{ vat_debit|currency_clp }}</strong>
         <span class="kpi-hint">Control interno, no declaración SII</span>
+    </a>
+</section>
+
+{% if evolution.has_values %}
+<section class="finance-panel evo-panel" aria-labelledby="evo-heading">
+    <h2 id="evo-heading">Evolución de ventas netas</h2>
+    <p class="kpi-hint">
+        {% if evolution.grain == 'day' %}Por día{% elif evolution.grain == 'week' %}Por semana{% else %}Por mes{% endif %}
+        · mismas cifras del período, con devoluciones en su fecha
+    </p>
+    <div class="evo-chart" role="img" aria-label="Ventas netas del período">
+        {% for point in evolution.points %}
+        <div class="evo-col{% if point.negative %} is-neg{% endif %}" title="{{ point.label }}: {{ point.net|currency_clp }}">
+            <div class="evo-track">
+                <span class="evo-bar" style="height: {{ point.bar }}%"></span>
+            </div>
+            <span class="evo-label">{{ point.label }}</span>
+        </div>
+        {% endfor %}
     </div>
 </section>
+{% endif %}
 
 <div class="finance-split">
     <section class="finance-panel" aria-labelledby="rank-heading">

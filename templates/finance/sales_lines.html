@@ -4,18 +4,49 @@
 {% block finance_title %}Ventas{% endblock %}
 
 {% block finance_content %}
+<nav class="finance-local-tabs" aria-label="Ingresos">
+    <a class="is-active" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">Ventas</a>
+    <a href="{% url 'finance:financing' %}?{{ sales_query }}">Financiamiento</a>
+    <a href="{% url 'finance:refunds' %}?{{ sales_query }}">Devoluciones</a>
+</nav>
+
+<section class="treasury-strip" aria-label="Totales del período">
+    <div>
+        <span class="kpi-label">Ventas netas</span>
+        <strong>{{ kpis.net_sales|currency_clp }}</strong>
+        <span class="kpi-hint">{{ kpis.orders }} pedido{{ kpis.orders|pluralize }} · {{ kpis.units }} u.</span>
+    </div>
+    <div>
+        <span class="kpi-label">Contribución</span>
+        <strong>{{ kpis.contribution|currency_clp }}</strong>
+    </div>
+    <div>
+        <span class="kpi-label">IVA débito</span>
+        <strong>{{ kpis.vat_debit|currency_clp }}</strong>
+    </div>
+</section>
+
 <div class="finance-panel">
+    {% if missing_cost %}
+    <p class="kpi-hint finance-inv-note">Mostrando solo líneas sin costo histórico.</p>
+    {% endif %}
     <div class="finance-panel-head">
         <h2>Líneas de venta</h2>
-        <form method="get" class="finance-search">
-            <input type="hidden" name="date_from" value="{{ date_from }}">
-            <input type="hidden" name="date_to" value="{{ date_to }}">
-            {% if channel %}<input type="hidden" name="channel" value="{{ channel }}">{% endif %}
-            {% if account_id %}<input type="hidden" name="account" value="{{ account_id }}">{% endif %}
-            <label class="visually-hidden" for="sales-q">Buscar</label>
-            <input id="sales-q" type="search" name="q" value="{{ search }}" placeholder="Pedido, SKU o producto">
-            <button type="submit">Buscar</button>
-        </form>
+        <div class="finance-search-row">
+            {% if can_add_manual_sale %}
+            <a class="finance-filter-submit" href="{% url 'finance:pos_sale' %}?{{ sales_query }}">+ Venta física</a>
+            {% endif %}
+            <form method="get" class="finance-search">
+                <input type="hidden" name="date_from" value="{{ date_from }}">
+                <input type="hidden" name="date_to" value="{{ date_to }}">
+                {% if channel %}<input type="hidden" name="channel" value="{{ channel }}">{% endif %}
+                {% if account_id %}<input type="hidden" name="account" value="{{ account_id }}">{% endif %}
+                {% if missing_cost %}<input type="hidden" name="missing_cost" value="1">{% endif %}
+                <label class="visually-hidden" for="sales-q">Buscar</label>
+                <input id="sales-q" type="search" name="q" value="{{ search }}" placeholder="Pedido, SKU o producto">
+                <button type="submit">Buscar</button>
+            </form>
+        </div>
     </div>
 
     {% if page.object_list %}
@@ -24,8 +55,10 @@
             <thead>
                 <tr>
                     <th>Pedido</th>
+                    <th>SKU</th>
                     <th>Producto</th>
                     <th>Canal</th>
+                    <th class="is-num">Cant.</th>
                     <th class="is-num">Venta neta</th>
                     <th class="is-num">Margen</th>
                     <th>Pago</th>
@@ -36,11 +69,14 @@
                 {% for item in page %}
                 <tr>
                     <td><a href="{% url 'finance:sales_line_detail' item.id %}?{{ sales_query }}">#{{ item.order.order_number|default:item.order_id }}</a></td>
+                    <td>{{ item.sku_snapshot|default:"—" }}</td>
                     <td>
                         {{ item.product_name }}
                         {% if item.variant_label %}<span class="muted">{{ item.variant_label }}</span>{% endif %}
+                        {% if item.cost_missing %}<span class="inv-badge is-warn">Sin costo</span>{% endif %}
                     </td>
                     <td>{{ item.order.get_sales_channel_display }}</td>
+                    <td class="is-num">{{ item.quantity }}</td>
                     <td class="is-num">{{ item.net_sale|currency_clp }}</td>
                     <td class="is-num">{{ item.gross_margin_amount|currency_clp }}</td>
                     <td>{{ item.order.payment_method.name }}</td>
@@ -60,13 +96,18 @@
     </div>
     {% if page.has_other_pages %}
     <nav class="finance-pagination" aria-label="Paginación">
-        {% if page.has_previous %}<a href="?{{ sales_query }}&q={{ search|urlencode }}&page={{ page.previous_page_number }}">Anterior</a>{% endif %}
+        {% if page.has_previous %}<a href="?{{ list_query }}&page={{ page.previous_page_number }}">Anterior</a>{% endif %}
         <span>Página {{ page.number }} de {{ page.paginator.num_pages }}</span>
-        {% if page.has_next %}<a href="?{{ sales_query }}&q={{ search|urlencode }}&page={{ page.next_page_number }}">Siguiente</a>{% endif %}
+        {% if page.has_next %}<a href="?{{ list_query }}&page={{ page.next_page_number }}">Siguiente</a>{% endif %}
     </nav>
     {% endif %}
     {% else %}
-    <p class="finance-empty">No hay líneas de venta en este período.</p>
+    <p class="finance-empty">
+        No hay líneas de venta en este período.
+        {% if can_add_manual_sale %}
+        <a href="{% url 'finance:pos_sale' %}?{{ sales_query }}">Registrar venta física</a>
+        {% endif %}
+    </p>
     {% endif %}
 </div>
 {% endblock %}

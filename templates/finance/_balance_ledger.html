@@ -1,0 +1,59 @@
+{% load shop_filters %}
+<section class="treasury-strip" aria-label="{{ label }} del período">
+    <div>
+        <span class="kpi-label">Saldo inicial</span>
+        <strong>{{ ledger.opening|currency_clp }}</strong>
+        <span class="kpi-hint">Al día anterior al período</span>
+    </div>
+    <div>
+        <span class="kpi-label">Entró / Salió</span>
+        <strong>+{{ ledger.inflow|currency_clp }} / −{{ ledger.outflow|currency_clp }}</strong>
+    </div>
+    <div>
+        <span class="kpi-label">Saldo al cierre</span>
+        <strong>{{ ledger.closing|currency_clp }}</strong>
+        <span class="kpi-hint">{{ label }} · derivado, no editable</span>
+    </div>
+</section>
+
+<div class="finance-panel">
+    <h2>{{ label }} por cuenta</h2>
+    {% if ledger.rows %}
+    <div class="finance-table-wrap">
+        <table class="finance-table">
+            <thead>
+                <tr>
+                    <th>Cuenta</th>
+                    <th>Tipo</th>
+                    <th class="is-num">Inicial</th>
+                    <th class="is-num">Entró</th>
+                    <th class="is-num">Salió</th>
+                    <th class="is-num">Cierre</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in ledger.rows %}
+                <tr>
+                    <td>{{ row.account.name }}</td>
+                    <td>{{ row.account.get_account_type_display }}</td>
+                    <td class="is-num">{{ row.opening|currency_clp }}</td>
+                    <td class="is-num">{{ row.inflow|currency_clp }}</td>
+                    <td class="is-num">{{ row.outflow|currency_clp }}</td>
+                    <td class="is-num">{{ row.closing|currency_clp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="finance-cards-mobile">
+        {% for row in ledger.rows %}
+        <div class="finance-line-card">
+            <strong>{{ row.account.name }} · {{ row.closing|currency_clp }}</strong>
+            <span>Inicial {{ row.opening|currency_clp }} · +{{ row.inflow|currency_clp }} · −{{ row.outflow|currency_clp }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="finance-empty">No hay cuentas activas de este tipo{% if account_id %} con el filtro de cuenta{% endif %}.</p>
+    {% endif %}
+</div>

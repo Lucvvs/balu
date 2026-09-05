@@ -4,7 +4,7 @@
 {% block title %}{% block finance_title %}Finanzas{% endblock %} — MotoMoto{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/finance.css' %}?v=fin4">
+<link rel="stylesheet" href="{% static 'css/pages/finance.css' %}?v=fin12">
 {% endblock %}
 
 {% block content %}
@@ -18,9 +18,27 @@
             </div>
             <div class="finance-shortcuts" role="group" aria-label="Atajos">
                 <a class="finance-shortcut" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">Ventas</a>
+                {% if can_add_manual_sale %}
+                <a class="finance-shortcut" href="{% url 'finance:pos_sale' %}?{{ sales_query }}">+ Venta física</a>
+                {% endif %}
+                {% if can_manage_catalog %}
+                <a class="finance-shortcut" href="{% url 'finance:product_create' %}?{{ sales_query }}">+ Producto</a>
+                {% endif %}
+                {% if can_register_expense %}
+                <a class="finance-shortcut" href="{% url 'finance:expenses' %}?{{ sales_query }}">+ Gasto</a>
+                {% else %}
                 <a class="finance-shortcut is-muted" href="{% url 'finance:expenses' %}?{{ sales_query }}">+ Gasto</a>
-                <a class="finance-shortcut is-muted" href="{% url 'finance:expenses' %}?{{ sales_query }}">+ Compra</a>
+                {% endif %}
+                {% if can_manage_purchases %}
+                <a class="finance-shortcut" href="{% url 'finance:purchases' %}?{{ sales_query }}">+ Compra</a>
+                {% else %}
+                <a class="finance-shortcut is-muted" href="{% url 'finance:purchases' %}?{{ sales_query }}">+ Compra</a>
+                {% endif %}
+                {% if can_manage_financing %}
+                <a class="finance-shortcut" href="{% url 'finance:financing' %}?{{ sales_query }}">+ Financiamiento</a>
+                {% else %}
                 <a class="finance-shortcut is-muted" href="{% url 'finance:financing' %}?{{ sales_query }}">+ Financiamiento</a>
+                {% endif %}
             </div>
         </div>
         <form class="finance-filters" method="get" role="search">
@@ -49,6 +67,9 @@
                     {% endfor %}
                 </select>
             </label>
+            {% if finance_section == 'saldos' and panel %}
+            <input type="hidden" name="panel" value="{{ panel }}">
+            {% endif %}
             <button type="submit" class="finance-filter-submit">Filtrar</button>
         </form>
     </header>

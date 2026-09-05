@@ -1,0 +1,172 @@
+{% extends 'finance/base.html' %}
+{% load shop_filters %}
+
+{% block finance_title %}Inventario{% endblock %}
+
+{% block finance_content %}
+<nav class="finance-local-tabs" aria-label="Inventario">
+    <a class="is-active" href="{% url 'finance:inventory' %}?{{ sales_query }}">Stock</a>
+    <a href="{% url 'finance:purchases' %}?{{ sales_query }}">Compras</a>
+</nav>
+
+<p class="kpi-hint finance-inv-note">
+    El potencial asume vender todo el stock al precio publicado (oferta si hay). No es una venta y no mueve tesorería.
+    Los filtros de fecha del encabezado se conservan para el resto de Finanzas.
+</p>
+
+<section class="finance-hero-grid" aria-label="Potencial de inventario">
+    <div class="kpi-hero is-static">
+        <span class="kpi-label">Potencial neto</span>
+        <strong class="kpi-value">{{ totals.net|currency_clp }}</strong>
+        <span class="kpi-hint">Si se vende el stock actual · proyección, no ingreso</span>
+    </div>
+    <div class="kpi-secondary-stack">
+        <div class="kpi-card is-static">
+            <span class="kpi-label">Potencial bruto</span>
+            <strong>{{ totals.gross|currency_clp }}</strong>
+        </div>
+        <div class="kpi-card is-static">
+            <span class="kpi-label">Costo vigente (COGS)</span>
+            <strong>{{ totals.cogs|currency_clp }}</strong>
+        </div>
+        <div class="kpi-card is-static">
+            <span class="kpi-label">Margen potencial</span>
+            <strong>{{ totals.margin|currency_clp }}</strong>
+            {% if totals.missing_cost %}
+            <span class="kpi-delta is-down">{{ totals.missing_cost }} SKU sin costo vigente</span>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<div class="treasury-strip" aria-label="Resumen de catálogo">
+    <div>
+        <span class="kpi-label">SKUs</span>
+        <strong>{{ totals.skus }}</strong>
+    </div>
+    <div>
+        <span class="kpi-label">Unidades</span>
+        <strong>{{ totals.units }}</strong>
+    </div>
+    <div>
+        <span class="kpi-label">IVA potencial</span>
+        <strong>{{ totals.vat|currency_clp }}</strong>
+        <span class="kpi-hint">Estimado al 19% si el producto es afecto</span>
+    </div>
+</div>
+
+<div class="finance-panel">
+    <div class="finance-panel-head">
+        <h2>Stock actual</h2>
+        <form method="get" class="finance-search finance-inv-filters">
+            <input type="hidden" name="date_from" value="{{ date_from }}">
+            <input type="hidden" name="date_to" value="{{ date_to }}">
+            {% if channel %}<input type="hidden" name="channel" value="{{ channel }}">{% endif %}
+            {% if account_id %}<input type="hidden" name="account" value="{{ account_id }}">{% endif %}
+            <label class="visually-hidden" for="inv-q">Buscar</label>
+            <input id="inv-q" type="search" name="q" value="{{ search }}" placeholder="Nombre o SKU">
+            <select name="status" aria-label="Estado">
+                <option value="" {% if not status_filter %}selected{% endif %}>Todos</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Activos</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactivos</option>
+            </select>
+            <select name="stock" aria-label="Stock">
+                <option value="" {% if not stock_filter %}selected{% endif %}>Cualquier stock</option>
+                <option value="in" {% if stock_filter == 'in' %}selected{% endif %}>Con stock</option>
+                <option value="out" {% if stock_filter == 'out' %}selected{% endif %}>Sin stock</option>
+            </select>
+            <select name="cost" aria-label="Costo">
+                <option value="" {% if not cost_filter %}selected{% endif %}>Cualquier costo</option>
+                <option value="missing" {% if cost_filter == 'missing' %}selected{% endif %}>Sin costo vigente</option>
+            </select>
+            <button type="submit">Filtrar</button>
+        </form>
+    </div>
+
+    {% if rows %}
+    <div class="finance-table-wrap">
+        <table class="finance-table">
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Producto</th>
+                    <th class="is-num">Stock</th>
+                    <th class="is-num">Precio</th>
+                    <th class="is-num">Costo neto</th>
+                    <th class="is-num">Potencial neto</th>
+                    <th class="is-num">Margen</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.product.sku|default:"—" }}</td>
+                    <td>
+                        <strong>{{ row.product.name }}</strong>
+                        {% if not row.product.is_active %}<span class="inv-badge">Inactivo</span>{% endif %}
+                        {% if row.potential.cost_missing %}<span class="inv-badge is-warn">Sin costo</span>{% endif %}
+                        {% if row.potential.has_variants %}<span class="muted">Variantes</span>{% endif %}
+                    </td>
+                    <td class="is-num">
+                        {% if can_manage_catalog and not row.potential.has_variants %}
+                        <form method="post" action="{% url 'finance:inventory_stock' row.product.id %}" class="inv-stock-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <label class="visually-hidden" for="stock-{{ row.product.id }}">Stock {{ row.product.name }}</label>
+                            <input id="stock-{{ row.product.id }}" type="number" name="stock" min="0" value="{{ row.product.stock }}">
+                            <button type="submit">OK</button>
+                        </form>
+                        {% else %}
+                        {{ row.product.stock }}
+                        {% endif %}
+                    </td>
+                    <td class="is-num">{{ row.potential.published_price|currency_clp }}</td>
+                    <td class="is-num">{{ row.product.cost_net|currency_clp }}</td>
+                    <td class="is-num">{{ row.potential.net|currency_clp }}</td>
+                    <td class="is-num">{{ row.potential.margin|currency_clp }}</td>
+                    <td>
+                        {% if can_manage_catalog %}
+                        <a href="{% url 'finance:product_edit' row.product.id %}?{{ sales_query }}">Editar</a>
+                        {% endif %}
+                        <a href="{% url 'shop:product_detail' row.product.slug %}">Ver</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="finance-cards-mobile">
+        {% for row in rows %}
+        <div class="finance-line-card">
+            <strong>{{ row.product.name }}</strong>
+            <span>{{ row.product.sku|default:"Sin SKU" }} · {{ row.potential.net|currency_clp }} neto</span>
+            {% if can_manage_catalog and not row.potential.has_variants %}
+            <form method="post" action="{% url 'finance:inventory_stock' row.product.id %}" class="inv-stock-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <label class="visually-hidden" for="stock-m-{{ row.product.id }}">Stock {{ row.product.name }}</label>
+                <input id="stock-m-{{ row.product.id }}" type="number" name="stock" min="0" value="{{ row.product.stock }}">
+                <button type="submit">OK</button>
+            </form>
+            {% else %}
+            <span>{{ row.product.stock }} u.</span>
+            {% endif %}
+            {% if can_manage_catalog %}
+            <a href="{% url 'finance:product_edit' row.product.id %}?{{ sales_query }}">Editar</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% if page.has_other_pages %}
+    <nav class="finance-pagination" aria-label="Paginación">
+        {% if page.has_previous %}<a href="?{{ inventory_query }}&page={{ page.previous_page_number }}">Anterior</a>{% endif %}
+        <span>Página {{ page.number }} de {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}<a href="?{{ inventory_query }}&page={{ page.next_page_number }}">Siguiente</a>{% endif %}
+    </nav>
+    {% endif %}
+    {% else %}
+    <p class="finance-empty">No hay productos con esos filtros.</p>
+    {% endif %}
+</div>
+{% endblock %}
