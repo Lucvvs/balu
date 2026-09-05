@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% block finance_title %}Finanzas{% endblock %} — MotoMoto{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/finance.css' %}?v=fin4">
+{% endblock %}
+
+{% block content %}
+<div class="finance-page">
+    <header class="finance-masthead">
+        <div class="finance-masthead-inner">
+            <div>
+                <p class="finance-kicker">MotoMoto</p>
+                <h1 class="finance-title">Finanzas</h1>
+                <p class="finance-subtitle">Control financiero de MotoMoto</p>
+            </div>
+            <div class="finance-shortcuts" role="group" aria-label="Atajos">
+                <a class="finance-shortcut" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">Ventas</a>
+                <a class="finance-shortcut is-muted" href="{% url 'finance:expenses' %}?{{ sales_query }}">+ Gasto</a>
+                <a class="finance-shortcut is-muted" href="{% url 'finance:expenses' %}?{{ sales_query }}">+ Compra</a>
+                <a class="finance-shortcut is-muted" href="{% url 'finance:financing' %}?{{ sales_query }}">+ Financiamiento</a>
+            </div>
+        </div>
+        <form class="finance-filters" method="get" role="search">
+            <label class="finance-filter">
+                <span>Desde</span>
+                <input type="date" name="date_from" value="{{ date_from }}" required>
+            </label>
+            <label class="finance-filter">
+                <span>Hasta</span>
+                <input type="date" name="date_to" value="{{ date_to }}" required>
+            </label>
+            <label class="finance-filter">
+                <span>Canal</span>
+                <select name="channel">
+                    <option value="" {% if not channel %}selected{% endif %}>Todos</option>
+                    <option value="web" {% if channel == 'web' %}selected{% endif %}>Web</option>
+                    <option value="pos" {% if channel == 'pos' %}selected{% endif %}>Tienda / Manual</option>
+                </select>
+            </label>
+            <label class="finance-filter">
+                <span>Cuenta</span>
+                <select name="account">
+                    <option value="" {% if not account_id %}selected{% endif %}>Todas</option>
+                    {% for acc in accounts %}
+                    <option value="{{ acc.id }}" {% if account_id == acc.id %}selected{% endif %}>{{ acc.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button type="submit" class="finance-filter-submit">Filtrar</button>
+        </form>
+    </header>
+
+    <nav class="finance-subnav" aria-label="Secciones de finanzas">
+        <a class="{% if finance_section == 'resumen' %}is-active{% endif %}" href="{% url 'finance:resumen' %}?{{ sales_query }}">Resumen</a>
+        <a class="{% if finance_section == 'ingresos' %}is-active{% endif %}" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">Ingresos</a>
+        <a class="{% if finance_section == 'gastos' %}is-active{% endif %}" href="{% url 'finance:expenses' %}?{{ sales_query }}">Gastos</a>
+        <a class="{% if finance_section == 'saldos' %}is-active{% endif %}" href="{% url 'finance:balances' %}?{{ sales_query }}">Saldos</a>
+        <a class="{% if finance_section == 'inventario' %}is-active{% endif %}" href="{% url 'finance:inventory' %}?{{ sales_query }}">Inventario</a>
+    </nav>
+
+    <div class="finance-body">
+        {% block finance_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

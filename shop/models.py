@@ -1,11 +1,25 @@
 import json
 
+from decimal import Decimal
+
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator
 from django.utils import timezone
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Q
+
+
+def clp_amount_field(*, verbose_name, help_text='', default=0):
+    """Monto CLP en Decimal de escala 0. No usar float."""
+    return models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        default=default,
+        validators=[MinValueValidator(Decimal('0'))],
+        verbose_name=verbose_name,
+        help_text=help_text,
+    )
 
 
 class CustomUserManager(BaseUserManager):
@@ -124,12 +138,41 @@ class Product(models.Model):
     
     name = models.CharField(max_length=200, verbose_name="Nombre")
     slug = models.SlugField(max_length=200, unique=True, blank=True, verbose_name="Slug")
+    sku = models.CharField(
+        max_length=64,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name="SKU",
+        help_text="Identificador estable del producto. Si se deja vacío se genera MM-{id}.",
+    )
     short_description = models.CharField(max_length=200, verbose_name="Descripción corta")
     description = models.TextField(verbose_name="Descripción completa")
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='products', verbose_name="Categoría")
     brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=True, related_name='products', verbose_name="Marca")
     price = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Precio original (CLP)")
     offer_price = models.IntegerField(validators=[MinValueValidator(0)], null=True, blank=True, verbose_name="Precio oferta (CLP)")
+    cost_net = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        default=0,
+        validators=[MinValueValidator(Decimal('0'))],
+        verbose_name="Costo unitario neto vigente (CLP)",
+        help_text="Costo actual del catálogo. Las ventas guardan un snapshot y no se recalculan si este valor cambia.",
+    )
+    cost_gross = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        default=0,
+        validators=[MinValueValidator(Decimal('0'))],
+        verbose_name="Costo unitario bruto vigente (CLP)",
+        help_text="Costo con IVA incluido, si aplica. Solo vigente; no altera márgenes históricos.",
+    )
+    is_vat_affected = models.BooleanField(
+        default=True,
+        verbose_name="Afecto a IVA",
+        help_text="Si está activo, las ventas de este producto se tratan como gravadas (19%).",
+    )
     stock = models.IntegerField(validators=[MinValueValidator(0)], default=0, verbose_name="Stock")
     is_active = models.BooleanField(default=True, verbose_name="Activo")
     is_offer = models.BooleanField(default=False, verbose_name="En oferta")
@@ -166,6 +209,9 @@ class Product(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+        if not self.sku:
+            self.sku = f'MM-{self.pk}'
+            super().save(update_fields=['sku'])
 
     @property
     def current_price(self):
@@ -665,11 +711,56 @@ class Order(models.Model):
         ('delivered', 'Entregado'),
         ('cancelled', 'Cancelado'),
     ]
+    CHANNEL_CHOICES = [
+        ('web', 'Web (ecommerce)'),
+        ('pos', 'Tienda / Manual'),
+    ]
+    FINANCIAL_STATUS_CHOICES = [
+        ('open', 'Abierta'),
+        ('paid', 'Pagada'),
+        ('settled', 'Liquidada'),
+        ('partially_refunded', 'Devuelta parcial'),
+        ('refunded', 'Devuelta total'),
+        ('voided', 'Anulada'),
+    ]
 
     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders', verbose_name="Usuario")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Fecha de actualización")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='realized', verbose_name="Estado")
+    sales_channel = models.CharField(
+        max_length=8,
+        choices=CHANNEL_CHOICES,
+        default='web',
+        db_index=True,
+        verbose_name="Canal de venta",
+    )
+    financial_status = models.CharField(
+        max_length=20,
+        choices=FINANCIAL_STATUS_CHOICES,
+        default='open',
+        db_index=True,
+        verbose_name="Estado financiero",
+        help_text="Estado de la venta en tesorería. Independiente del estado logístico del pedido.",
+    )
+    is_vat_affected = models.BooleanField(
+        default=True,
+        verbose_name="Pedido afecto a IVA",
+        help_text="Si está desactivado, las líneas no calculan IVA débito.",
+    )
+    document_type = models.CharField(
+        max_length=32,
+        blank=True,
+        default='',
+        verbose_name="Tipo de documento",
+        help_text="Control interno (boleta, factura, etc.). No reemplaza el SII.",
+    )
+    document_folio = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        verbose_name="Folio",
+    )
     order_number = models.CharField(
         max_length=32,
         unique=True,
@@ -719,6 +810,10 @@ class Order(models.Model):
         verbose_name = "Pedido"
         verbose_name_plural = "Pedidos"
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['sales_channel', 'created_at']),
+            models.Index(fields=['financial_status', 'created_at']),
+        ]
 
     def __str__(self):
         if self.user:
@@ -873,9 +968,72 @@ class OrderItem(models.Model):
     quantity = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="Cantidad")
     line_total = models.IntegerField(validators=[MinValueValidator(0)], verbose_name="Total línea")
 
+    sku_snapshot = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        db_index=True,
+        verbose_name="SKU (snapshot)",
+    )
+    list_unit_price = clp_amount_field(
+        verbose_name="Precio lista unitario (snapshot)",
+        help_text="Precio de catálogo al vender. Distinto de la venta bruta cobrada.",
+    )
+    discount_allocated = clp_amount_field(
+        verbose_name="Descuento prorrateado",
+        help_text="Porción del descuento de pedido asignada a esta línea.",
+    )
+    gross_sale = clp_amount_field(
+        verbose_name="Venta bruta efectiva",
+        help_text="Monto cobrado de la línea (IVA incluido si aplica). No es el precio lista.",
+    )
+    net_sale = clp_amount_field(verbose_name="Venta neta")
+    vat_debit = clp_amount_field(verbose_name="IVA débito")
+    unit_cost_gross_snapshot = clp_amount_field(
+        verbose_name="Costo unitario bruto histórico",
+    )
+    unit_cost_net_snapshot = clp_amount_field(
+        verbose_name="Costo unitario neto histórico",
+        help_text="Costo al momento de la venta. No se recalcula si cambia el catálogo.",
+    )
+    line_cost_net = clp_amount_field(verbose_name="Costo neto de la línea")
+    commission_allocated = clp_amount_field(verbose_name="Comisión prorrateada")
+    shipping_charged_allocated = clp_amount_field(verbose_name="Envío cobrado prorrateado")
+    shipping_assumed_allocated = clp_amount_field(verbose_name="Envío asumido prorrateado")
+    other_variable_allocated = clp_amount_field(verbose_name="Otros costos variables prorrateados")
+    allocation_method = models.CharField(
+        max_length=32,
+        default='net_proportional',
+        verbose_name="Criterio de prorrateo",
+    )
+    is_vat_affected = models.BooleanField(default=True, verbose_name="Línea afecta a IVA")
+    cost_missing = models.BooleanField(
+        default=True,
+        verbose_name="Costo histórico no informado",
+        help_text="True si al vender no había costo vigente; el margen puede estar sobreestimado.",
+    )
+    finance_synced_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Sincronizado en finanzas",
+        help_text="Al primer sync se congela el costo histórico. Re-sync no lo pisa.",
+    )
+
     class Meta:
         verbose_name = "Item de pedido"
         verbose_name_plural = "Items de pedido"
+        indexes = [
+            models.Index(fields=['sku_snapshot']),
+        ]
+        constraints = [
+            models.CheckConstraint(condition=Q(quantity__gte=1), name='orderitem_quantity_gte_1'),
+            models.CheckConstraint(condition=Q(discount_allocated__gte=0), name='orderitem_discount_allocated_gte_0'),
+            models.CheckConstraint(condition=Q(gross_sale__gte=0), name='orderitem_gross_sale_gte_0'),
+            models.CheckConstraint(condition=Q(net_sale__gte=0), name='orderitem_net_sale_gte_0'),
+            models.CheckConstraint(condition=Q(vat_debit__gte=0), name='orderitem_vat_debit_gte_0'),
+            models.CheckConstraint(condition=Q(commission_allocated__gte=0), name='orderitem_commission_allocated_gte_0'),
+            models.CheckConstraint(condition=Q(shipping_assumed_allocated__gte=0), name='orderitem_shipping_assumed_gte_0'),
+        ]
 
     def __str__(self):
         return f"{self.product_name} x {self.quantity}"
@@ -933,6 +1091,13 @@ class Payment(models.Model):
         verbose_name = "Pago"
         verbose_name_plural = "Pagos"
         ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['mp_payment_id'],
+                condition=Q(mp_payment_id__isnull=False) & ~Q(mp_payment_id=''),
+                name='unique_payment_mp_payment_id',
+            ),
+        ]
 
     def __str__(self):
         return f"Pago #{self.id} - Pedido #{self.order.id} - {self.get_status_display()} - ${self.amount:,}".replace(',', '.')

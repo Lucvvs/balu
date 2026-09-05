@@ -1,0 +1,12 @@
+{% extends 'finance/base.html' %}
+
+{% block finance_title %}{{ page_heading }}{% endblock %}
+
+{% block finance_content %}
+<section class="finance-panel">
+    <h2>{{ page_heading }}</h2>
+    <p class="finance-empty">
+        Esta sección se activa en el siguiente incremento. Los filtros del período se conservan para cuando esté disponible.
+    </p>
+</section>
+{% endblock %}

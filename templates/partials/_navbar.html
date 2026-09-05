@@ -61,6 +61,11 @@
                             </a>
                         </li>
                         <li class="nav-item d-lg-none">
+                            <a class="nav-link" href="{% url 'finance:resumen' %}">
+                                <i class="bi bi-cash-coin"></i> Finanzas
+                            </a>
+                        </li>
+                        <li class="nav-item d-lg-none">
                             <a class="nav-link" href="{% url 'admin:index' %}">
                                 <i class="bi bi-gear"></i> Admin Django
                             </a>
@@ -109,6 +114,7 @@
                             {% if user.is_staff %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{% url 'shop:admin_dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                                <li><a class="dropdown-item" href="{% url 'finance:resumen' %}"><i class="bi bi-cash-coin"></i> Finanzas</a></li>
                                 <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="bi bi-gear"></i> Admin Django</a></li>
                             {% endif %}
                             <li><hr class="dropdown-divider"></li>
