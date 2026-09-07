@@ -106,6 +106,42 @@ class PosSaleServiceTests(TestCase):
         self.assertEqual(self.product.price, 119000)
         self.assertEqual(order.items.get().variant_label, 'S')
 
+    def test_shipping_charged_enters_total_and_line_snapshot(self):
+        courier = ShippingMethod.objects.create(
+            name='Starken POS',
+            description='Courier',
+            base_price=3500,
+        )
+        order = create_pos_sale(
+            processed_by=None,
+            payment_method=self.cash,
+            lines=[{'product_id': self.product.id, 'variant_id': None, 'quantity': 1}],
+            shipping_cost=3500,
+            shipping_method=courier,
+        )
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.price, 119000)
+        self.assertEqual(order.shipping_cost, 3500)
+        self.assertEqual(order.shipping_method_id, courier.id)
+        self.assertEqual(order.subtotal, 100000)
+        self.assertEqual(order.total, 103500)
+        self.assertEqual(order.payments.get().amount, 103500)
+        item = order.items.get()
+        self.assertEqual(item.gross_sale, Decimal('100000'))
+        self.assertEqual(item.shipping_charged_allocated, Decimal('3500'))
+        self.assertEqual(item.shipping_assumed_allocated, Decimal('0'))
+        self.assertEqual(FinancialMovement.objects.count(), 0)
+
+    def test_negative_shipping_is_rejected(self):
+        with self.assertRaises(PosSaleError):
+            create_pos_sale(
+                processed_by=None,
+                payment_method=self.cash,
+                lines=[{'product_id': self.product.id, 'quantity': 1}],
+                shipping_cost=-1,
+            )
+        self.assertEqual(Order.objects.count(), 0)
+
 
 @override_settings(SECURE_SSL_REDIRECT=False)
 class PosSaleViewTests(TestCase):
@@ -179,6 +215,7 @@ class PosSaleViewTests(TestCase):
         get_form = self.client.get('/dashboard/finanzas/ingresos/ventas/nueva/')
         self.assertEqual(get_form.status_code, 200)
         self.assertContains(get_form, 'Registrar venta')
+        self.assertContains(get_form, 'Envío cobrado')
         self.assertContains(get_form, 'Buscar producto')
         added = self.client.post(
             '/dashboard/finanzas/ingresos/ventas/nueva/',
@@ -192,6 +229,7 @@ class PosSaleViewTests(TestCase):
                 'customer_name': 'Mostrador',
                 'payment_method': str(self.cash.id),
                 'discount_total': '0',
+                'shipping_cost': '2500',
             },
         )
         self.assertEqual(response.status_code, 302)
@@ -200,6 +238,9 @@ class PosSaleViewTests(TestCase):
         self.assertEqual(self.product.price, 30000)
         order = Order.objects.get()
         self.assertEqual(order.sales_channel, 'pos')
+        self.assertEqual(order.shipping_cost, 2500)
+        self.assertEqual(order.total, 32500)
+        self.assertEqual(order.items.get().shipping_charged_allocated, Decimal('2500'))
         listing = self.client.get(
             '/dashboard/finanzas/ingresos/ventas/',
             {'channel': 'pos'},
@@ -213,3 +254,36 @@ class PosSaleViewTests(TestCase):
             {'channel': 'web'},
         )
         self.assertNotContains(web_only, 'Guante POS')
+
+    def test_multi_line_order_is_marked_and_can_be_walked(self):
+        _grant(self.staff, 'view_finance', 'add_manual_sale')
+        self.client.force_login(self.staff)
+        self.other.cost_net = Decimal('40000')
+        self.other.save(update_fields=['cost_net'])
+        order = create_pos_sale(
+            processed_by=self.staff,
+            payment_method=self.cash,
+            lines=[
+                {'product_id': self.product.id, 'quantity': 1},
+                {'product_id': self.other.id, 'quantity': 1},
+            ],
+        )
+        first, second = list(order.items.order_by('id'))
+        listing = self.client.get(
+            '/dashboard/finanzas/ingresos/ventas/',
+            {'channel': 'pos'},
+        )
+        self.assertEqual(listing.status_code, 200)
+        self.assertContains(listing, '2 líneas')
+        self.assertEqual(len(listing.context['page'].object_list), 2)
+        detail = self.client.get(f'/dashboard/finanzas/ingresos/ventas/{first.id}/')
+        self.assertEqual(detail.status_code, 200)
+        self.assertContains(detail, 'Líneas del pedido')
+        self.assertContains(detail, 'Línea 1 de 2')
+        self.assertContains(detail, second.product_name)
+        self.assertContains(detail, f'/ingresos/ventas/{second.id}/')
+        nxt = self.client.get(f'/dashboard/finanzas/ingresos/ventas/{second.id}/')
+        self.assertEqual(nxt.status_code, 200)
+        self.assertContains(nxt, 'Línea 2 de 2')
+        self.assertContains(nxt, first.product_name)
+        self.assertContains(nxt, f'/ingresos/ventas/{first.id}/')

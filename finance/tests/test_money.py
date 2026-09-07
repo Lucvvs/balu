@@ -8,7 +8,7 @@ from finance.calculations import (
     margin_percentage,
     sale_components,
 )
-from finance.money import allocate_proportional, split_gross_vat, to_decimal
+from finance.money import allocate_proportional, gross_from_net, split_gross_vat, to_decimal
 
 
 class MoneyConversionTests(SimpleTestCase):
@@ -32,6 +32,27 @@ class VatSplitTests(SimpleTestCase):
     def test_zero(self):
         net, vat = split_gross_vat(0, is_vat_affected=True)
         self.assertEqual(net, Decimal('0'))
+        self.assertEqual(vat, Decimal('0'))
+
+
+class GrossFromNetTests(SimpleTestCase):
+    def test_35378_becomes_42100(self):
+        gross, vat = gross_from_net(Decimal('35378'), is_vat_affected=True)
+        self.assertEqual(gross, Decimal('42100'))
+        self.assertEqual(vat, Decimal('6722'))
+        self.assertEqual(Decimal('35378') + vat, gross)
+        net, split_vat = split_gross_vat(gross, is_vat_affected=True)
+        self.assertEqual(net, Decimal('35378'))
+        self.assertEqual(split_vat, vat)
+
+    def test_does_not_round_the_119_product(self):
+        gross, vat = gross_from_net(Decimal('35378'), is_vat_affected=True)
+        self.assertNotEqual(gross, Decimal('42101'))
+        self.assertEqual(vat, Decimal('6722'))
+
+    def test_not_affected_gross_equals_net(self):
+        gross, vat = gross_from_net(Decimal('35378'), is_vat_affected=False)
+        self.assertEqual(gross, Decimal('35378'))
         self.assertEqual(vat, Decimal('0'))
 
 
@@ -66,6 +87,14 @@ class MarginFormulaTests(SimpleTestCase):
         self.assertEqual(components['vat_debit'], Decimal('19000'))
         self.assertEqual(components['gross_margin'], Decimal('60000'))
         self.assertEqual(components['gross_margin_pct'], Decimal('60'))
+
+    def test_list_64990_cost_35378(self):
+        components = sale_components(Decimal('64990'), Decimal('35378'), is_vat_affected=True)
+        self.assertEqual(components['gross_sale'], Decimal('64990'))
+        self.assertEqual(components['net_sale'], Decimal('54613'))
+        self.assertEqual(components['vat_debit'], Decimal('10377'))
+        self.assertEqual(components['cost_net'], Decimal('35378'))
+        self.assertEqual(components['gross_margin'], Decimal('19235'))
 
     def test_margin_percentage_zero_net(self):
         self.assertEqual(margin_percentage(Decimal('10'), Decimal('0')), Decimal('0'))

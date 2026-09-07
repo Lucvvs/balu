@@ -4,10 +4,7 @@
 {% block finance_title %}Envíos{% endblock %}
 
 {% block finance_content %}
-<nav class="finance-local-tabs" aria-label="Gastos">
-    <a href="{% url 'finance:expenses' %}?{{ sales_query }}">Operativos</a>
-    <a class="is-active" href="{% url 'finance:shipments' %}?{{ sales_query }}">Envíos</a>
-</nav>
+{% include 'finance/_tabs_gastos.html' with gas_tab='ship' %}
 
 <p class="kpi-hint finance-inv-note">
     El envío es una sola transacción de origen: lo cobrado al cliente vive en el pedido; aquí se registra el flete real.
@@ -17,7 +14,7 @@
 {% if can_register_expense %}
 <form method="post" class="finance-form-section">
     {% csrf_token %}
-    <h2>Registrar flete</h2>
+    <h2><i class="bi bi-truck" aria-hidden="true"></i> Registrar flete</h2>
     {{ form.non_field_errors }}
     <div class="finance-form-grid">
         <label>Pedido {{ form.order_number }} {{ form.order_number.errors }}</label>
@@ -57,9 +54,9 @@
                     <td>{{ item.occurred_on|date:"d/m/Y" }}</td>
                     <td>#{{ item.order.order_number|default:item.order_id }}</td>
                     <td>{{ item.carrier|default:"—" }} {% if item.tracking_code %}<span class="muted">{{ item.tracking_code }}</span>{% endif %}</td>
-                    <td class="is-num">{{ item.charged_amount|currency_clp }}</td>
-                    <td class="is-num">{{ item.actual_cost|currency_clp }}</td>
-                    <td class="is-num">{{ item.assumed_cost|currency_clp }}</td>
+                    <td class="is-num amount-in">{{ item.charged_amount|currency_clp }}</td>
+                    <td class="is-num amount-out">{{ item.actual_cost|currency_clp }}</td>
+                    <td class="is-num amount-out">{{ item.assumed_cost|currency_clp }}</td>
                     <td>{% if item.account %}{{ item.account.name }}{% else %}—{% endif %}</td>
                 </tr>
                 {% endfor %}

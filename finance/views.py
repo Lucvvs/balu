@@ -2,7 +2,7 @@ from decimal import Decimal
 from urllib.parse import quote
 
 from django.core.paginator import Paginator
-from django.db.models import F, Q
+from django.db.models import Count, F, Q
 from django.shortcuts import get_object_or_404, render
 
 from finance.balances import ledger_rows, period_movements, profitability_steps, tax_snapshot
@@ -75,7 +75,11 @@ def sales_lines(request):
     qs = (
         sales_lines_qs(filters['date_from'], filters['date_to'], filters['channel'])
         .select_related('order', 'order__payment_method', 'product')
-        .annotate(gross_margin_amount=F('net_sale') - F('line_cost_net'))
+        .prefetch_related('product__images')
+        .annotate(
+            gross_margin_amount=F('net_sale') - F('line_cost_net'),
+            order_line_count=Count('order__items'),
+        )
         .order_by('-order__created_at', '-id')
     )
     search = (request.GET.get('q') or '').strip()
@@ -115,9 +119,11 @@ def sales_line_detail(request, item_id: int):
     item = get_object_or_404(
         OrderItem.objects.select_related(
             'order', 'order__payment_method', 'order__shipping_method', 'product', 'product_variant'
-        ),
+        ).prefetch_related('product__images', 'order__items__product__images'),
         pk=item_id,
     )
+    siblings = list(item.order.items.order_by('id'))
+    position = next((i for i, row in enumerate(siblings) if row.pk == item.pk), 0)
     context = {
         'finance_section': 'ingresos',
         'filters': filters,
@@ -125,6 +131,11 @@ def sales_line_detail(request, item_id: int):
         'sales_query': sales_querystring(filters),
         'item': item,
         'order': item.order,
+        'order_lines': siblings,
+        'order_line_count': len(siblings),
+        'order_line_position': position + 1,
+        'prev_line': siblings[position - 1] if position > 0 else None,
+        'next_line': siblings[position + 1] if position + 1 < len(siblings) else None,
     }
     return render(request, 'finance/sales_line_detail.html', context)
 

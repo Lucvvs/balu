@@ -4,23 +4,19 @@
 {% block finance_title %}Ventas{% endblock %}
 
 {% block finance_content %}
-<nav class="finance-local-tabs" aria-label="Ingresos">
-    <a class="is-active" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">Ventas</a>
-    <a href="{% url 'finance:financing' %}?{{ sales_query }}">Financiamiento</a>
-    <a href="{% url 'finance:refunds' %}?{{ sales_query }}">Devoluciones</a>
-</nav>
+{% include 'finance/_tabs_ingresos.html' with ing_tab='ventas' %}
 
 <section class="treasury-strip" aria-label="Totales del período">
-    <div>
+    <div class="tone-in">
         <span class="kpi-label">Ventas netas</span>
         <strong>{{ kpis.net_sales|currency_clp }}</strong>
         <span class="kpi-hint">{{ kpis.orders }} pedido{{ kpis.orders|pluralize }} · {{ kpis.units }} u.</span>
     </div>
-    <div>
+    <div class="tone-in">
         <span class="kpi-label">Contribución</span>
         <strong>{{ kpis.contribution|currency_clp }}</strong>
     </div>
-    <div>
+    <div class="tone-tax">
         <span class="kpi-label">IVA débito</span>
         <strong>{{ kpis.vat_debit|currency_clp }}</strong>
     </div>
@@ -34,7 +30,7 @@
         <h2>Líneas de venta</h2>
         <div class="finance-search-row">
             {% if can_add_manual_sale %}
-            <a class="finance-filter-submit" href="{% url 'finance:pos_sale' %}?{{ sales_query }}">+ Venta física</a>
+            <a class="finance-filter-submit" href="{% url 'finance:pos_sale' %}?{{ sales_query }}"><i class="bi bi-shop-window" aria-hidden="true"></i> Venta física</a>
             {% endif %}
             <form method="get" class="finance-search">
                 <input type="hidden" name="date_from" value="{{ date_from }}">
@@ -44,7 +40,7 @@
                 {% if missing_cost %}<input type="hidden" name="missing_cost" value="1">{% endif %}
                 <label class="visually-hidden" for="sales-q">Buscar</label>
                 <input id="sales-q" type="search" name="q" value="{{ search }}" placeholder="Pedido, SKU o producto">
-                <button type="submit">Buscar</button>
+                <button type="submit"><i class="bi bi-search" aria-hidden="true"></i> Buscar</button>
             </form>
         </div>
     </div>
@@ -68,17 +64,32 @@
             <tbody>
                 {% for item in page %}
                 <tr>
-                    <td><a href="{% url 'finance:sales_line_detail' item.id %}?{{ sales_query }}">#{{ item.order.order_number|default:item.order_id }}</a></td>
+                    <td>
+                        <a href="{% url 'finance:sales_line_detail' item.id %}?{{ sales_query }}">#{{ item.order.order_number|default:item.order_id }}</a>
+                        {% if item.order_line_count > 1 %}
+                        <span class="inv-badge">{{ item.order_line_count }} líneas</span>
+                        {% endif %}
+                    </td>
                     <td>{{ item.sku_snapshot|default:"—" }}</td>
                     <td>
-                        {{ item.product_name }}
-                        {% if item.variant_label %}<span class="muted">{{ item.variant_label }}</span>{% endif %}
-                        {% if item.cost_missing %}<span class="inv-badge is-warn">Sin costo</span>{% endif %}
+                        <div class="prod-cell">
+                            {% include 'finance/_product_thumb.html' with product=item.product thumb_class='is-sm' %}
+                            <div>
+                                {{ item.product_name }}
+                                {% if item.variant_label %}<span class="muted">{{ item.variant_label }}</span>{% endif %}
+                                {% if item.cost_missing %}<span class="inv-badge is-warn">Sin costo</span>{% endif %}
+                            </div>
+                        </div>
                     </td>
-                    <td>{{ item.order.get_sales_channel_display }}</td>
+                    <td>
+                        <span class="channel-pill {% if item.order.sales_channel == 'pos' %}is-pos{% else %}is-web{% endif %}">
+                            <i class="bi {% if item.order.sales_channel == 'pos' %}bi-shop-window{% else %}bi-globe{% endif %}" aria-hidden="true"></i>
+                            {{ item.order.get_sales_channel_display }}
+                        </span>
+                    </td>
                     <td class="is-num">{{ item.quantity }}</td>
-                    <td class="is-num">{{ item.net_sale|currency_clp }}</td>
-                    <td class="is-num">{{ item.gross_margin_amount|currency_clp }}</td>
+                    <td class="is-num amount-in">{{ item.net_sale|currency_clp }}</td>
+                    <td class="is-num {% if item.gross_margin_amount < 0 %}amount-out{% else %}amount-in{% endif %}">{{ item.gross_margin_amount|currency_clp }}</td>
                     <td>{{ item.order.payment_method.name }}</td>
                     <td>{{ item.order.created_at|date:"d/m/Y" }}</td>
                 </tr>
@@ -88,9 +99,12 @@
     </div>
     <div class="finance-cards-mobile">
         {% for item in page %}
-        <a class="finance-line-card" href="{% url 'finance:sales_line_detail' item.id %}?{{ sales_query }}">
+        <a class="finance-line-card{% if item.product.images.all %} has-thumb{% endif %}" href="{% url 'finance:sales_line_detail' item.id %}?{{ sales_query }}">
+            {% include 'finance/_product_thumb.html' with product=item.product thumb_class='is-sm' %}
+            <div>
             <strong>#{{ item.order.order_number|default:item.order_id }} · {{ item.product_name }}</strong>
-            <span>{{ item.net_sale|currency_clp }} · {{ item.order.get_sales_channel_display }} · {{ item.order.created_at|date:"d/m/Y" }}</span>
+            <span>{{ item.net_sale|currency_clp }} · {{ item.order.get_sales_channel_display }} · {{ item.order.created_at|date:"d/m/Y" }}{% if item.order_line_count > 1 %} · {{ item.order_line_count }} líneas{% endif %}</span>
+            </div>
         </a>
         {% endfor %}
     </div>
@@ -103,6 +117,7 @@
     {% endif %}
     {% else %}
     <p class="finance-empty">
+        <i class="bi bi-receipt" aria-hidden="true"></i>
         No hay líneas de venta en este período.
         {% if can_add_manual_sale %}
         <a href="{% url 'finance:pos_sale' %}?{{ sales_query }}">Registrar venta física</a>

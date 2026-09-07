@@ -4,7 +4,9 @@ from decimal import Decimal
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, override_settings
+from django.utils import timezone
 
+from finance.forms import ExpenseForm, FinancingForm, LoanRepayForm, PurchaseForm, ShipmentForm
 from finance.kpis import compute_sales_kpis
 from finance.models import (
     ExpenseCategory,
@@ -195,3 +197,29 @@ class ExpenseViewTests(TestCase):
         self.assertContains(resumen, 'Gastos operacionales')
         self.assertEqual(resumen.context['opex']['value'], Decimal('10000'))
         self.assertEqual(Order.objects.count(), 0)
+
+    def test_create_form_shows_today_and_keeps_it_editable(self):
+        _grant(self.staff, 'view_finance', 'register_expense')
+        self.client.force_login(self.staff)
+        today = timezone.localdate().isoformat()
+        response = self.client.get('/dashboard/finanzas/gastos/')
+        self.assertEqual(response.status_code, 200)
+        html = str(response.context['form']['occurred_on'])
+        self.assertIn('type="date"', html)
+        self.assertIn(f'value="{today}"', html)
+
+
+class DefaultOccurredOnFormTests(TestCase):
+    def test_unbound_finance_forms_render_today_iso(self):
+        today = timezone.localdate().isoformat()
+        forms = [
+            ExpenseForm(),
+            PurchaseForm(),
+            FinancingForm(),
+            LoanRepayForm(),
+            ShipmentForm(),
+        ]
+        for form in forms:
+            html = str(form['occurred_on'])
+            self.assertIn('type="date"', html, msg=form.__class__.__name__)
+            self.assertIn(f'value="{today}"', html, msg=form.__class__.__name__)

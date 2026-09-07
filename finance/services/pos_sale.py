@@ -85,6 +85,8 @@ def create_pos_sale(
     customer_name: str = '',
     customer_phone: str = '',
     discount_total: int = 0,
+    shipping_cost: int = 0,
+    shipping_method: ShippingMethod | None = None,
     notes: str = '',
 ) -> Order:
     """
@@ -92,18 +94,28 @@ def create_pos_sale(
 
     El precio cobrado es el publicado (oferta o lista). Nunca escribe
     Product.price ni Product.offer_price.
+    El envío cobrado entra al total del pedido; el flete real al courier
+    se registra después en Envíos.
     """
     allowed = pos_payment_methods()
     if not allowed.filter(pk=getattr(payment_method, 'pk', None)).exists():
         raise PosSaleError('La venta física no usa Mercado Pago. Elige efectivo o transferencia.')
     if discount_total < 0:
         raise PosSaleError('El descuento no puede ser negativo.')
+    if shipping_cost < 0:
+        raise PosSaleError('El envío cobrado no puede ser negativo.')
+    shipping_cost = int(shipping_cost or 0)
 
     merged = _merge_lines(lines)
     if not merged:
         raise PosSaleError('Agrega al menos un producto.')
 
-    shipping = pos_shipping_method()
+    if shipping_method is not None:
+        if not shipping_method.is_active:
+            raise PosSaleError('Elige un método de entrega activo.')
+        shipping = shipping_method
+    else:
+        shipping = pos_shipping_method()
     product_ids = sorted({row['product_id'] for row in merged})
     locked_products = {
         p.id: p
@@ -155,12 +167,12 @@ def create_pos_sale(
     subtotal = sum(item['line_total'] for item in prepared)
     if discount_total > subtotal:
         raise PosSaleError('El descuento no puede superar el subtotal.')
-    total = subtotal - discount_total
+    total = subtotal - discount_total + shipping_cost
 
     order = Order.objects.create(
         user=None,
         shipping_method=shipping,
-        shipping_cost=0,
+        shipping_cost=shipping_cost,
         payment_method=payment_method,
         subtotal=subtotal,
         discount_total=discount_total,

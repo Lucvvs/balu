@@ -1,0 +1,5 @@
+<nav class="finance-local-tabs" aria-label="Ingresos">
+    <a class="{% if ing_tab == 'ventas' %}is-active{% endif %}" href="{% url 'finance:sales_lines' %}?{{ sales_query }}"><i class="bi bi-receipt" aria-hidden="true"></i> Ventas</a>
+    <a class="{% if ing_tab == 'financing' %}is-active{% endif %}" href="{% url 'finance:financing' %}?{{ sales_query }}"><i class="bi bi-bank" aria-hidden="true"></i> Financiamiento</a>
+    <a class="{% if ing_tab == 'refunds' %}is-active{% endif %}" href="{% url 'finance:refunds' %}?{{ sales_query }}"><i class="bi bi-arrow-return-left" aria-hidden="true"></i> Devoluciones</a>
+</nav>

@@ -1,15 +1,15 @@
 {% load shop_filters %}
 <section class="treasury-strip" aria-label="{{ label }} del período">
-    <div>
+    <div class="tone-neutral">
         <span class="kpi-label">Saldo inicial</span>
         <strong>{{ ledger.opening|currency_clp }}</strong>
         <span class="kpi-hint">Al día anterior al período</span>
     </div>
-    <div>
+    <div class="tone-in">
         <span class="kpi-label">Entró / Salió</span>
-        <strong>+{{ ledger.inflow|currency_clp }} / −{{ ledger.outflow|currency_clp }}</strong>
+        <strong><span class="amount-in">+{{ ledger.inflow|currency_clp }}</span> / <span class="amount-out">−{{ ledger.outflow|currency_clp }}</span></strong>
     </div>
-    <div>
+    <div class="tone-result">
         <span class="kpi-label">Saldo al cierre</span>
         <strong>{{ ledger.closing|currency_clp }}</strong>
         <span class="kpi-hint">{{ label }} · derivado, no editable</span>
@@ -37,8 +37,8 @@
                     <td>{{ row.account.name }}</td>
                     <td>{{ row.account.get_account_type_display }}</td>
                     <td class="is-num">{{ row.opening|currency_clp }}</td>
-                    <td class="is-num">{{ row.inflow|currency_clp }}</td>
-                    <td class="is-num">{{ row.outflow|currency_clp }}</td>
+                    <td class="is-num amount-in">{{ row.inflow|currency_clp }}</td>
+                    <td class="is-num amount-out">{{ row.outflow|currency_clp }}</td>
                     <td class="is-num">{{ row.closing|currency_clp }}</td>
                 </tr>
                 {% endfor %}
@@ -49,7 +49,7 @@
         {% for row in ledger.rows %}
         <div class="finance-line-card">
             <strong>{{ row.account.name }} · {{ row.closing|currency_clp }}</strong>
-            <span>Inicial {{ row.opening|currency_clp }} · +{{ row.inflow|currency_clp }} · −{{ row.outflow|currency_clp }}</span>
+            <span>Inicial {{ row.opening|currency_clp }} · <span class="amount-in">+{{ row.inflow|currency_clp }}</span> · <span class="amount-out">−{{ row.outflow|currency_clp }}</span></span>
         </div>
         {% endfor %}
     </div>

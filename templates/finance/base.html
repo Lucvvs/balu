@@ -4,7 +4,7 @@
 {% block title %}{% block finance_title %}Finanzas{% endblock %} — MotoMoto{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/finance.css' %}?v=fin12">
+<link rel="stylesheet" href="{% static 'css/pages/finance.css' %}?v=fin18">
 {% endblock %}
 
 {% block content %}
@@ -12,32 +12,38 @@
     <header class="finance-masthead">
         <div class="finance-masthead-inner">
             <div>
-                <p class="finance-kicker">MotoMoto</p>
+                <p class="finance-kicker"><i class="bi bi-cash-coin" aria-hidden="true"></i> MotoMoto</p>
                 <h1 class="finance-title">Finanzas</h1>
-                <p class="finance-subtitle">Control financiero de MotoMoto</p>
+                <p class="finance-subtitle">
+                    {% if finance_section == 'ingresos' %}Ventas, aportes y devoluciones
+                    {% elif finance_section == 'gastos' %}Operativos y fletes
+                    {% elif finance_section == 'saldos' %}Caja, bancos y resultado
+                    {% elif finance_section == 'inventario' %}Stock, potencial y compras
+                    {% else %}Control financiero de MotoMoto{% endif %}
+                </p>
             </div>
             <div class="finance-shortcuts" role="group" aria-label="Atajos">
-                <a class="finance-shortcut" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">Ventas</a>
+                <a class="finance-shortcut" href="{% url 'finance:sales_lines' %}?{{ sales_query }}"><i class="bi bi-receipt" aria-hidden="true"></i> Ventas</a>
                 {% if can_add_manual_sale %}
-                <a class="finance-shortcut" href="{% url 'finance:pos_sale' %}?{{ sales_query }}">+ Venta física</a>
+                <a class="finance-shortcut" href="{% url 'finance:pos_sale' %}?{{ sales_query }}"><i class="bi bi-shop-window" aria-hidden="true"></i> Venta física</a>
                 {% endif %}
                 {% if can_manage_catalog %}
-                <a class="finance-shortcut" href="{% url 'finance:product_create' %}?{{ sales_query }}">+ Producto</a>
+                <a class="finance-shortcut" href="{% url 'finance:product_create' %}?{{ sales_query }}"><i class="bi bi-box-seam" aria-hidden="true"></i> Producto</a>
                 {% endif %}
                 {% if can_register_expense %}
-                <a class="finance-shortcut" href="{% url 'finance:expenses' %}?{{ sales_query }}">+ Gasto</a>
+                <a class="finance-shortcut" href="{% url 'finance:expenses' %}?{{ sales_query }}"><i class="bi bi-wallet2" aria-hidden="true"></i> Gasto</a>
                 {% else %}
-                <a class="finance-shortcut is-muted" href="{% url 'finance:expenses' %}?{{ sales_query }}">+ Gasto</a>
+                <a class="finance-shortcut is-muted" href="{% url 'finance:expenses' %}?{{ sales_query }}"><i class="bi bi-lock" aria-hidden="true"></i> Gasto</a>
                 {% endif %}
                 {% if can_manage_purchases %}
-                <a class="finance-shortcut" href="{% url 'finance:purchases' %}?{{ sales_query }}">+ Compra</a>
+                <a class="finance-shortcut" href="{% url 'finance:purchases' %}?{{ sales_query }}"><i class="bi bi-bag-plus" aria-hidden="true"></i> Compra</a>
                 {% else %}
-                <a class="finance-shortcut is-muted" href="{% url 'finance:purchases' %}?{{ sales_query }}">+ Compra</a>
+                <a class="finance-shortcut is-muted" href="{% url 'finance:purchases' %}?{{ sales_query }}"><i class="bi bi-lock" aria-hidden="true"></i> Compra</a>
                 {% endif %}
                 {% if can_manage_financing %}
-                <a class="finance-shortcut" href="{% url 'finance:financing' %}?{{ sales_query }}">+ Financiamiento</a>
+                <a class="finance-shortcut" href="{% url 'finance:financing' %}?{{ sales_query }}"><i class="bi bi-bank" aria-hidden="true"></i> Financiamiento</a>
                 {% else %}
-                <a class="finance-shortcut is-muted" href="{% url 'finance:financing' %}?{{ sales_query }}">+ Financiamiento</a>
+                <a class="finance-shortcut is-muted" href="{% url 'finance:financing' %}?{{ sales_query }}"><i class="bi bi-lock" aria-hidden="true"></i> Financiamiento</a>
                 {% endif %}
             </div>
         </div>
@@ -70,16 +76,23 @@
             {% if finance_section == 'saldos' and panel %}
             <input type="hidden" name="panel" value="{{ panel }}">
             {% endif %}
-            <button type="submit" class="finance-filter-submit">Filtrar</button>
+            <button type="submit" class="finance-filter-submit"><i class="bi bi-funnel" aria-hidden="true"></i> Filtrar</button>
         </form>
+        {% if date_from_obj and date_to_obj %}
+        <p class="finance-period-chip">
+            <i class="bi bi-calendar3" aria-hidden="true"></i>
+            {{ date_from_obj|date:"d/m/Y" }} → {{ date_to_obj|date:"d/m/Y" }}
+            {% if channel %} · {% if channel == 'pos' %}Tienda{% else %}Web{% endif %}{% endif %}
+        </p>
+        {% endif %}
     </header>
 
     <nav class="finance-subnav" aria-label="Secciones de finanzas">
-        <a class="{% if finance_section == 'resumen' %}is-active{% endif %}" href="{% url 'finance:resumen' %}?{{ sales_query }}">Resumen</a>
-        <a class="{% if finance_section == 'ingresos' %}is-active{% endif %}" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">Ingresos</a>
-        <a class="{% if finance_section == 'gastos' %}is-active{% endif %}" href="{% url 'finance:expenses' %}?{{ sales_query }}">Gastos</a>
-        <a class="{% if finance_section == 'saldos' %}is-active{% endif %}" href="{% url 'finance:balances' %}?{{ sales_query }}">Saldos</a>
-        <a class="{% if finance_section == 'inventario' %}is-active{% endif %}" href="{% url 'finance:inventory' %}?{{ sales_query }}">Inventario</a>
+        <a class="{% if finance_section == 'resumen' %}is-active{% endif %}" href="{% url 'finance:resumen' %}?{{ sales_query }}"><i class="bi bi-speedometer2" aria-hidden="true"></i> Resumen</a>
+        <a class="{% if finance_section == 'ingresos' %}is-active{% endif %}" href="{% url 'finance:sales_lines' %}?{{ sales_query }}"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> Ingresos</a>
+        <a class="{% if finance_section == 'gastos' %}is-active{% endif %}" href="{% url 'finance:expenses' %}?{{ sales_query }}"><i class="bi bi-wallet2" aria-hidden="true"></i> Gastos</a>
+        <a class="{% if finance_section == 'saldos' %}is-active{% endif %}" href="{% url 'finance:balances' %}?{{ sales_query }}"><i class="bi bi-safe" aria-hidden="true"></i> Saldos</a>
+        <a class="{% if finance_section == 'inventario' %}is-active{% endif %}" href="{% url 'finance:inventory' %}?{{ sales_query }}"><i class="bi bi-boxes" aria-hidden="true"></i> Inventario</a>
     </nav>
 
     <div class="finance-body">

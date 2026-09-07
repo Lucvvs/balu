@@ -4,11 +4,7 @@
 {% block finance_title %}Financiamiento{% endblock %}
 
 {% block finance_content %}
-<nav class="finance-local-tabs" aria-label="Ingresos">
-    <a href="{% url 'finance:sales_lines' %}?{{ sales_query }}">Ventas</a>
-    <a class="is-active" href="{% url 'finance:financing' %}?{{ sales_query }}">Financiamiento</a>
-    <a href="{% url 'finance:refunds' %}?{{ sales_query }}">Devoluciones</a>
-</nav>
+{% include 'finance/_tabs_ingresos.html' with ing_tab='financing' %}
 
 <p class="kpi-hint finance-inv-note">
     Un aporte aumenta caja y no es venta. Un préstamo también entra a caja, pero queda como deuda hasta pagarlo.
@@ -74,10 +70,15 @@
                 {% for row in rows %}
                 <tr>
                     <td>{{ row.item.occurred_on|date:"d/m/Y" }}</td>
-                    <td>{{ row.item.get_kind_display }}</td>
+                    <td>
+                        <span class="kind-pill {% if row.item.kind == 'loan' %}is-pos{% else %}is-web{% endif %}">
+                            <i class="bi {% if row.item.kind == 'loan' %}bi-bank{% else %}bi-piggy-bank{% endif %}" aria-hidden="true"></i>
+                            {{ row.item.get_kind_display }}
+                        </span>
+                    </td>
                     <td>{{ row.item.counterparty }}</td>
                     <td>{{ row.item.account.name }}</td>
-                    <td class="is-num">{{ row.item.principal|currency_clp }}</td>
+                    <td class="is-num amount-in">{{ row.item.principal|currency_clp }}</td>
                     <td class="is-num">{% if row.item.kind == 'loan' %}{{ row.outstanding|currency_clp }}{% else %}—{% endif %}</td>
                 </tr>
                 {% endfor %}

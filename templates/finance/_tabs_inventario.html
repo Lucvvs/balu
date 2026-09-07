@@ -1,0 +1,4 @@
+<nav class="finance-local-tabs" aria-label="Inventario">
+    <a class="{% if inv_tab == 'stock' %}is-active{% endif %}" href="{% url 'finance:inventory' %}?{{ sales_query }}"><i class="bi bi-boxes" aria-hidden="true"></i> Stock</a>
+    <a class="{% if inv_tab == 'buy' %}is-active{% endif %}" href="{% url 'finance:purchases' %}?{{ sales_query }}"><i class="bi bi-bag-plus" aria-hidden="true"></i> Compras</a>
+</nav>

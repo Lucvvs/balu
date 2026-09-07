@@ -4,10 +4,7 @@
 {% block finance_title %}Gastos{% endblock %}
 
 {% block finance_content %}
-<nav class="finance-local-tabs" aria-label="Gastos">
-    <a class="is-active" href="{% url 'finance:expenses' %}?{{ sales_query }}">Operativos</a>
-    <a href="{% url 'finance:shipments' %}?{{ sales_query }}">Envíos</a>
-</nav>
+{% include 'finance/_tabs_gastos.html' with gas_tab='opex' %}
 
 <p class="kpi-hint finance-inv-note">
     Un gasto operativo baja tesorería y resta al resultado. No es compra de mercadería ni venta.
@@ -15,16 +12,19 @@
 </p>
 
 <section class="treasury-strip" aria-label="Totales de gastos del período">
-    <div>
+    <div class="tone-out">
+        <span class="kpi-ico" aria-hidden="true"><i class="bi bi-wallet2"></i></span>
         <span class="kpi-label">Opex neto</span>
         <strong>{{ list_net|currency_clp }}</strong>
         <span class="kpi-hint">Resultado operativo {{ kpis.operating_result|currency_clp }}</span>
     </div>
-    <div>
+    <div class="tone-out">
+        <span class="kpi-ico" aria-hidden="true"><i class="bi bi-cash-stack"></i></span>
         <span class="kpi-label">Pagado (bruto)</span>
-        <strong>{{ gross_total|currency_clp }}</strong>
+        <strong class="amount-out">{{ gross_total|currency_clp }}</strong>
     </div>
-    <div>
+    <div class="tone-tax">
+        <span class="kpi-ico" aria-hidden="true"><i class="bi bi-receipt-cutoff"></i></span>
         <span class="kpi-label">IVA crédito</span>
         <strong>{{ vat_credit_total|currency_clp }}</strong>
         <span class="kpi-hint">Estimado, no declaración SII</span>
@@ -33,7 +33,13 @@
 
 <div class="treasury-strip" aria-label="Opex por grupo">
     {% for row in kind_totals %}
-    <div>
+    <div class="tone-out">
+        <span class="kpi-ico" aria-hidden="true">
+            {% if row.kind == 'ads' %}<i class="bi bi-megaphone"></i>
+            {% elif row.kind == 'infrastructure' %}<i class="bi bi-building"></i>
+            {% elif row.kind == 'services' %}<i class="bi bi-lightning-charge"></i>
+            {% else %}<i class="bi bi-three-dots"></i>{% endif %}
+        </span>
         <span class="kpi-label">{{ row.label }}</span>
         <strong>{{ row.net|currency_clp }}</strong>
     </div>
@@ -60,7 +66,7 @@
             <label>{{ form.is_vat_affected }} Afecta a IVA</label>
         </div>
         <div class="finance-form-actions">
-            <button type="submit" class="finance-filter-submit">Registrar gasto</button>
+            <button type="submit" class="finance-filter-submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Registrar gasto</button>
         </div>
     </form>
 
@@ -107,8 +113,8 @@
                     <td>{{ item.description }}</td>
                     <td>{{ item.vendor }}</td>
                     <td>{{ item.account.name }}</td>
-                    <td class="is-num">{{ item.gross_amount|currency_clp }}</td>
-                    <td class="is-num">{{ item.net_amount|currency_clp }}</td>
+                    <td class="is-num amount-out">{{ item.gross_amount|currency_clp }}</td>
+                    <td class="is-num amount-out">{{ item.net_amount|currency_clp }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -119,7 +125,7 @@
         <div class="finance-line-card">
             <strong>{{ item.description }}</strong>
             <span>{{ item.occurred_on|date:"d/m/Y" }} · {{ item.category.name }} · {{ item.vendor }}</span>
-            <span>{{ item.net_amount|currency_clp }} neto · {{ item.account.name }}</span>
+            <span class="amount-out">{{ item.net_amount|currency_clp }} neto · {{ item.account.name }}</span>
         </div>
         {% endfor %}
     </div>

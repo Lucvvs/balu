@@ -11,7 +11,7 @@ from django.utils import timezone
 from finance.calculations import contribution_margin, margin_percentage
 from finance.models import FinancialAccount, FinancialMovement, OperationalExpense, OrderRefundItem
 from finance.money import ZERO, to_decimal
-from shop.models import OrderItem
+from shop.models import OrderItem, Product
 
 
 def parse_date(value, fallback: date) -> date:
@@ -219,6 +219,13 @@ def contribution_ranking(date_from: date, date_to: date, channel: str = '', limi
             row['bar'] = int((row['contribution'] / max_val) * Decimal('100'))
         else:
             row['bar'] = 0
+    product_ids = [row['product_id'] for row in rows if row['product_id']]
+    products = {
+        product.id: product
+        for product in Product.objects.filter(pk__in=product_ids).prefetch_related('images')
+    }
+    for row in rows:
+        row['product'] = products.get(row['product_id'])
     return rows
 
 

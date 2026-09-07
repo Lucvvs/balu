@@ -1,0 +1,9 @@
+{% if product %}
+{% with images=product.images.all %}
+{% if images %}
+<img src="{{ images.0.image.url }}" alt="" class="prod-thumb {{ thumb_class }}" loading="lazy" width="72" height="72">
+{% elif show_empty %}
+<span class="prod-thumb is-empty {{ thumb_class }}" aria-hidden="true"><i class="bi bi-image"></i></span>
+{% endif %}
+{% endwith %}
+{% endif %}

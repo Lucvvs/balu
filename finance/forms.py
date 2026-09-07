@@ -1,9 +1,33 @@
 from django import forms
 from django.forms import formset_factory, inlineformset_factory
+from django.utils import timezone
 from django.utils.text import slugify
 
-from shop.models import PaymentMethod, Product, ProductImage, ProductVariant
+from finance.money import gross_from_net
 from finance.models import ExpenseCategory, FinancialAccount, Financing
+from shop.models import PaymentMethod, Product, ProductImage, ProductVariant, ShippingMethod
+
+HTML_DATE_FORMAT = '%Y-%m-%d'
+
+
+class HtmlDateInput(forms.DateInput):
+    """type=date solo muestra valor si viene en YYYY-MM-DD (es-cl si no, queda vacío)."""
+
+    input_type = 'date'
+
+    def __init__(self, attrs=None):
+        merged = {'class': 'form-control'}
+        if attrs:
+            merged.update(attrs)
+        super().__init__(format=HTML_DATE_FORMAT, attrs=merged)
+
+
+def today_date_field(label='Fecha', **kwargs):
+    kwargs.setdefault('initial', timezone.localdate)
+    kwargs.setdefault('localize', False)
+    kwargs.setdefault('input_formats', [HTML_DATE_FORMAT])
+    kwargs.setdefault('widget', HtmlDateInput())
+    return forms.DateField(label=label, **kwargs)
 
 
 def unique_product_slug(name: str, instance_pk=None) -> str:
@@ -42,6 +66,9 @@ class CatalogProductForm(forms.ModelForm):
             'show_variant_badges',
             'uses_special_shipping',
         )
+        help_texts = {
+            'cost_gross': 'Se calcula solo: costo neto + IVA 19% si el producto es afecto.',
+        }
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'sku': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Vacío = MM-{id}'}),
@@ -51,8 +78,19 @@ class CatalogProductForm(forms.ModelForm):
             'brand': forms.Select(attrs={'class': 'form-select'}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'offer_price': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
-            'cost_net': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
-            'cost_gross': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'cost_net': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'step': 1,
+                'inputmode': 'numeric',
+            }),
+            'cost_gross': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'step': 1,
+                'readonly': True,
+                'tabindex': '-1',
+            }),
             'stock': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
         }
 
@@ -74,6 +112,16 @@ class CatalogProductForm(forms.ModelForm):
         if value == 0:
             return None
         return value
+
+    def clean(self):
+        cleaned = super().clean()
+        net = cleaned.get('cost_net')
+        if net is None:
+            return cleaned
+        affected = bool(cleaned.get('is_vat_affected'))
+        gross, _vat = gross_from_net(net, is_vat_affected=affected)
+        cleaned['cost_gross'] = gross
+        return cleaned
 
     def save(self, commit=True):
         product = super().save(commit=False)
@@ -163,12 +211,25 @@ class PosSaleForm(forms.Form):
         label='Medio de pago',
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
+    shipping_method = forms.ModelChoiceField(
+        queryset=ShippingMethod.objects.none(),
+        required=False,
+        label='Entrega',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    shipping_cost = forms.IntegerField(
+        required=False,
+        min_value=0,
+        initial=0,
+        label='Envío cobrado (CLP)',
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'id': 'pos-shipping-cost'}),
+    )
     discount_total = forms.IntegerField(
         required=False,
         min_value=0,
         initial=0,
         label='Descuento (CLP)',
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'id': 'pos-discount'}),
     )
     notes = forms.CharField(
         required=False,
@@ -181,9 +242,16 @@ class PosSaleForm(forms.Form):
 
         super().__init__(*args, **kwargs)
         self.fields['payment_method'].queryset = pos_payment_methods()
+        self.fields['shipping_method'].queryset = ShippingMethod.objects.filter(
+            is_active=True
+        ).order_by('base_price', 'name')
+        self.fields['shipping_method'].empty_label = 'Retiro en tienda'
 
     def clean_discount_total(self):
         return self.cleaned_data.get('discount_total') or 0
+
+    def clean_shipping_cost(self):
+        return self.cleaned_data.get('shipping_cost') or 0
 
 
 class PosLineForm(forms.Form):
@@ -262,10 +330,7 @@ class FinancingForm(forms.Form):
         label='Cuenta que recibe el dinero',
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
-    occurred_on = forms.DateField(
-        label='Fecha',
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-    )
+    occurred_on = today_date_field()
     notes = forms.CharField(
         required=False,
         label='Nota',
@@ -289,10 +354,7 @@ class LoanRepayForm(forms.Form):
         label='Cuenta que paga',
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
-    occurred_on = forms.DateField(
-        label='Fecha',
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-    )
+    occurred_on = today_date_field()
     notes = forms.CharField(
         required=False,
         label='Nota',
@@ -320,10 +382,7 @@ class PurchaseForm(forms.Form):
         label='Cuenta que paga',
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
-    occurred_on = forms.DateField(
-        label='Fecha',
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-    )
+    occurred_on = today_date_field()
     updates_stock = forms.BooleanField(
         required=False,
         initial=True,
@@ -375,10 +434,7 @@ class ExpenseForm(forms.Form):
         label='Cuenta que paga',
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
-    occurred_on = forms.DateField(
-        label='Fecha',
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-    )
+    occurred_on = today_date_field()
     is_vat_affected = forms.BooleanField(
         required=False,
         initial=True,
@@ -440,10 +496,7 @@ class ShipmentForm(forms.Form):
         label='Seguimiento',
         widget=forms.TextInput(attrs={'class': 'form-control'}),
     )
-    occurred_on = forms.DateField(
-        label='Fecha',
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-    )
+    occurred_on = today_date_field()
     notes = forms.CharField(
         required=False,
         label='Nota',

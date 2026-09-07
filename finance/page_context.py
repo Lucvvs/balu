@@ -25,6 +25,8 @@ def filter_context(request, filters: dict) -> dict:
     return {
         'date_from': filters['date_from'].isoformat(),
         'date_to': filters['date_to'].isoformat(),
+        'date_from_obj': filters['date_from'],
+        'date_to_obj': filters['date_to'],
         'channel': filters['channel'],
         'account_id': filters['account_id'] or '',
         'accounts': FinancialAccount.objects.filter(is_active=True).order_by('name'),

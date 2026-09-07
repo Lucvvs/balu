@@ -4,6 +4,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, override_settings
 
+from finance.forms import CatalogProductForm
 from finance.inventory import catalog_potential_totals, product_potential
 from finance.models import FinancialAccount, FinancialMovement
 from shop.models import Category, CustomUser, Order, Product, ProductVariant
@@ -156,6 +157,8 @@ class InventoryMutationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Guardar producto')
         self.assertContains(response, 'Variantes')
+        self.assertContains(response, 'Se calcula solo')
+        self.assertContains(response, 'id_cost_gross')
 
     def _formsets(self, **extra):
         data = {
@@ -206,6 +209,7 @@ class InventoryMutationTests(TestCase):
         self.assertEqual(response.status_code, 302)
         created = Product.objects.get(sku='CHAQ-NEW')
         self.assertEqual(created.price, 89000)
+        self.assertEqual(created.cost_gross, Decimal('35700'))
         self.assertEqual(created.stock, 3)
         self.other.refresh_from_db()
         self.assertEqual(self.other.price, 50000)
@@ -270,3 +274,83 @@ class InventoryMutationTests(TestCase):
         self.assertEqual(blocked.status_code, 302)
         product.refresh_from_db()
         self.assertEqual(product.stock, 14)
+
+
+class CatalogProductCostFormTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(name='Cascos costo', slug='cascos-costo')
+
+    def _data(self, **extra):
+        data = {
+            'name': 'Casco integral',
+            'short_description': 'Casco',
+            'description': 'Casco de prueba',
+            'category': str(self.category.id),
+            'price': '64990',
+            'cost_net': '35378',
+            'cost_gross': '1',
+            'stock': '1',
+            'is_active': 'on',
+            'is_vat_affected': 'on',
+        }
+        data.update(extra)
+        return data
+
+    def test_gross_is_derived_from_net_even_if_posted_wrong(self):
+        form = CatalogProductForm(data=self._data())
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['cost_net'], Decimal('35378'))
+        self.assertEqual(form.cleaned_data['cost_gross'], Decimal('42100'))
+        product = form.save()
+        self.assertEqual(product.cost_net, Decimal('35378'))
+        self.assertEqual(product.cost_gross, Decimal('42100'))
+
+    def test_without_vat_gross_equals_net(self):
+        data = self._data()
+        data.pop('is_vat_affected')
+        form = CatalogProductForm(data=data)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['cost_gross'], Decimal('35378'))
+
+    @override_settings(SECURE_SSL_REDIRECT=False)
+    def test_create_view_persists_derived_gross(self):
+        user = CustomUser.objects.create_user(
+            email='costo@motomoto.cl',
+            password='pass-12345',
+            first_name='Costo',
+            last_name='Bruto',
+            is_staff=True,
+        )
+        _grant(user, 'view_finance', 'manage_catalog')
+        self.client.force_login(user)
+        payload = {
+            'name': 'Casco lista',
+            'sku': 'CASCO-64990',
+            'short_description': 'Casco',
+            'description': 'Casco',
+            'category': str(self.category.id),
+            'price': '64990',
+            'cost_net': '35378',
+            'cost_gross': '99999',
+            'stock': '1',
+            'is_active': 'on',
+            'is_vat_affected': 'on',
+            'variants-TOTAL_FORMS': '1',
+            'variants-INITIAL_FORMS': '0',
+            'variants-MIN_NUM_FORMS': '0',
+            'variants-MAX_NUM_FORMS': '1000',
+            'variants-0-name': '',
+            'variants-0-stock': '0',
+            'variants-0-sort_order': '0',
+            'images-TOTAL_FORMS': '1',
+            'images-INITIAL_FORMS': '0',
+            'images-MIN_NUM_FORMS': '0',
+            'images-MAX_NUM_FORMS': '1000',
+            'images-0-order': '0',
+        }
+        response = self.client.post('/dashboard/finanzas/inventario/nuevo/', payload)
+        self.assertEqual(response.status_code, 302)
+        created = Product.objects.get(sku='CASCO-64990')
+        self.assertEqual(created.price, 64990)
+        self.assertEqual(created.cost_net, Decimal('35378'))
+        self.assertEqual(created.cost_gross, Decimal('42100'))

@@ -50,6 +50,24 @@ def split_gross_vat(gross, *, is_vat_affected: bool) -> tuple[Decimal, Decimal]:
     return net, vat
 
 
+def gross_from_net(net, *, is_vat_affected: bool) -> tuple[Decimal, Decimal]:
+    """
+    Arma el bruto a partir del neto (catálogo / costo vigente).
+
+    IVA = redondeo(neto × 0.19); bruto = neto + IVA.
+    Así neto + IVA == bruto al peso. No usar redondeo(neto × 1.19):
+    con 35378 eso daría 42101 y no cierra con el desglose de ventas.
+    """
+    net_clp = quantize_clp(net)
+    if net_clp < ZERO:
+        raise ValueError('El monto neto no puede ser negativo.')
+    if not is_vat_affected:
+        return net_clp, ZERO
+    vat = quantize_clp(net_clp * IVA_RATE)
+    gross = net_clp + vat
+    return gross, vat
+
+
 def allocate_proportional(total, weights: Sequence) -> list[Decimal]:
     """
     Prorratea `total` según `weights` (típicamente venta neta de cada línea).

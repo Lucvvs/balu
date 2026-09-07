@@ -30,7 +30,7 @@ def _save_ticket(request, ticket: list) -> None:
 def _ticket_rows(ticket: list) -> list[dict]:
     rows = []
     for index, line in enumerate(ticket):
-        product = Product.objects.filter(pk=line['product_id']).select_related('brand', 'category').first()
+        product = Product.objects.filter(pk=line['product_id']).select_related('brand', 'category').prefetch_related('images').first()
         if not product:
             continue
         variant = None
@@ -133,7 +133,7 @@ def purchases(request):
         'can_manage_purchases': can_manage,
         'purchases': (
             MerchandisePurchase.objects.select_related('account')
-            .prefetch_related('lines')
+            .prefetch_related('lines__product__images')
             .order_by('-occurred_on', '-id')[:40]
         ),
     }

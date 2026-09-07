@@ -18,11 +18,12 @@ def _find_order(number: str):
     number = (number or '').strip()
     if not number:
         return None
-    order = Order.objects.filter(order_number=number).first()
+    qs = Order.objects.prefetch_related('items__product__images')
+    order = qs.filter(order_number=number).first()
     if order:
         return order
     if number.isdigit():
-        return Order.objects.filter(pk=int(number)).first()
+        return qs.filter(pk=int(number)).first()
     return None
 
 
@@ -99,7 +100,7 @@ def refunds(request):
             occurred_on__lte=filters['date_to'],
         )
         .select_related('order', 'account')
-        .prefetch_related('items__order_item')
+        .prefetch_related('items__order_item__product__images')
         .order_by('-occurred_on', '-id')
     )
     context = {

@@ -4,10 +4,7 @@
 {% block finance_title %}Compras{% endblock %}
 
 {% block finance_content %}
-<nav class="finance-local-tabs" aria-label="Inventario">
-    <a href="{% url 'finance:inventory' %}?{{ sales_query }}">Stock</a>
-    <a class="is-active" href="{% url 'finance:purchases' %}?{{ sales_query }}">Compras</a>
-</nav>
+{% include 'finance/_tabs_inventario.html' with inv_tab='buy' %}
 
 <p class="kpi-hint finance-inv-note">
     La compra paga mercadería: sale de tesorería y no es gasto operativo ni venta.
@@ -18,7 +15,7 @@
 {% if can_manage_purchases %}
 <div class="pos-layout">
     <section class="finance-form-section">
-        <h2>Buscar producto</h2>
+        <h2><i class="bi bi-search" aria-hidden="true"></i> Buscar producto</h2>
         <form method="get" class="pos-search" id="pos-search-form">
             <input type="hidden" name="date_from" value="{{ date_from }}">
             <input type="hidden" name="date_to" value="{{ date_to }}">
@@ -45,19 +42,20 @@
                     {% endfor %}
                 </select>
             </label>
-            <button type="submit">Buscar</button>
+            <button type="submit"><i class="bi bi-search" aria-hidden="true"></i> Buscar</button>
         </form>
 
         <div id="pos-results" class="pos-results">
             {% if matches %}
                 {% for product in matches %}
-                <form method="post" class="pos-result">
+                <form method="post" class="pos-result{% if product.images.all %} has-thumb{% endif %}">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     <input type="hidden" name="q" value="{{ search_q }}">
                     {% if search_category %}<input type="hidden" name="category" value="{{ search_category }}">{% endif %}
                     {% if search_brand %}<input type="hidden" name="brand" value="{{ search_brand }}">{% endif %}
+                    {% include 'finance/_product_thumb.html' with product=product thumb_class='is-sm' %}
                     <div>
                         <strong>{{ product.name }}</strong>
                         <span class="muted">{{ product.sku|default:"Sin SKU" }}{% if product.brand %} · {{ product.brand.name }}{% endif %} · {{ product.category.name }}</span>
@@ -73,23 +71,24 @@
                     {% endif %}
                     <input type="number" name="quantity" min="1" value="1" aria-label="Cantidad">
                     <input class="pos-cost" type="number" name="unit_cost_gross" min="1" value="{% if product.purchase_unit_cost %}{{ product.purchase_unit_cost }}{% endif %}" placeholder="Costo" aria-label="Costo unitario bruto">
-                    <button type="submit">Agregar</button>
+                    <button type="submit"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar</button>
                 </form>
                 {% endfor %}
             {% elif has_filter %}
-                <p class="finance-empty">No hay productos con esa búsqueda.</p>
+                <p class="finance-empty"><i class="bi bi-search" aria-hidden="true"></i> No hay productos con esa búsqueda.</p>
             {% else %}
-                <p class="finance-empty">Escribe un nombre o SKU, o elige marca/categoría. Los resultados se filtran al instante.</p>
+                <p class="finance-empty"><i class="bi bi-upc-scan" aria-hidden="true"></i> Escribe un nombre o SKU, o elige marca/categoría. Los resultados se filtran al instante.</p>
             {% endif %}
         </div>
     </section>
 
     <section class="finance-form-section">
-        <h2>Compra en curso</h2>
+        <h2><i class="bi bi-bag-plus" aria-hidden="true"></i> Compra en curso</h2>
         {% if ticket_rows %}
         <ul class="pos-ticket">
             {% for row in ticket_rows %}
-            <li>
+            <li{% if row.product.images.all %} class="has-thumb"{% endif %}>
+                {% include 'finance/_product_thumb.html' with product=row.product thumb_class='is-sm' %}
                 <div>
                     <strong>{{ row.product.name }}{% if row.variant %} — {{ row.variant.name }}{% endif %}</strong>
                     <span class="muted">{{ row.quantity }} × {{ row.unit_cost_gross|currency_clp }}</span>
@@ -99,14 +98,14 @@
                     {% csrf_token %}
                     <input type="hidden" name="action" value="remove">
                     <input type="hidden" name="index" value="{{ row.index }}">
-                    <button type="submit" class="pos-remove">Quitar</button>
+                    <button type="submit" class="pos-remove"><i class="bi bi-x-lg" aria-hidden="true"></i> Quitar</button>
                 </form>
             </li>
             {% endfor %}
         </ul>
         <p class="pos-ticket-total">Total {{ ticket_total|currency_clp }}</p>
         {% else %}
-        <p class="finance-empty">Todavía no hay productos en la compra.</p>
+        <p class="finance-empty"><i class="bi bi-bag" aria-hidden="true"></i> Todavía no hay productos en la compra.</p>
         {% endif %}
 
         <form method="post" class="finance-form">
@@ -120,12 +119,12 @@
                 <label class="is-wide">Nota {{ form.notes }}</label>
             </div>
             <div class="finance-form-checks">
-                <label>{{ form.updates_stock }} Sumar al stock</label>
-                <label>{{ form.updates_catalog_cost }} Actualizar costo vigente</label>
+                <label>{{ form.updates_stock }} <i class="bi bi-boxes" aria-hidden="true"></i> Sumar al stock</label>
+                <label>{{ form.updates_catalog_cost }} <i class="bi bi-currency-dollar" aria-hidden="true"></i> Actualizar costo vigente</label>
                 <label>{{ form.is_vat_affected }} Afecta a IVA</label>
             </div>
             <div class="finance-form-actions">
-                <button type="submit" class="finance-filter-submit" {% if not ticket_rows %}disabled{% endif %}>Registrar compra</button>
+                <button type="submit" class="finance-filter-submit" {% if not ticket_rows %}disabled{% endif %}><i class="bi bi-check2-circle" aria-hidden="true"></i> Registrar compra</button>
                 {% if ticket_rows %}
                 <button type="submit" name="action" value="clear" class="pos-remove">Vaciar</button>
                 {% endif %}
@@ -161,12 +160,15 @@
                     <td>{{ purchase.account.name }}</td>
                     <td>
                         {% for line in purchase.lines.all %}
-                        {{ line.product_name }}{% if line.variant_label %} — {{ line.variant_label }}{% endif %} ×{{ line.quantity }}{% if not forloop.last %}<br>{% endif %}
+                        <span class="prod-cell is-compact">
+                            {% include 'finance/_product_thumb.html' with product=line.product thumb_class='is-xs' %}
+                            <span>{{ line.product_name }}{% if line.variant_label %} — {{ line.variant_label }}{% endif %} ×{{ line.quantity }}</span>
+                        </span>{% if not forloop.last %}<br>{% endif %}
                         {% endfor %}
                     </td>
-                    <td class="is-num">{{ purchase.gross_total|currency_clp }}</td>
-                    <td>{% if purchase.updates_stock %}Sí{% else %}No{% endif %}</td>
-                    <td>{% if purchase.updates_catalog_cost %}Vigente{% else %}Sin cambio{% endif %}</td>
+                    <td class="is-num amount-out">{{ purchase.gross_total|currency_clp }}</td>
+                    <td>{% if purchase.updates_stock %}<span class="inv-badge is-ok">Stock</span>{% else %}<span class="inv-badge">No</span>{% endif %}</td>
+                    <td>{% if purchase.updates_catalog_cost %}<span class="inv-badge is-accent">Costo</span>{% else %}<span class="inv-badge">Sin cambio</span>{% endif %}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -210,7 +212,7 @@
 
     function render(items) {
         if (!items.length) {
-            results.innerHTML = '<p class="finance-empty">No hay productos con esa búsqueda.</p>';
+            results.innerHTML = '<p class="finance-empty"><i class="bi bi-search" aria-hidden="true"></i> No hay productos con esa búsqueda.</p>';
             return;
         }
         results.innerHTML = items.slice(0, 40).map(function (p) {
@@ -221,12 +223,16 @@
                 ? '<select name="variant_id" required><option value="">Talla / color</option>' + variants + '</select>'
                 : '';
             const unitCost = p.unit_cost || p.cost_gross || p.cost_net || '';
+            const thumb = p.image
+                ? '<img src="' + p.image + '" alt="" class="prod-thumb is-sm" width="40" height="40" loading="lazy">'
+                : '';
             return (
-                '<form method="post" class="pos-result">' +
+                '<form method="post" class="pos-result' + (p.image ? ' has-thumb' : '') + '">' +
                 '<input type="hidden" name="csrfmiddlewaretoken" value="' + (csrf ? csrf.value : '') + '">' +
                 '<input type="hidden" name="action" value="add">' +
                 '<input type="hidden" name="product_id" value="' + p.id + '">' +
                 '<input type="hidden" name="q" value="' + (qInput.value || '') + '">' +
+                thumb +
                 '<div><strong>' + p.name + '</strong><span class="muted">' +
                 (p.sku || 'Sin SKU') + (p.brand ? ' · ' + p.brand : '') + ' · ' + p.category +
                 '</span></div>' +
@@ -234,7 +240,7 @@
                 variantField +
                 '<input type="number" name="quantity" min="1" value="1" aria-label="Cantidad">' +
                 '<input class="pos-cost" type="number" name="unit_cost_gross" min="1" value="' + unitCost + '" placeholder="Costo" aria-label="Costo unitario bruto">' +
-                '<button type="submit">Agregar</button></form>'
+                '<button type="submit"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar</button></form>'
             );
         }).join('');
     }
@@ -244,7 +250,7 @@
         const cat = catSel.value;
         const brand = brandSel.value;
         if (!q && !cat && !brand) {
-            results.innerHTML = '<p class="finance-empty">Escribe un nombre o SKU, o elige marca/categoría.</p>';
+            results.innerHTML = '<p class="finance-empty"><i class="bi bi-upc-scan" aria-hidden="true"></i> Escribe un nombre o SKU, o elige marca/categoría.</p>';
             return;
         }
         const items = catalog.filter(function (p) {

@@ -24,7 +24,7 @@ def _save_ticket(request, ticket: list) -> None:
 def _ticket_rows(ticket: list) -> list[dict]:
     rows = []
     for index, line in enumerate(ticket):
-        product = Product.objects.filter(pk=line['product_id']).select_related('brand', 'category').first()
+        product = Product.objects.filter(pk=line['product_id']).select_related('brand', 'category').prefetch_related('images').first()
         if not product:
             continue
         variant = None
@@ -79,6 +79,8 @@ def pos_sale(request):
                     customer_name=form.cleaned_data.get('customer_name') or '',
                     customer_phone=form.cleaned_data.get('customer_phone') or '',
                     discount_total=form.cleaned_data.get('discount_total') or 0,
+                    shipping_cost=form.cleaned_data.get('shipping_cost') or 0,
+                    shipping_method=form.cleaned_data.get('shipping_method'),
                     notes=form.cleaned_data.get('notes') or '',
                 )
             except PosSaleError as exc:
