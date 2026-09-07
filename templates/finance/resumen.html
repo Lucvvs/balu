@@ -1,0 +1,196 @@
+{% extends 'finance/base.html' %}
+{% load shop_filters %}
+
+{% block finance_title %}Resumen{% endblock %}
+
+{% block finance_content %}
+{% if alerts %}
+<ul class="finance-alerts" aria-label="Alertas financieras">
+    {% for alert in alerts %}
+    <li>
+        {% if alert.href %}
+        <a class="finance-alert finance-alert-{{ alert.tone }}" href="{{ alert.href }}">
+            <i class="bi {% if alert.tone == 'danger' %}bi-exclamation-triangle-fill{% else %}bi-info-circle{% endif %}" aria-hidden="true"></i>
+            {{ alert.text }}
+        </a>
+        {% else %}
+        <span class="finance-alert finance-alert-{{ alert.tone }}">
+            <i class="bi {% if alert.tone == 'danger' %}bi-exclamation-triangle-fill{% else %}bi-info-circle{% endif %}" aria-hidden="true"></i>
+            {{ alert.text }}
+        </span>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<section class="finance-hero-grid" aria-label="Indicadores principales">
+    <a class="kpi-hero tone-result" href="{% url 'finance:balances' %}?{{ sales_query }}&panel=rentabilidad">
+        <span class="kpi-ico" aria-hidden="true"><i class="bi bi-graph-up-arrow"></i></span>
+        <span class="kpi-label">Resultado operativo</span>
+        <strong class="kpi-value">{{ operating.value|currency_clp }}</strong>
+        {% if operating.has_delta %}
+        <span class="kpi-delta {% if operating.up %}is-up{% else %}is-down{% endif %}">
+            <i class="bi {% if operating.up %}bi-caret-up-fill{% else %}bi-caret-down-fill{% endif %}" aria-hidden="true"></i>
+            {{ operating.delta }} vs período anterior
+        </span>
+        {% else %}
+        <span class="kpi-delta is-muted">Sin período comparable</span>
+        {% endif %}
+        <span class="kpi-hint">Ventas netas − costo − gastos operacionales</span>
+    </a>
+    <div class="kpi-secondary-stack">
+        <a class="kpi-card tone-in" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">
+            <span class="kpi-ico" aria-hidden="true"><i class="bi bi-receipt"></i></span>
+            <span class="kpi-label">Ventas netas</span>
+            <strong>{{ net_sales.value|currency_clp }}</strong>
+            {% if net_sales.has_delta %}
+            <span class="kpi-delta {% if net_sales.up %}is-up{% else %}is-down{% endif %}">
+                <i class="bi {% if net_sales.up %}bi-caret-up-fill{% else %}bi-caret-down-fill{% endif %}" aria-hidden="true"></i>
+                {{ net_sales.delta }}
+            </span>
+            {% endif %}
+        </a>
+        <a class="kpi-card tone-result" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">
+            <span class="kpi-ico" aria-hidden="true"><i class="bi bi-percent"></i></span>
+            <span class="kpi-label">Margen de contribución</span>
+            <strong>{{ contribution.value|currency_clp }}</strong>
+            {% if contribution.has_delta %}
+            <span class="kpi-delta {% if contribution.up %}is-up{% else %}is-down{% endif %}">
+                <i class="bi {% if contribution.up %}bi-caret-up-fill{% else %}bi-caret-down-fill{% endif %}" aria-hidden="true"></i>
+                {{ contribution.delta }}
+            </span>
+            {% endif %}
+        </a>
+        <a class="kpi-card tone-out" href="{% url 'finance:expenses' %}?{{ sales_query }}">
+            <span class="kpi-ico" aria-hidden="true"><i class="bi bi-wallet2"></i></span>
+            <span class="kpi-label">Gastos operacionales</span>
+            <strong>{{ opex.value|currency_clp }}</strong>
+            {% if opex.has_delta %}
+            <span class="kpi-delta {% if opex.up %}is-up{% else %}is-down{% endif %}">
+                <i class="bi {% if opex.up %}bi-caret-up-fill{% else %}bi-caret-down-fill{% endif %}" aria-hidden="true"></i>
+                {{ opex.delta }}
+            </span>
+            {% endif %}
+        </a>
+    </div>
+</section>
+
+<div class="flow-band" aria-label="Flujo de tesorería del período">
+    <div class="flow-step is-in">
+        <i class="bi bi-box-arrow-in-down" aria-hidden="true"></i>
+        <div>
+            <span class="flow-label">Entró</span>
+            <strong class="amount-in">{{ treasury.inflow|currency_clp }}</strong>
+        </div>
+    </div>
+    <span class="flow-arrow" aria-hidden="true">→</span>
+    <div class="flow-step is-out">
+        <i class="bi bi-box-arrow-up" aria-hidden="true"></i>
+        <div>
+            <span class="flow-label">Salió</span>
+            <strong class="amount-out">{{ treasury.outflow|currency_clp }}</strong>
+        </div>
+    </div>
+    <span class="flow-arrow" aria-hidden="true">→</span>
+    <div class="flow-step is-rest">
+        <i class="bi bi-safe" aria-hidden="true"></i>
+        <div>
+            <span class="flow-label">Queda</span>
+            <strong>{{ treasury.remaining|currency_clp }}</strong>
+        </div>
+    </div>
+</div>
+
+<section class="treasury-strip" aria-label="Tesorería e impuestos">
+    <a class="tone-neutral" href="{% url 'finance:balances' %}?{{ sales_query }}&panel=caja">
+        <span class="kpi-ico" aria-hidden="true"><i class="bi bi-cash-stack"></i></span>
+        <span class="kpi-label">Caja</span>
+        <strong>{{ treasury.cash|currency_clp }}</strong>
+    </a>
+    <a class="tone-in" href="{% url 'finance:balances' %}?{{ sales_query }}&panel=bancos">
+        <span class="kpi-ico" aria-hidden="true"><i class="bi bi-bank2"></i></span>
+        <span class="kpi-label">Bancos y saldos digitales</span>
+        <strong>{{ treasury.banks|currency_clp }}</strong>
+    </a>
+    <a class="tone-tax" href="{% url 'finance:balances' %}?{{ sales_query }}&panel=impuestos">
+        <span class="kpi-ico" aria-hidden="true"><i class="bi bi-receipt-cutoff"></i></span>
+        <span class="kpi-label">IVA débito estimado</span>
+        <strong>{{ vat_debit|currency_clp }}</strong>
+        <span class="kpi-hint">Control interno, no declaración SII</span>
+    </a>
+</section>
+
+{% if evolution.has_values %}
+<section class="finance-panel evo-panel" aria-labelledby="evo-heading">
+    <h2 id="evo-heading">Evolución de ventas netas</h2>
+    <p class="kpi-hint">
+        {% if evolution.grain == 'day' %}Por día{% elif evolution.grain == 'week' %}Por semana{% else %}Por mes{% endif %}
+        · mismas cifras del período, con devoluciones en su fecha
+    </p>
+    <div class="evo-chart" role="img" aria-label="Ventas netas del período">
+        {% for point in evolution.points %}
+        <div class="evo-col{% if point.negative %} is-neg{% endif %}" title="{{ point.label }}: {{ point.net|currency_clp }}">
+            <div class="evo-track">
+                <span class="evo-bar" style="height: {{ point.bar }}%"></span>
+            </div>
+            <span class="evo-label">{{ point.label }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<div class="finance-split">
+    <section class="finance-panel" aria-labelledby="rank-heading">
+        <h2 id="rank-heading">Contribución por producto</h2>
+        {% if ranking %}
+        <ol class="rank-list">
+            {% for row in ranking %}
+            <li{% if row.product.images.all %} class="has-thumb"{% endif %}>
+                <div class="rank-meta">
+                    {% include 'finance/_product_thumb.html' with product=row.product thumb_class='is-xs' %}
+                    <span class="rank-index">{{ forloop.counter|stringformat:"02d" }}</span>
+                    <span class="rank-name">{{ row.name }}</span>
+                    <span class="rank-value amount-in">{{ row.contribution|currency_clp }}</span>
+                </div>
+                <div class="rank-bar" role="img" aria-label="{{ row.share }} por ciento del ranking">
+                    <span style="width: {{ row.bar }}%"></span>
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <p class="finance-empty"><i class="bi bi-graph-up" aria-hidden="true"></i> Aún no hay ventas sincronizadas en este período.</p>
+        {% endif %}
+    </section>
+
+    <section class="finance-panel" aria-labelledby="timeline-heading">
+        <h2 id="timeline-heading">Movimientos recientes</h2>
+        {% if treasury.timeline %}
+        <ol class="timeline-list">
+            {% for mv in treasury.timeline %}
+            <li>
+                <span class="timeline-dot {% if mv.direction == 'in' %}is-in{% else %}is-out{% endif %}" aria-hidden="true"></span>
+                <div>
+                    <strong>
+                        {% if mv.movement_type == 'purchase' %}<i class="bi bi-bag" aria-hidden="true"></i>
+                        {% elif mv.movement_type == 'expense' %}<i class="bi bi-wallet2" aria-hidden="true"></i>
+                        {% elif mv.movement_type == 'shipment' %}<i class="bi bi-truck" aria-hidden="true"></i>
+                        {% elif mv.movement_type == 'refund' %}<i class="bi bi-arrow-return-left" aria-hidden="true"></i>
+                        {% elif mv.movement_type == 'capital_contribution' %}<i class="bi bi-piggy-bank" aria-hidden="true"></i>
+                        {% elif mv.movement_type == 'loan_in' or mv.movement_type == 'loan_repayment' %}<i class="bi bi-bank" aria-hidden="true"></i>
+                        {% else %}<i class="bi bi-arrow-left-right" aria-hidden="true"></i>{% endif %}
+                        {{ mv.get_movement_type_display }}
+                    </strong>
+                    <p>{{ mv.occurred_on|date:"d/m/Y" }} · {{ mv.account.name }} · <span class="{% if mv.direction == 'in' %}amount-in{% else %}amount-out{% endif %}">{% if mv.direction == 'in' %}+{% else %}−{% endif %}{{ mv.amount|currency_clp }}</span></p>
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <p class="finance-empty"><i class="bi bi-clock-history" aria-hidden="true"></i> No hay movimientos de tesorería en el período. Las ventas web aparecen al liquidarse.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,204 @@
+{% extends 'finance/base.html' %}
+{% load shop_filters %}
+
+{% block finance_title %}Saldos{% endblock %}
+
+{% block finance_content %}
+<nav class="finance-local-tabs" aria-label="Saldos">
+    <a class="{% if panel == 'caja' %}is-active{% endif %}" href="{% url 'finance:balances' %}?{{ sales_query }}&panel=caja"><i class="bi bi-cash-stack" aria-hidden="true"></i> Caja</a>
+    <a class="{% if panel == 'bancos' %}is-active{% endif %}" href="{% url 'finance:balances' %}?{{ sales_query }}&panel=bancos"><i class="bi bi-bank2" aria-hidden="true"></i> Bancos</a>
+    <a class="{% if panel == 'ventas' %}is-active{% endif %}" href="{% url 'finance:balances' %}?{{ sales_query }}&panel=ventas"><i class="bi bi-graph-up" aria-hidden="true"></i> Ventas</a>
+    <a class="{% if panel == 'rentabilidad' %}is-active{% endif %}" href="{% url 'finance:balances' %}?{{ sales_query }}&panel=rentabilidad"><i class="bi bi-percent" aria-hidden="true"></i> Rentabilidad</a>
+    <a class="{% if panel == 'impuestos' %}is-active{% endif %}" href="{% url 'finance:balances' %}?{{ sales_query }}&panel=impuestos"><i class="bi bi-receipt-cutoff" aria-hidden="true"></i> Impuestos</a>
+</nav>
+
+<p class="kpi-hint finance-inv-note">
+    Cifras derivadas del libro, las ventas y el IVA ya guardado. No se editan saldos a mano.
+</p>
+
+{% if panel == 'caja' or panel == 'bancos' %}
+    {% if panel == 'caja' %}
+        {% with ledger=cash label="Caja" %}
+            {% include 'finance/_balance_ledger.html' %}
+        {% endwith %}
+    {% else %}
+        {% with ledger=banks label="Bancos y saldos digitales" %}
+            {% include 'finance/_balance_ledger.html' %}
+        {% endwith %}
+    {% endif %}
+
+    <section class="finance-panel" aria-labelledby="mv-heading">
+        <h2 id="mv-heading">Movimientos del período</h2>
+        {% if movements %}
+        <div class="finance-table-wrap">
+            <table class="finance-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Cuenta</th>
+                        <th>Tipo</th>
+                        <th class="is-num">Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mv in movements %}
+                    <tr>
+                        <td>{{ mv.occurred_on|date:"d/m/Y" }}</td>
+                        <td>{{ mv.account.name }}</td>
+                        <td>{{ mv.get_movement_type_display }}{% if mv.order %} · pedido #{{ mv.order.order_number|default:mv.order_id }}{% endif %}</td>
+                        <td class="is-num {% if mv.direction == 'in' %}amount-in{% else %}amount-out{% endif %}">{% if mv.direction == 'in' %}+{% else %}−{% endif %}{{ mv.amount|currency_clp }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="finance-cards-mobile">
+            {% for mv in movements %}
+            <div class="finance-line-card">
+                <strong>{{ mv.get_movement_type_display }} · <span class="{% if mv.direction == 'in' %}amount-in{% else %}amount-out{% endif %}">{% if mv.direction == 'in' %}+{% else %}−{% endif %}{{ mv.amount|currency_clp }}</span></strong>
+                <span>{{ mv.occurred_on|date:"d/m/Y" }} · {{ mv.account.name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="finance-empty">No hay movimientos confirmados en estas cuentas durante el período.</p>
+        {% endif %}
+    </section>
+
+{% elif panel == 'ventas' %}
+<section class="treasury-strip" aria-label="Ventas del período">
+    <a class="tone-in" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">
+        <span class="kpi-label">Ventas netas</span>
+        <strong>{{ kpis.net_sales|currency_clp }}</strong>
+        <span class="kpi-hint">{{ kpis.orders }} pedido{{ kpis.orders|pluralize }} · {{ kpis.units }} u.</span>
+    </a>
+    <a class="tone-in" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">
+        <span class="kpi-label">Contribución</span>
+        <strong>{{ kpis.contribution|currency_clp }}</strong>
+    </a>
+    <a class="tone-tax" href="{% url 'finance:balances' %}?{{ sales_query }}&panel=impuestos">
+        <span class="kpi-label">IVA débito</span>
+        <strong>{{ kpis.vat_debit|currency_clp }}</strong>
+        <span class="kpi-hint">Estimado, no declaración SII</span>
+    </a>
+</section>
+<div class="treasury-strip" aria-label="Por canal">
+    <a class="tone-in" href="{% url 'finance:sales_lines' %}?{{ sales_query }}&channel=web">
+        <span class="kpi-label">Web</span>
+        <strong>{{ web_kpis.net_sales|currency_clp }}</strong>
+        <span class="kpi-hint">{{ web_kpis.orders }} pedido{{ web_kpis.orders|pluralize }}</span>
+    </a>
+    <a class="tone-in" href="{% url 'finance:sales_lines' %}?{{ sales_query }}&channel=pos">
+        <span class="kpi-label">Tienda / Manual</span>
+        <strong>{{ pos_kpis.net_sales|currency_clp }}</strong>
+        <span class="kpi-hint">{{ pos_kpis.orders }} pedido{{ pos_kpis.orders|pluralize }}</span>
+    </a>
+    <div class="tone-tax">
+        <span class="kpi-label">Costo mercadería</span>
+        <strong>{{ kpis.cogs|currency_clp }}</strong>
+        <span class="kpi-hint">Snapshot histórico, no el costo vigente</span>
+    </div>
+</div>
+{% if not kpis.orders %}
+<p class="finance-empty">Aún no hay ventas sincronizadas en este período.</p>
+{% endif %}
+
+{% elif panel == 'rentabilidad' %}
+<section class="treasury-strip" aria-label="Resultado">
+    <div class="tone-result">
+        <span class="kpi-label">Resultado operativo</span>
+        <strong>{{ kpis.operating_result|currency_clp }}</strong>
+        <span class="kpi-hint">Después de costo, comisión, flete asumido y opex</span>
+    </div>
+    <div class="tone-in">
+        <span class="kpi-label">Margen bruto</span>
+        <strong>{{ kpis.gross_margin|currency_clp }}</strong>
+        {% if margin_pct is not None %}
+        <span class="kpi-hint">{{ margin_pct }}% sobre venta neta</span>
+        {% endif %}
+    </div>
+    <div class="tone-in">
+        <span class="kpi-label">Contribución</span>
+        <strong>{{ kpis.contribution|currency_clp }}</strong>
+    </div>
+</section>
+<div class="finance-split">
+    <section class="finance-panel" aria-labelledby="profit-heading">
+        <h2 id="profit-heading">De la venta al resultado</h2>
+        <ol class="rank-list profit-steps">
+            {% for step in profit_steps %}
+            <li class="{% if step.subtracts %}is-sub{% endif %}">
+                <div class="rank-meta">
+                    <span class="rank-name">{{ step.label }}</span>
+                    <span class="rank-value">{% if step.subtracts %}−{% endif %}{{ step.value|currency_clp }}</span>
+                </div>
+                <div class="rank-bar" role="img" aria-hidden="true">
+                    <span style="width: {{ step.bar }}%"></span>
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+    </section>
+    <section class="finance-panel" aria-labelledby="rank-heading">
+        <h2 id="rank-heading">Contribución por producto</h2>
+        {% if ranking %}
+        <ol class="rank-list">
+            {% for row in ranking %}
+            <li{% if row.product.images.all %} class="has-thumb"{% endif %}>
+                <div class="rank-meta">
+                    {% include 'finance/_product_thumb.html' with product=row.product thumb_class='is-xs' %}
+                    <span class="rank-index">{{ forloop.counter|stringformat:"02d" }}</span>
+                    <span class="rank-name">{{ row.name }}</span>
+                    <span class="rank-value amount-in">{{ row.contribution|currency_clp }}</span>
+                </div>
+                <div class="rank-bar" role="img" aria-label="{{ row.share }} por ciento del ranking">
+                    <span style="width: {{ row.bar }}%"></span>
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <p class="finance-empty">Aún no hay ventas sincronizadas en este período.</p>
+        {% endif %}
+    </section>
+</div>
+
+{% elif panel == 'impuestos' %}
+<p class="finance-disclaimer">
+    <i class="bi bi-info-circle" aria-hidden="true"></i>
+    Control interno estimado (IVA 19%). No es una declaración SII ni un Formulario 29.
+</p>
+<section class="treasury-strip" aria-label="IVA del período">
+    <a class="tone-tax" href="{% url 'finance:sales_lines' %}?{{ sales_query }}">
+        <span class="kpi-label">IVA débito</span>
+        <strong>{{ tax.vat_debit|currency_clp }}</strong>
+        <span class="kpi-hint">Ventas afectas del período, menos devoluciones</span>
+    </a>
+    <div class="tone-tax">
+        <span class="kpi-label">IVA crédito</span>
+        <strong>{{ tax.vat_credit|currency_clp }}</strong>
+        <span class="kpi-hint">Compras {{ tax.purchase_credit|currency_clp }} · Gastos {{ tax.expense_credit|currency_clp }}</span>
+    </div>
+    <div class="tone-result">
+        <span class="kpi-label">{% if tax.vat_net < 0 %}IVA a favor estimado{% else %}IVA a pagar estimado{% endif %}</span>
+        <strong>{{ tax.vat_net|currency_clp }}</strong>
+        <span class="kpi-hint">Débito − crédito. El crédito no filtra por canal.</span>
+    </div>
+</section>
+<div class="treasury-strip" aria-label="Origen del crédito">
+    <a class="tone-tax" href="{% url 'finance:purchases' %}?{{ sales_query }}">
+        <span class="kpi-label">Crédito compras</span>
+        <strong>{{ tax.purchase_credit|currency_clp }}</strong>
+    </a>
+    <a class="tone-tax" href="{% url 'finance:expenses' %}?{{ sales_query }}">
+        <span class="kpi-label">Crédito gastos</span>
+        <strong>{{ tax.expense_credit|currency_clp }}</strong>
+    </a>
+    <a class="tone-out" href="{% url 'finance:refunds' %}?{{ sales_query }}">
+        <span class="kpi-label">Devoluciones</span>
+        <strong>Ver período</strong>
+        <span class="kpi-hint">Ya restan el débito de ventas</span>
+    </a>
+</div>
+{% endif %}
+{% endblock %}

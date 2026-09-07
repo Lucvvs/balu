@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     
     # Local apps
     'shop',
+    'finance.apps.FinanceConfig',
 ]
 
 # Configuración de modelo de usuario personalizado

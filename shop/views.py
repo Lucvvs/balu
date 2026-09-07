@@ -35,6 +35,7 @@ from .forms import (
 from .utils import send_order_confirmation_email, send_order_notification_to_admin
 from .mercadopago_client import create_checkout_pro_preference, get_payment
 from .email_preview import get_mock_order_email_context
+from finance.services import attach_mercadopago_payment, sync_sale_from_order, upsert_mp_settlement
 
 
 def format_currency_clp(value):
@@ -1011,6 +1012,7 @@ def checkout(request):
             )
     order.stock_committed = True
     order.save(update_fields=['stock_committed'])
+    sync_sale_from_order(order)
 
     # Limpiar carrito
     cart.items.all().delete()
@@ -1200,10 +1202,10 @@ def mp_webhook(request: HttpRequest):
         order.mp_payment_status = str(status) if status else None
         order.mp_last_event_at = timezone.now()
 
-        # Obtener o crear Payment para este pago de Mercado Pago
-        payment_obj, created = Payment.objects.get_or_create(
-            order=order,
-            mp_payment_id=str(payment_id),
+        # Reutilizar el Payment del checkout; no crear un segundo registro por el mismo mp_payment_id.
+        payment_obj = attach_mercadopago_payment(
+            order,
+            str(payment_id),
             defaults={
                 'payment_method': order.payment_method,
                 'amount': order.total,
@@ -1211,7 +1213,7 @@ def mp_webhook(request: HttpRequest):
                 'payment_type': 'mercado_pago',
                 'mp_preference_id': order.mp_preference_id,
                 'mp_init_point': order.mp_init_point,
-            }
+            },
         )
         
         # Actualizar Payment con el estado actual
@@ -1283,6 +1285,9 @@ def mp_webhook(request: HttpRequest):
             'status',
             'stock_committed',
         ])
+
+        if status == 'approved' and order.status == 'confirmed':
+            upsert_mp_settlement(payment_obj, mp_payment_data)
 
     return HttpResponse(status=200)
 

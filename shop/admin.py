@@ -82,9 +82,9 @@ class ProductShippingRateInline(admin.TabularInline):
 class ProductAdmin(admin.ModelAdmin):
     change_list_template = 'admin/shop/product/change_list.html'
     actions = ['delete_selected', 'export_catalog_pdf_action']
-    list_display = ('id', 'name', 'category', 'brand', 'current_price_display', 'stock', 'is_active', 'is_offer', 'uses_special_shipping', 'offer_order', 'is_best_seller', 'featured_order', 'created_at')
-    list_filter = ('is_active', 'is_offer', 'is_best_seller', 'uses_special_shipping', 'category', 'brand', 'created_at')
-    search_fields = ('name', 'short_description', 'description')
+    list_display = ('id', 'sku', 'name', 'category', 'brand', 'current_price_display', 'stock', 'is_active', 'is_offer', 'uses_special_shipping', 'offer_order', 'is_best_seller', 'featured_order', 'created_at')
+    list_filter = ('is_active', 'is_offer', 'is_best_seller', 'is_vat_affected', 'uses_special_shipping', 'category', 'brand', 'created_at')
+    search_fields = ('name', 'sku', 'short_description', 'description')
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ('created_at', 'updated_at')
     inlines = [ProductVariantInline, ProductImageInline, ProductShippingRateInline]
@@ -96,7 +96,7 @@ class ProductAdmin(admin.ModelAdmin):
         return ro
     fieldsets = (
         ('Información básica', {
-            'fields': ('name', 'slug', 'short_description', 'description')
+            'fields': ('name', 'slug', 'sku', 'short_description', 'description')
         }),
         ('Categorización', {
             'fields': ('category', 'brand')
@@ -105,8 +105,12 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('show_variant_badges',),
             'description': 'Controla si se muestran los cuadros de tallas/variantes sobre la imagen en el catálogo.',
         }),
-        ('Precios', {
-            'fields': ('price', 'offer_price')
+        ('Precios y costo', {
+            'fields': ('price', 'offer_price', 'cost_net', 'cost_gross', 'is_vat_affected'),
+            'description': (
+                'El costo vigente se copia a la línea al vender. '
+                'Cambiarlo después no altera márgenes de ventas ya registradas.'
+            ),
         }),
         ('Stock y Estado', {
             'fields': ('stock', 'is_active', 'is_offer', 'is_best_seller'),
@@ -270,23 +274,86 @@ class CartAdmin(admin.ModelAdmin):
 
 
 class OrderItemInline(admin.TabularInline):
-    """Inline para items de pedido"""
+    """Líneas del pedido: columnas operativas + snapshot financiero esencial."""
     model = OrderItem
     extra = 0
-    readonly_fields = ('product', 'product_variant', 'product_name', 'variant_label', 'unit_price', 'quantity', 'line_total')
     can_delete = False
+    show_change_link = True
+    fields = (
+        'product_name',
+        'variant_label',
+        'sku_snapshot',
+        'quantity',
+        'unit_price',
+        'line_total',
+        'gross_sale',
+        'net_sale',
+        'vat_debit',
+        'unit_cost_net_snapshot',
+        'line_cost_net',
+    )
+    readonly_fields = fields
+    verbose_name = 'Línea'
+    verbose_name_plural = 'Líneas del pedido'
+
+
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    """Detalle financiero de una línea. No aparece en el índice; se abre desde el pedido."""
+    list_display = ('id', 'order', 'product_name', 'quantity', 'gross_sale', 'net_sale', 'vat_debit')
+    readonly_fields = (
+        'order', 'product', 'product_variant', 'product_name', 'variant_label', 'sku_snapshot',
+        'unit_price', 'quantity', 'line_total',
+        'list_unit_price', 'discount_allocated', 'gross_sale', 'net_sale', 'vat_debit',
+        'unit_cost_gross_snapshot', 'unit_cost_net_snapshot', 'line_cost_net',
+        'commission_allocated', 'shipping_charged_allocated', 'shipping_assumed_allocated',
+        'other_variable_allocated', 'allocation_method', 'is_vat_affected', 'cost_missing',
+        'finance_synced_at',
+    )
+    fieldsets = (
+        ('Línea', {
+            'fields': ('order', 'product', 'product_variant', 'product_name', 'variant_label', 'sku_snapshot', 'quantity'),
+        }),
+        ('Precio', {
+            'fields': ('list_unit_price', 'unit_price', 'discount_allocated', 'line_total', 'gross_sale'),
+        }),
+        ('IVA y costo histórico', {
+            'fields': (
+                'is_vat_affected', 'net_sale', 'vat_debit',
+                'unit_cost_gross_snapshot', 'unit_cost_net_snapshot', 'line_cost_net', 'cost_missing',
+            ),
+        }),
+        ('Prorrateos', {
+            'fields': (
+                'commission_allocated', 'shipping_charged_allocated',
+                'shipping_assumed_allocated', 'other_variable_allocated', 'allocation_method',
+            ),
+        }),
+        ('Auditoría', {
+            'fields': ('finance_synced_at',),
+        }),
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_model_perms(self, request):
+        return {}
 
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('order_number_display', 'user_display', 'status', 'total_display', 'payment_method', 'shipping_method', 'created_at')
-    list_filter = ('status', 'payment_method', 'shipping_method', 'created_at')
+    list_display = ('order_number_display', 'user_display', 'status', 'sales_channel', 'financial_status', 'total_display', 'payment_method', 'shipping_method', 'created_at')
+    list_filter = ('status', 'sales_channel', 'financial_status', 'payment_method', 'shipping_method', 'created_at')
     search_fields = ('order_number', 'id', 'user__email', 'customer_name', 'customer_email', 'customer_phone')
     readonly_fields = ('order_number', 'created_at', 'updated_at', 'total', 'subtotal', 'discount_total', 'shipping_cost')
     inlines = [OrderItemInline]
     fieldsets = (
         ('Información del Pedido', {
-            'fields': ('order_number', 'user', 'status', 'created_at', 'updated_at')
+            'fields': ('order_number', 'user', 'status', 'sales_channel', 'financial_status', 'created_at', 'updated_at')
         }),
         ('Cliente', {
             'fields': ('customer_name', 'customer_email', 'customer_phone')
@@ -295,7 +362,7 @@ class OrderAdmin(admin.ModelAdmin):
             'fields': ('shipping_method', 'shipping_region', 'shipping_comuna', 'shipping_address', 'shipping_cost')
         }),
         ('Pago', {
-            'fields': ('payment_method', 'coupon')
+            'fields': ('payment_method', 'coupon', 'is_vat_affected', 'document_type', 'document_folio')
         }),
         ('Totales', {
             'fields': ('subtotal', 'discount_total', 'total')

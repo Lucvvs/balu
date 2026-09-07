@@ -23,6 +23,7 @@ from django.views.static import serve
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
+    path('dashboard/finanzas/', include('finance.urls')),
     path('', include('shop.urls')),
 ]
 

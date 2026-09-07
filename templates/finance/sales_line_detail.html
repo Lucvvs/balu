@@ -1,0 +1,132 @@
+{% extends 'finance/base.html' %}
+{% load shop_filters %}
+
+{% block finance_title %}Línea {{ item.product_name }}{% endblock %}
+
+{% block finance_content %}
+<p class="finance-back">
+    <a href="{% url 'finance:sales_lines' %}?{{ sales_query }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a ventas</a>
+    ·
+    <a href="{% url 'shop:order_confirmation' order.id %}">Pedido #{{ order.order_number|default:order.id }}</a>
+    {% if order_line_count > 1 %}
+    · {{ order_line_count }} líneas · {{ order_line_position }} de {{ order_line_count }}
+    {% endif %}
+</p>
+
+{% if order_line_count > 1 %}
+<nav class="finance-pagination line-nav" aria-label="Líneas del pedido">
+    {% if prev_line %}
+    <a href="{% url 'finance:sales_line_detail' prev_line.id %}?{{ sales_query }}">← {{ prev_line.product_name }}</a>
+    {% else %}
+    <span class="muted">Primera línea</span>
+    {% endif %}
+    <span>Línea {{ order_line_position }} de {{ order_line_count }}</span>
+    {% if next_line %}
+    <a href="{% url 'finance:sales_line_detail' next_line.id %}?{{ sales_query }}">{{ next_line.product_name }} →</a>
+    {% else %}
+    <span class="muted">Última línea</span>
+    {% endif %}
+</nav>
+
+<div class="finance-panel">
+    <h2>Líneas del pedido #{{ order.order_number|default:order.id }}</h2>
+    <div class="finance-table-wrap">
+        <table class="finance-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>SKU</th>
+                    <th>Producto</th>
+                    <th class="is-num">Cant.</th>
+                    <th class="is-num">Venta neta</th>
+                    <th class="is-num">Envío cobrado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in order_lines %}
+                <tr class="{% if line.id == item.id %}is-current{% endif %}">
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ line.sku_snapshot|default:"—" }}</td>
+                    <td>
+                        <div class="prod-cell">
+                            {% include 'finance/_product_thumb.html' with product=line.product thumb_class='is-sm' %}
+                            <div>
+                        {% if line.id == item.id %}
+                        <strong>{{ line.product_name }}</strong>
+                        {% else %}
+                        <a href="{% url 'finance:sales_line_detail' line.id %}?{{ sales_query }}">{{ line.product_name }}</a>
+                        {% endif %}
+                        {% if line.variant_label %}<span class="muted">{{ line.variant_label }}</span>{% endif %}
+                        {% if line.cost_missing %}<span class="inv-badge is-warn">Sin costo</span>{% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="is-num">{{ line.quantity }}</td>
+                    <td class="is-num">{{ line.net_sale|currency_clp }}</td>
+                    <td class="is-num">{{ line.shipping_charged_allocated|currency_clp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="finance-cards-mobile">
+        {% for line in order_lines %}
+        <a class="finance-line-card{% if line.id == item.id %} is-current{% endif %}{% if line.product.images.all %} has-thumb{% endif %}" href="{% url 'finance:sales_line_detail' line.id %}?{{ sales_query }}">
+            {% include 'finance/_product_thumb.html' with product=line.product thumb_class='is-sm' %}
+            <div>
+            <strong>{{ forloop.counter }}. {{ line.product_name }}{% if line.id == item.id %} · esta línea{% endif %}</strong>
+            <span>{{ line.net_sale|currency_clp }} · {{ line.quantity }} u.</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<article class="finance-panel">
+    <header class="product-detail-head">
+        {% include 'finance/_product_thumb.html' with product=item.product thumb_class='is-lg' show_empty=True %}
+        <div>
+            <h2>{{ item.product_name }} {% if item.variant_label %}<span class="muted">{{ item.variant_label }}</span>{% endif %}</h2>
+            <p class="muted">{{ item.sku_snapshot }} · {{ order.get_sales_channel_display }} · {{ order.created_at|date:"d/m/Y H:i" }}</p>
+        </div>
+    </header>
+
+    <div class="detail-grid">
+        <section class="detail-block is-price">
+            <h3>Precio</h3>
+            <dl>
+                <div><dt>Precio lista</dt><dd>{{ item.list_unit_price|currency_clp }}</dd></div>
+                <div><dt>Precio cobrado</dt><dd>{{ item.unit_price|currency_clp }}</dd></div>
+                <div><dt>Cantidad</dt><dd>{{ item.quantity }}</dd></div>
+                <div><dt>Descuento prorrateado</dt><dd>{{ item.discount_allocated|currency_clp }}</dd></div>
+                <div><dt>Venta bruta efectiva</dt><dd>{{ item.gross_sale|currency_clp }}</dd></div>
+                <div><dt>Venta neta</dt><dd class="is-emphasis">{{ item.net_sale|currency_clp }}</dd></div>
+            </dl>
+        </section>
+        <section class="detail-block is-cost">
+            <h3>Costo e impuestos</h3>
+            <dl>
+                <div><dt>IVA débito</dt><dd>{{ item.vat_debit|currency_clp }}</dd></div>
+                <div><dt>Costo neto histórico</dt><dd>{{ item.unit_cost_net_snapshot|currency_clp }}</dd></div>
+                <div><dt>Costo línea</dt><dd>{{ item.line_cost_net|currency_clp }}</dd></div>
+                <div><dt>Comisión</dt><dd>{{ item.commission_allocated|currency_clp }}</dd></div>
+                <div><dt>Envío cobrado</dt><dd>{{ item.shipping_charged_allocated|currency_clp }}</dd></div>
+                <div><dt>Envío asumido</dt><dd>{{ item.shipping_assumed_allocated|currency_clp }}</dd></div>
+            </dl>
+        </section>
+        <section class="detail-block is-order">
+            <h3>Pedido</h3>
+            <dl>
+                <div><dt>Canal</dt><dd>{{ order.get_sales_channel_display }}</dd></div>
+                <div><dt>Cliente</dt><dd>{{ order.customer_name|default:"—" }}</dd></div>
+                <div><dt>Estado financiero</dt><dd>{{ order.get_financial_status_display }}</dd></div>
+                <div><dt>Pago</dt><dd>{{ order.payment_method.name }}</dd></div>
+                <div><dt>Entrega</dt><dd>{{ order.shipping_method.name }}</dd></div>
+                <div><dt>Afecto a IVA</dt><dd>{% if item.is_vat_affected %}Sí{% else %}No{% endif %}</dd></div>
+                <div><dt>Costo informado</dt><dd>{% if item.cost_missing %}<span class="status-dot is-warn"></span>No{% else %}<span class="status-dot"></span>Sí{% endif %}</dd></div>
+            </dl>
+        </section>
+    </div>
+</article>
+{% endblock %}

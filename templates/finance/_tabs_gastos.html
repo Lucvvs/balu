@@ -1,0 +1,4 @@
+<nav class="finance-local-tabs" aria-label="Gastos">
+    <a class="{% if gas_tab == 'opex' %}is-active{% endif %}" href="{% url 'finance:expenses' %}?{{ sales_query }}"><i class="bi bi-wallet2" aria-hidden="true"></i> Operativos</a>
+    <a class="{% if gas_tab == 'ship' %}is-active{% endif %}" href="{% url 'finance:shipments' %}?{{ sales_query }}"><i class="bi bi-truck" aria-hidden="true"></i> Envíos</a>
+</nav>

@@ -1,0 +1,79 @@
+{% extends 'finance/base.html' %}
+{% load shop_filters %}
+
+{% block finance_title %}Envíos{% endblock %}
+
+{% block finance_content %}
+{% include 'finance/_tabs_gastos.html' with gas_tab='ship' %}
+
+<p class="kpi-hint finance-inv-note">
+    El envío es una sola transacción de origen: lo cobrado al cliente vive en el pedido; aquí se registra el flete real.
+    El costo asumido entra al margen de contribución. No se mezcla con el opex de arriendo o ads.
+</p>
+
+{% if can_register_expense %}
+<form method="post" class="finance-form-section">
+    {% csrf_token %}
+    <h2><i class="bi bi-truck" aria-hidden="true"></i> Registrar flete</h2>
+    {{ form.non_field_errors }}
+    <div class="finance-form-grid">
+        <label>Pedido {{ form.order_number }} {{ form.order_number.errors }}</label>
+        <label>Costo real {{ form.actual_cost }} {{ form.actual_cost.errors }}</label>
+        <label>Costo asumido {{ form.assumed_cost }} {{ form.assumed_cost.errors }}</label>
+        <label>Cuenta (si se paga) {{ form.account }} {{ form.account.errors }}</label>
+        <label>Courier {{ form.carrier }}</label>
+        <label>Seguimiento {{ form.tracking_code }}</label>
+        <label>Fecha {{ form.occurred_on }} {{ form.occurred_on.errors }}</label>
+        <label class="is-wide">Nota {{ form.notes }}</label>
+    </div>
+    <div class="finance-form-actions">
+        <button type="submit" class="finance-filter-submit">Guardar envío</button>
+    </div>
+</form>
+{% endif %}
+
+<div class="finance-panel">
+    <h2>Historial del período</h2>
+    {% if rows %}
+    <div class="finance-table-wrap">
+        <table class="finance-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Pedido</th>
+                    <th>Courier</th>
+                    <th class="is-num">Cobrado</th>
+                    <th class="is-num">Real</th>
+                    <th class="is-num">Asumido</th>
+                    <th>Cuenta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in rows %}
+                <tr>
+                    <td>{{ item.occurred_on|date:"d/m/Y" }}</td>
+                    <td>#{{ item.order.order_number|default:item.order_id }}</td>
+                    <td>{{ item.carrier|default:"—" }} {% if item.tracking_code %}<span class="muted">{{ item.tracking_code }}</span>{% endif %}</td>
+                    <td class="is-num amount-in">{{ item.charged_amount|currency_clp }}</td>
+                    <td class="is-num amount-out">{{ item.actual_cost|currency_clp }}</td>
+                    <td class="is-num amount-out">{{ item.assumed_cost|currency_clp }}</td>
+                    <td>{% if item.account %}{{ item.account.name }}{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="finance-cards-mobile">
+        {% for item in rows %}
+        <div class="finance-line-card">
+            <strong>#{{ item.order.order_number|default:item.order_id }} · {{ item.actual_cost|currency_clp }}</strong>
+            <span>{{ item.occurred_on|date:"d/m/Y" }} · {{ item.carrier|default:"Sin courier" }}</span>
+            <span>Cobrado {{ item.charged_amount|currency_clp }} · asumido {{ item.assumed_cost|currency_clp }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="finance-empty">Aún no hay fletes registrados en este período.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends 'finance/base.html' %}
+{% load shop_filters %}
+
+{% block finance_title %}Gastos{% endblock %}
+
+{% block finance_content %}
+{% include 'finance/_tabs_gastos.html' with gas_tab='opex' %}
+
+<p class="kpi-hint finance-inv-note">
+    Un gasto operativo baja tesorería y resta al resultado. No es compra de mercadería ni venta.
+    El opex usa el neto si hay IVA; lo que sale de la cuenta es el bruto.
+</p>
+
+<section class="treasury-strip" aria-label="Totales de gastos del período">
+    <div class="tone-out">
+        <span class="kpi-ico" aria-hidden="true"><i class="bi bi-wallet2"></i></span>
+        <span class="kpi-label">Opex neto</span>
+        <strong>{{ list_net|currency_clp }}</strong>
+        <span class="kpi-hint">Resultado operativo {{ kpis.operating_result|currency_clp }}</span>
+    </div>
+    <div class="tone-out">
+        <span class="kpi-ico" aria-hidden="true"><i class="bi bi-cash-stack"></i></span>
+        <span class="kpi-label">Pagado (bruto)</span>
+        <strong class="amount-out">{{ gross_total|currency_clp }}</strong>
+    </div>
+    <div class="tone-tax">
+        <span class="kpi-ico" aria-hidden="true"><i class="bi bi-receipt-cutoff"></i></span>
+        <span class="kpi-label">IVA crédito</span>
+        <strong>{{ vat_credit_total|currency_clp }}</strong>
+        <span class="kpi-hint">Estimado, no declaración SII</span>
+    </div>
+</section>
+
+<div class="treasury-strip" aria-label="Opex por grupo">
+    {% for row in kind_totals %}
+    <div class="tone-out">
+        <span class="kpi-ico" aria-hidden="true">
+            {% if row.kind == 'ads' %}<i class="bi bi-megaphone"></i>
+            {% elif row.kind == 'infrastructure' %}<i class="bi bi-building"></i>
+            {% elif row.kind == 'services' %}<i class="bi bi-lightning-charge"></i>
+            {% else %}<i class="bi bi-three-dots"></i>{% endif %}
+        </span>
+        <span class="kpi-label">{{ row.label }}</span>
+        <strong>{{ row.net|currency_clp }}</strong>
+    </div>
+    {% endfor %}
+</div>
+
+{% if can_register_expense %}
+<div class="finance-split">
+    <form method="post" class="finance-form-section">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create">
+        <h2>Registrar gasto</h2>
+        {{ form.non_field_errors }}
+        <div class="finance-form-grid">
+            <label>Categoría {{ form.category }} {{ form.category.errors }}</label>
+            <label>Proveedor {{ form.vendor }} {{ form.vendor.errors }}</label>
+            <label class="is-wide">Descripción {{ form.description }} {{ form.description.errors }}</label>
+            <label>Monto bruto {{ form.amount }} {{ form.amount.errors }}</label>
+            <label>Cuenta que paga {{ form.account }} {{ form.account.errors }}</label>
+            <label>Fecha {{ form.occurred_on }} {{ form.occurred_on.errors }}</label>
+            <label class="is-wide">Nota {{ form.notes }}</label>
+        </div>
+        <div class="finance-form-checks">
+            <label>{{ form.is_vat_affected }} Afecta a IVA</label>
+        </div>
+        <div class="finance-form-actions">
+            <button type="submit" class="finance-filter-submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Registrar gasto</button>
+        </div>
+    </form>
+
+    <form method="post" class="finance-form-section">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_category">
+        <h2>Nueva categoría</h2>
+        {{ category_form.non_field_errors }}
+        <div class="finance-form-grid">
+            <label>Nombre {{ category_form.name }} {{ category_form.name.errors }}</label>
+            <label>Grupo {{ category_form.kind }} {{ category_form.kind.errors }}</label>
+        </div>
+        <p class="kpi-hint">Los grupos son infraestructura, servicios, publicidad u otros. Sirven para agrupar; puedes crear tantas categorías como necesites.</p>
+        <div class="finance-form-actions">
+            <button type="submit" class="finance-filter-submit">Crear categoría</button>
+        </div>
+    </form>
+</div>
+{% else %}
+<p class="finance-empty">Puedes ver el historial. Registrar un gasto requiere el permiso de gastos.</p>
+{% endif %}
+
+<div class="finance-panel">
+    <h2>Historial del período</h2>
+    {% if rows %}
+    <div class="finance-table-wrap">
+        <table class="finance-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Categoría</th>
+                    <th>Descripción</th>
+                    <th>Proveedor</th>
+                    <th>Cuenta</th>
+                    <th class="is-num">Bruto</th>
+                    <th class="is-num">Opex neto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in rows %}
+                <tr>
+                    <td>{{ item.occurred_on|date:"d/m/Y" }}</td>
+                    <td>{{ item.category.name }} <span class="muted">{{ item.category.get_kind_display }}</span></td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.vendor }}</td>
+                    <td>{{ item.account.name }}</td>
+                    <td class="is-num amount-out">{{ item.gross_amount|currency_clp }}</td>
+                    <td class="is-num amount-out">{{ item.net_amount|currency_clp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="finance-cards-mobile">
+        {% for item in rows %}
+        <div class="finance-line-card">
+            <strong>{{ item.description }}</strong>
+            <span>{{ item.occurred_on|date:"d/m/Y" }} · {{ item.category.name }} · {{ item.vendor }}</span>
+            <span class="amount-out">{{ item.net_amount|currency_clp }} neto · {{ item.account.name }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="finance-empty">Aún no hay gastos operativos en este período. Las compras de mercadería no aparecen aquí.</p>
+    {% endif %}
+</div>
+{% endblock %}

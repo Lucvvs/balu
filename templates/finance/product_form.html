@@ -1,0 +1,236 @@
+{% extends 'finance/base.html' %}
+{% load shop_filters %}
+
+{% block finance_title %}{% if is_create %}Nuevo producto{% else %}{{ product.name }}{% endif %}{% endblock %}
+
+{% block finance_content %}
+<div class="finance-panel-head finance-inv-form-head">
+    <a href="{% url 'finance:inventory' %}?{{ sales_query }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Inventario</a>
+    {% if product %}
+    <a href="{% url 'shop:product_detail' product.slug %}">Ver en tienda</a>
+    {% endif %}
+</div>
+
+{% if product %}
+<header class="product-detail-head">
+    {% include 'finance/_product_thumb.html' with product=product thumb_class='is-lg' show_empty=True %}
+    <div>
+        <h2>{% if is_create %}Nuevo producto{% else %}{{ product.name }}{% endif %}</h2>
+        <p class="muted">{{ product.sku|default:"Sin SKU" }}{% if product.brand %} · {{ product.brand.name }}{% endif %}{% if product.category %} · {{ product.category.name }}{% endif %}</p>
+    </div>
+</header>
+{% endif %}
+
+{% if potential %}
+<section class="treasury-strip" aria-label="Potencial de este SKU">
+    <div class="tone-neutral">
+        <span class="kpi-label">Stock</span>
+        <strong>{{ potential.units }}</strong>
+    </div>
+    <div class="tone-in">
+        <span class="kpi-label">Potencial neto</span>
+        <strong>{{ potential.net|currency_clp }}</strong>
+    </div>
+    <div class="tone-in">
+        <span class="kpi-label">Margen potencial</span>
+        <strong>{{ potential.margin|currency_clp }}</strong>
+        {% if potential.cost_missing %}<span class="kpi-hint">Falta costo vigente</span>{% endif %}
+    </div>
+</section>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" class="finance-form" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <section class="finance-form-section">
+        <h2>Identidad</h2>
+        <div class="finance-form-grid">
+            <label>Nombre {{ form.name }} {{ form.name.errors }}</label>
+            <label>SKU {{ form.sku }} {{ form.sku.errors }}</label>
+            <label>Categoría {{ form.category }} {{ form.category.errors }}</label>
+            <label>Marca {{ form.brand }} {{ form.brand.errors }}</label>
+            <label class="is-wide">Descripción corta {{ form.short_description }} {{ form.short_description.errors }}</label>
+            <label class="is-wide">Descripción {{ form.description }} {{ form.description.errors }}</label>
+        </div>
+        <div class="finance-form-checks">
+            <label>{{ form.is_active }} Activo</label>
+            <label>{{ form.is_best_seller }} Más vendido</label>
+            <label>{{ form.show_variant_badges }} Mostrar variantes en catálogo</label>
+            <label>{{ form.uses_special_shipping }} Envío especial (tarifas en Django Admin)</label>
+        </div>
+    </section>
+
+    <section class="finance-form-section">
+        <h2>Precios y costo vigente</h2>
+        <p class="kpi-hint">Ingresa el costo neto; el bruto se calcula solo. Cambiar el costo aquí no recalcula ventas ya sincronizadas. El potencial usa estos valores actuales.</p>
+        <div class="finance-form-grid">
+            <label>Precio lista {{ form.price }} {{ form.price.errors }}</label>
+            <label>Precio oferta {{ form.offer_price }} {{ form.offer_price.errors }}</label>
+            <label>Costo neto {{ form.cost_net }} {{ form.cost_net.errors }}</label>
+            <label>Costo bruto {{ form.cost_gross }}
+                <span class="kpi-hint form-lock-hint"><i class="bi bi-lock" aria-hidden="true"></i> {{ form.cost_gross.help_text }}</span>
+                {{ form.cost_gross.errors }}
+            </label>
+            <label>Stock {{ form.stock }} {% if form.stock.help_text %}<span class="kpi-hint">{{ form.stock.help_text }}</span>{% endif %} {{ form.stock.errors }}</label>
+        </div>
+        <div class="finance-form-checks">
+            <label>{{ form.is_vat_affected }} Afecto a IVA (19%)</label>
+            <label>{{ form.is_offer }} Marcar como oferta</label>
+        </div>
+        <section class="treasury-strip cost-preview" id="cost-preview" hidden aria-label="Desglose al precio publicado">
+            <div class="tone-in">
+                <span class="kpi-label">Venta neta (1 u.)</span>
+                <strong id="cost-preview-net">—</strong>
+            </div>
+            <div class="tone-tax">
+                <span class="kpi-label">IVA débito</span>
+                <strong id="cost-preview-vat">—</strong>
+            </div>
+            <div class="tone-in">
+                <span class="kpi-label">Margen bruto</span>
+                <strong id="cost-preview-margin">—</strong>
+                <span class="kpi-hint" id="cost-preview-pct"></span>
+            </div>
+        </section>
+    </section>
+
+    <section class="finance-form-section">
+        <h2>Variantes</h2>
+        <p class="kpi-hint">Si hay opciones, el stock del producto es la suma. El precio sigue siendo el del producto (no hay precio por talla).</p>
+        {{ variant_formset.management_form }}
+        {{ variant_formset.non_form_errors }}
+        <table class="finance-table finance-form-table">
+            <thead>
+                <tr>
+                    <th>Opción</th>
+                    <th>Stock</th>
+                    <th>Orden</th>
+                    <th>Quitar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vform in variant_formset %}
+                <tr>
+                    <td>{{ vform.id }}{{ vform.name }}{{ vform.name.errors }}</td>
+                    <td>{{ vform.stock }}{{ vform.stock.errors }}</td>
+                    <td>{{ vform.sort_order }}{{ vform.sort_order.errors }}</td>
+                    <td>{% if vform.instance.pk %}{{ vform.DELETE }}{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="finance-form-section">
+        <h2>Imágenes</h2>
+        {{ image_formset.management_form }}
+        {{ image_formset.non_form_errors }}
+        <div class="finance-image-forms">
+            {% for iform in image_formset %}
+            <div class="finance-image-form">
+                {{ iform.id }}
+                {% if iform.instance.pk and iform.instance.image %}
+                <img src="{{ iform.instance.image.url }}" alt="" class="inv-thumb">
+                {% endif %}
+                <label>Archivo {{ iform.image }}{{ iform.image.errors }}</label>
+                <label>{{ iform.is_primary }} Principal</label>
+                <label>Orden {{ iform.order }}</label>
+                {% if iform.instance.pk %}<label>{{ iform.DELETE }} Eliminar</label>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div class="finance-form-actions">
+        <button type="submit" class="finance-filter-submit">Guardar producto</button>
+        <a class="finance-text-link" href="{% url 'finance:inventory' %}?{{ sales_query }}">Cancelar</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const netInput = document.getElementById('id_cost_net');
+    const grossInput = document.getElementById('id_cost_gross');
+    const vatBox = document.getElementById('id_is_vat_affected');
+    const priceInput = document.getElementById('id_price');
+    const offerInput = document.getElementById('id_offer_price');
+    const preview = document.getElementById('cost-preview');
+    const previewNet = document.getElementById('cost-preview-net');
+    const previewVat = document.getElementById('cost-preview-vat');
+    const previewMargin = document.getElementById('cost-preview-margin');
+    const previewPct = document.getElementById('cost-preview-pct');
+    if (!netInput || !grossInput) return;
+
+    function toClp(value) {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed) || parsed < 0) return 0;
+        return Math.round(parsed);
+    }
+
+    function roundHalfUp(value) {
+        return Math.round(value);
+    }
+
+    function vatFromNet(net) {
+        return roundHalfUp((net * 19) / 100);
+    }
+
+    function splitGrossVat(gross, affected) {
+        if (!affected) return { net: gross, vat: 0 };
+        const net = roundHalfUp(gross / 1.19);
+        return { net: net, vat: gross - net };
+    }
+
+    function formatClp(value) {
+        return '$' + Number(value).toLocaleString('es-CL');
+    }
+
+    function publishedPrice() {
+        const offer = toClp(offerInput && offerInput.value);
+        if (offer > 0) return offer;
+        return toClp(priceInput && priceInput.value);
+    }
+
+    function sync() {
+        const net = toClp(netInput.value);
+        const affected = !vatBox || vatBox.checked;
+        const vatCost = affected ? vatFromNet(net) : 0;
+        const gross = net + vatCost;
+        grossInput.value = String(gross);
+
+        if (!preview || !previewNet) return;
+        const price = publishedPrice();
+        if (price <= 0) {
+            preview.hidden = true;
+            return;
+        }
+        const sale = splitGrossVat(price, affected);
+        const margin = sale.net - net;
+        preview.hidden = false;
+        previewNet.textContent = formatClp(sale.net);
+        previewVat.textContent = formatClp(sale.vat);
+        previewMargin.textContent = formatClp(margin);
+        if (previewPct) {
+            const pct = sale.net > 0 ? ((margin / sale.net) * 100).toFixed(1).replace('.', ',') : '0';
+            previewPct.textContent = pct + '% sobre venta neta · al precio publicado';
+        }
+    }
+
+    netInput.addEventListener('input', sync);
+    netInput.addEventListener('change', sync);
+    if (vatBox) vatBox.addEventListener('change', sync);
+    if (priceInput) {
+        priceInput.addEventListener('input', sync);
+        priceInput.addEventListener('change', sync);
+    }
+    if (offerInput) {
+        offerInput.addEventListener('input', sync);
+        offerInput.addEventListener('change', sync);
+    }
+    sync();
+})();
+</script>
+{% endblock %}

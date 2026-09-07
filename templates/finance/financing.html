@@ -1,0 +1,101 @@
+{% extends 'finance/base.html' %}
+{% load shop_filters %}
+
+{% block finance_title %}Financiamiento{% endblock %}
+
+{% block finance_content %}
+{% include 'finance/_tabs_ingresos.html' with ing_tab='financing' %}
+
+<p class="kpi-hint finance-inv-note">
+    Un aporte aumenta caja y no es venta. Un préstamo también entra a caja, pero queda como deuda hasta pagarlo.
+</p>
+
+{% if can_manage_financing %}
+<div class="finance-split">
+    <form method="post" class="finance-form-section">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create">
+        <h2>Registrar entrada</h2>
+        {{ form.non_field_errors }}
+        <div class="finance-form-grid">
+            <label>Tipo {{ form.kind }}</label>
+            <label>Origen / prestamista {{ form.counterparty }} {{ form.counterparty.errors }}</label>
+            <label>Monto {{ form.amount }} {{ form.amount.errors }}</label>
+            <label>Cuenta destino {{ form.account }} {{ form.account.errors }}</label>
+            <label>Fecha {{ form.occurred_on }} {{ form.occurred_on.errors }}</label>
+            <label class="is-wide">Nota {{ form.notes }}</label>
+        </div>
+        <div class="finance-form-actions">
+            <button type="submit" class="finance-filter-submit">Guardar</button>
+        </div>
+    </form>
+
+    {% if open_loans %}
+    <form method="post" class="finance-form-section">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="repay">
+        <h2>Pagar préstamo</h2>
+        {{ repay_form.non_field_errors }}
+        <div class="finance-form-grid">
+            <label class="is-wide">Préstamo {{ repay_form.financing }} {{ repay_form.financing.errors }}</label>
+            <label>Monto {{ repay_form.amount }} {{ repay_form.amount.errors }}</label>
+            <label>Cuenta que paga {{ repay_form.account }} {{ repay_form.account.errors }}</label>
+            <label>Fecha {{ repay_form.occurred_on }} {{ repay_form.occurred_on.errors }}</label>
+            <label class="is-wide">Nota {{ repay_form.notes }}</label>
+        </div>
+        <div class="finance-form-actions">
+            <button type="submit" class="finance-filter-submit">Registrar pago</button>
+        </div>
+    </form>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="finance-panel">
+    <h2>Historial</h2>
+    {% if rows %}
+    <div class="finance-table-wrap">
+        <table class="finance-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Origen</th>
+                    <th>Cuenta</th>
+                    <th class="is-num">Monto</th>
+                    <th class="is-num">Saldo préstamo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.item.occurred_on|date:"d/m/Y" }}</td>
+                    <td>
+                        <span class="kind-pill {% if row.item.kind == 'loan' %}is-pos{% else %}is-web{% endif %}">
+                            <i class="bi {% if row.item.kind == 'loan' %}bi-bank{% else %}bi-piggy-bank{% endif %}" aria-hidden="true"></i>
+                            {{ row.item.get_kind_display }}
+                        </span>
+                    </td>
+                    <td>{{ row.item.counterparty }}</td>
+                    <td>{{ row.item.account.name }}</td>
+                    <td class="is-num amount-in">{{ row.item.principal|currency_clp }}</td>
+                    <td class="is-num">{% if row.item.kind == 'loan' %}{{ row.outstanding|currency_clp }}{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="finance-cards-mobile">
+        {% for row in rows %}
+        <div class="finance-line-card">
+            <strong>{{ row.item.get_kind_display }} · {{ row.item.principal|currency_clp }}</strong>
+            <span>{{ row.item.occurred_on|date:"d/m/Y" }} · {{ row.item.counterparty }} · {{ row.item.account.name }}</span>
+            {% if row.item.kind == 'loan' %}<span>Saldo {{ row.outstanding|currency_clp }}</span>{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="finance-empty">Aún no hay aportes ni préstamos. No se mezclan con las ventas.</p>
+    {% endif %}
+</div>
+{% endblock %}
